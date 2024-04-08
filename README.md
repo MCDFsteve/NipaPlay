@@ -36,4 +36,50 @@ npm install electron -g
 npm start
 ```
 启动这个项目。
+项目根据需要，需要自己准备[ffmpeg](https://ffmpeg.org)（不需要也可以在main.js内移除下面这段：）
+```javascript
+function ffmpegif(videoPath) {
+    const ext = path.extname(videoPath).toLowerCase();
+    if (ext === '.gif') {
+        ffmpegWindow(videoPath);
+    } else {
+        createVideoWindow(videoPath)
+    }
+}
+function ffmpegWindow(videoPath) {
+    const isMac = process.platform === 'darwin';
+    const ffmpegPath = isMac ? './ffmpeg/ffmpeg_mac' : './ffmpeg/ffmpeg_win/bin/ffmpeg.exe';
+    const outputVideoPath = path.join('./cache', videoPath);  // 定义输出文件路径
+
+    const { spawn } = require('child_process');
+    const ffmpeg = spawn(ffmpegPath, [
+        '-i', videoPath,            // 输入文件
+        '-c:v', 'h264',             // 视频编解码器
+        '-c:a', 'aac',              // 音频编解码器
+        '-f', 'mp4',             // 使用 ffplay 播放器
+        outputVideoPath             // 输出文件路径
+    ]);
+
+    // 监听 FFmpeg 子进程的输出
+    ffmpeg.stdout.on('data', (data) => {
+        console.log(`FFmpeg output: ${data}`);
+    });
+
+    // 监听 FFmpeg 子进程的错误输出
+    ffmpeg.stderr.on('data', (data) => {
+        console.error(`FFmpeg error: ${data}`);
+    });
+
+    // 监听 FFmpeg 子进程的退出事件
+    ffmpeg.on('close', (code) => {
+        console.log(`FFmpeg process exited with code ${code}`);
+
+        // 如果 FFmpeg 成功处理视频，则创建视频窗口播放处理后的视频
+        if (code === 0) {
+            createVideoWindow(outputVideoPath); // 将处理后的视频路径传递给 createVideoWindow 函数
+        }
+    });
+}
+```
+并将剩余代码所有的 <span style="background-color: #333; color: #fff; padding: 2px 4px;">ffmpegif</span> 替换为 <span style="background-color: #333; color: #fff; padding: 2px 4px;">createVideoWindow</span> 。
 
