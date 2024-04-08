@@ -1,0 +1,25 @@
+{
+  "name": "nipaplay",
+  "productName": "NipaPlay",
+  "version": "0.0.6",
+  "description": "咪啪～☆",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "DFsteve",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^29.1.6",
+    "electron-builder": "^24.13.3",
+    "electron-winstaller": "^5.3.0"
+  },
+  "dependencies": {
+    "assjs": "^0.0.11",
+    "danmaku": "^2.0.6",
+    "express": "^4.19.2",
+    "plyr": "^3.7.8"
+  }
+}

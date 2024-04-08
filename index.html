@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>NipaPlay</title>
+    <link rel="stylesheet" href="index.css">
+    <style id="theme-style"></style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <div id="title-text"><span>NipaPlay</span></div>
+        <button id="import-video"><span>视频导入⬇︎</span></button>
+        <button id="media-library"><span>媒体库❖</span></button>
+        <button id="new-series"><span>新番更新ℍ</span></button>
+        <button id="viewing-history"><span>观看记录☕︎</span></button>
+        <button id="theme-todark" style="display: none;" onclick="setTheme('dark')"><span>切换至深色模式☪︎</span></button>
+        <button id="theme-tolight" onclick="setTheme('light')"><span>切换至浅色模式☀︎</span></button>
+        <button id="about-menu"><span>关于NipaPlay☆</span></button>
+    </div>
+    <div class="content-area">
+        <!-- 视频导入功能区 -->
+        <div id="import-video-content" class="content-page">
+            <button id="import-video-button" class="upload-button" ondragover="allowDrop(event)"
+                ondrop="dropFile(event)" onclick="window.electron.selectVideo()">
+                <div class="upload-icon"></div>
+                <div>导入视频/拖入视频</div>
+            </button>
+            <input type="file" id="file-input" style="display: none;" accept="video/*">
+        </div>
+        <!-- 媒体库内容区 -->
+        <div id="media-library-content" class="content-page" style="display:none;">
+            <h2>媒体库</h2>
+            <hr class="section-divider">
+            <h3>这里还什么都没有.....建设中......</h3>
+        </div>
+        <!-- 新番更新内容区 -->
+        <div id="new-series-content" class="content-page" style="display:none;">
+            <h2>新番更新</h2>
+            <hr class="section-divider">
+            <h3>这里还什么都没有.....建设中......</h3>
+        </div>
+        <!-- 观看记录内容区 -->
+                <!-- 观看记录内容区 -->
+                <div id="viewing-history-content" class="content-page" style="display:none;">
+                    <h2>观看记录</h2>
+                    <hr class="section-divider">
+                    <div class="scrollable-list">
+                        <ul id="video-history">
+                            <!-- 视频记录项将被动态添加到这里 -->
+                        </ul>
+                    </div>
+                </div> <!-- 正确结束观看记录内容区的div -->
+        
+                <!-- 关于区 -->
+                <div id="about-menu-content" class="content-page" style="display:none;">
+                    <h2>关于</h2>
+                    <hr class="section-divider">
+                    <h3>NipaPlay.<br>作者戴夫邻居史蒂夫.<br>咪啪～☆<br>Ver0.0.6.<br>0.0.6（2024.04.07）更新内容：<br>1.添加了还没做实际功能的右边菜单，悬浮可出现显示。<br>2.现在任务栏图标右键可以快捷进入最近播放的视频（前提是在使用这个功能之前先播放过视频。<br>3.现在播放器会自动记录上次视频的观看位置并自动从该位置开始播放了。<br>4.给ui按钮做了过渡动画，没被选中时是灰色。<br>6.更多细微调整。</h3>
+                </div>
+        
+        </div>
+        <!-- 在页面底部添加版本号文本 -->
+        <div id="version-text">ver0.0.6</div>
+
+    </div>
+    <div class="drag-area">
+    </div>
+    
+    <script src="./videoplay.js"></script>
+    <script src="./history.js"></script>
+    <script src="./theme.js"></script>
+    <script src="./darkmode.js"></script>
+    <script>
+        document.querySelectorAll('.sidebar button').forEach(btn => {
+            btn.addEventListener('click', function () {
+                // 忽略主题切换按钮的点击事件，让它们继续使用darkmode.js中的逻辑
+                if (this.id === 'theme-todark' || this.id === 'theme-tolight') {
+                    return; // 不执行任何操作，因为darkmode.js中的setTheme函数会处理这些按钮
+                }
+                // 移除所有按钮的'active'类
+                document.querySelectorAll('.sidebar button').forEach(button => {
+                    button.classList.remove('active');
+                });
+                // 给当前点击的按钮添加'active'类
+                this.classList.add('active');
+                // 显示对应的内容区
+                const contentId = this.id + '-content';
+                document.querySelectorAll('.content-page').forEach(page => {
+                    page.style.display = 'none';
+                });
+                const activeContent = document.getElementById(contentId);
+                if (activeContent) {
+                    activeContent.style.display = 'block';
+                }
+            });
+        });
+
+        function changeContent(content) {
+            const buttons = document.querySelectorAll('.sidebar button');
+            buttons.forEach(button => button.classList.remove('active'));
+            document.getElementById(content + '-video').classList.add('active');
+
+            // Hide all content divs
+            const contents = document.querySelectorAll('.content > button');
+            contents.forEach(content => content.classList.remove('active'));
+
+            // Show the selected content div
+            document.getElementById(content + '-content').classList.add('active');
+        }
+    </script>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>NipaPlay播放视图</title>
+    <link rel="stylesheet" href="video-player.css">
+    <style>
+    </style>
+</head>
+
+<body>
+    <div id="player-container">
+        <video id="video-player"></video>
+        <div id="danmaku-container"></div>
+        <div id="subtitle-container"></div>
+    </div>
+    <div id="uihide">
+        <div id="controls-container">
+            <div id="left-controls">
+                <button id="play-button" class="control-button"
+                    style="background-image: url('icons/play.png')"></button>
+                <button id="pause-button" class="control-button"
+                    style="background-image: url('icons/pause.png'); display: none;"></button>
+                <div id="pop-play" popover="auto" class="pop">播放</div>
+                <div id="pop-pause" popover="auto" class="pop">暂停</div>
+            </div>
+            <div id="center-controls">
+                <input id="seek-bar" type="range" min="0" max="100" value="0">
+                <div id="time-display">00:00 / 00:00</div>
+            </div>
+            <div id="pop-bar" popover="auto" class="pop">进度条</div>
+            <div id="right-controls">
+                <button id="fullscreen-button" style="background-image: url('icons/fullscreen.png')">全屏</button>
+                <button id="windowed-button"
+                    style="background-image: url('icons/windowscreen.png'); display: none;">窗口化</button>
+                <div id="pop-full" popover="auto" class="pop">全屏</div>
+                <div id="pop-win" popover="auto" class="pop">窗口化</div>
+            </div>
+        </div>
+        <div id="side-controls">
+            <button id="subtitle-button" class="side-button"
+                style="background-image: url('icons/subtitle.png')"></button>
+            <button id="comment-button" class="side-button" style="background-image: url('icons/comment.png')"></button>
+            <button id="settings-button" class="side-button"
+                style="background-image: url('icons/settings.png')"></button>
+            <div id="pop-subtitle" popover="auto" class="pop">字幕</div>
+            <div id="pop-comment" popover="auto" class="pop">弹幕</div>
+            <div id="pop-settings" popover="auto" class="pop">设置</div>
+        </div>
+    </div>
+    <div id="subtitle-display" class="subtitle"></div>
+    <div  id="danmaku-input-container">
+        <input type="text" id="danmaku-input" placeholder="输入弹幕内容" style="width: 200px; padding: 5px;">
+    <br/>
+    <label for="danmaku-size">弹幕大小: </label>
+    <input type="range" id="danmaku-size" min="1" max="2" value="2">
+    <span id="size-display">大弹幕</span>
+    <br/>
+    <button id="send-scroll-danmaku">发送滚动弹幕</button>
+    <button id="send-top-danmaku">发送顶部弹幕</button>
+    <button id="send-bottom-danmaku">发送底部弹幕</button>
+    </div>
+      
+    <button id="video-title"></button>
+    <script>
+        // 从 URL 中获取视频路径并设置视频源
+        const urlParams = new URLSearchParams(window.location.search);
+        const videoElement = document.getElementById('video-player');
+        const path = urlParams.get('path');
+        videoElement.src = path;
+        document.addEventListener('DOMContentLoaded', async () => {
+            const savedTime = parseFloat(localStorage.getItem(videoElement.src)) || 0;
+
+            if (savedTime > 0) {
+                videoElement.currentTime = savedTime;
+            } else {
+                videoElement.currentTime = 0; // 如果播放位置不存在，默认从头开始播放
+            }
+            videoElement.play();
+
+            // 监听视频播放时间变化，并保存到 localStorage
+            videoElement.addEventListener('timeupdate', () => {
+                localStorage.setItem(videoElement.src, videoElement.currentTime);
+            });
+
+        });
+
+
+
+        // 设置页面标题为视频文件名
+        const videoTitle = document.getElementById('video-title');
+        const title = path.split('/').pop().split('.').slice(0, -1).join('.');
+        videoTitle.textContent = "正在播放：" + title + "......";
+
+        let watchedVideos = JSON.parse(localStorage.getItem('watchedVideos')) || [];
+        const videoRecord = { name: title, path: path };
+
+        // 查找数组中是否已存在该记录
+        const existingIndex = watchedVideos.findIndex(v => v.path === path);
+
+        if (existingIndex !== -1) {
+            // 如果找到了，先移除旧的记录
+            watchedVideos.splice(existingIndex, 1);
+        }
+
+        // 然后将新记录添加到数组的开头
+        watchedVideos.unshift(videoRecord);
+        localStorage.setItem('watchedVideos', JSON.stringify(watchedVideos));
+        console.log("Updated watched video list with:", title);
+
+        window.electron.sendToMain('update-watched-video', videoRecord);
+    </script>
+    <script src="player.js"></script>
+    <script src="danmaku.js"></script>
+</body>
+
+</html>
