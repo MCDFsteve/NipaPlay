@@ -360,7 +360,7 @@ html {
     pointer-events: none; /* 确保不会阻挡视频控件的交互 */
     overflow: hidden;
   }
-  #danmaku-input-container {
+  #send-button {
     position: absolute;
     bottom: 100px; /* 或根据实际需要调整 */
     right: 20px; /* 或根据实际需要调整 */

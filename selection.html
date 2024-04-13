@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>选择视频应该匹配的结果</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .selection-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            border-radius: 20px;
+        }
+        .selection-item:hover {
+            background-color: #aaaaaa;
+        }
+        .no-matches {
+            color: red;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+<body>
+    <h1>请选择一个视频</h1>
+    <div id="matchList">正在加载数据...</div>
+
+    <script src="selection.js">
+    </script>
+</body>
+</html>
