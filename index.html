@@ -11,19 +11,17 @@
 <body>
     <div class="sidebar">
         <div id="title-text"><span>NipaPlay</span></div>
-        <button id="import-video"><span>视频导入⬇︎</span></button>
+        <button id="import-video" class="active"><span>视频导入⬇︎</span></button>
         <button id="media-library"><span>媒体库❖</span></button>
         <button id="new-series"><span>新番更新ℍ</span></button>
         <button id="viewing-history"><span>观看记录☕︎</span></button>
-        <button id="theme-todark" style="display: none;" onclick="setTheme('dark')"><span>切换至深色模式☪︎</span></button>
-        <button id="theme-tolight" onclick="setTheme('light')"><span>切换至浅色模式☀︎</span></button>
         <button id="about-menu"><span>关于NipaPlay☆</span></button>
     </div>
     <div class="content-area">
         <!-- 视频导入功能区 -->
         <div id="import-video-content" class="content-page">
             <button id="import-video-button" class="upload-button" ondragover="allowDrop(event)"
-                ondrop="dropFile(event)" onclick="window.electron.selectVideo()">
+                ondrop="dropFile(event)" onclick="openVideoFile2()">
                 <div class="upload-icon"></div>
                 <div>导入视频/拖入视频</div>
             </button>
@@ -57,32 +55,26 @@
         <div id="about-menu-content" class="content-page" style="display:none;">
             <h2>关于</h2>
             <hr class="section-divider">
-            <h3>NipaPlay.<br>作者戴夫邻居史蒂夫.<br>咪啪～☆<br>Ver0.1.1.</h3>
+            <h3>NipaPlay.<br>作者戴夫邻居史蒂夫.<br>咪啪～☆<br>Ver0.3.0.</h3>
             <h4>
-            <br>0.1.0(2024.04.13) 更新内容:<br>弹幕功能已经实装,记得联网.
-            <br>0.0.7（2024.04.12）更新内容：<br>1.增加了弹幕功能(暂时没有开放使用)。<br>2.现在打开视频会识别是什么动画了。<br>0.0.6（2024.04.07）更新内容：<br>1.添加了还没做实际功能的右边菜单，悬浮可出现显示。<br>2.现在任务栏图标右键可以快捷进入最近播放的视频（前提是在使用这个功能之前先播放过视频。<br>3.现在播放器会自动记录上次视频的观看位置并自动从该位置开始播放了。<br>4.给ui按钮做了过渡动画，没被选中时是灰色。<br>6.更多细微调整。
+                <br>0.3.0(2024.04.30) 更新内容：<br>1.支持方向键前进后退调节音量了。<br>2.已经装载过字幕的视频现在会自动装载字幕。<br>3.现在顶部弹幕能正常显示出来了。<br>4.现在带内嵌字幕的视频打开之前会询问使用什么字幕格式了。
+                <br>0.2.0(2024.04.30) 更新内容:<br>1.现在可以装载 vtt ass ssa格式字幕了.<br>2.现在macOS版有毛玻璃效果了.<br>3.将弹幕文件保存位置迁移到了下载文件夹.<br>4.现在 选择弹幕库 的窗口也会跟随系统主题了.<br>5.移除了 深色浅色模式 开关，现在更换软件主题会自动跟随系统切换.<br>6.优化了弹幕菜单的界面，现在调整弹幕不透明度会记忆位置了.<br>7.更多细微调整和bug修复.
+                <br>0.1.0(2024.04.13) 更新内容:<br>弹幕功能已经实装,记得联网.
+                <br>0.0.7（2024.04.12）更新内容：<br>1.增加了弹幕功能(暂时没有开放使用)。<br>2.现在打开视频会识别是什么动画了。<br>0.0.6（2024.04.07）更新内容：<br>1.添加了还没做实际功能的右边菜单，悬浮可出现显示。<br>2.现在任务栏图标右键可以快捷进入最近播放的视频（前提是在使用这个功能之前先播放过视频。<br>3.现在播放器会自动记录上次视频的观看位置并自动从该位置开始播放了。<br>4.给ui按钮做了过渡动画，没被选中时是灰色。<br>6.更多细微调整。
             </h4>
         </div>
 
     </div>
     <!-- 在页面底部添加版本号文本 -->
-    <div id="version-text">ver0.1.1</div>
-
+    <div id="version-text">ver0.3.0</div>
     </div>
     <div class="drag-area">
     </div>
-
     <script src="./videoplay.js"></script>
     <script src="./history.js"></script>
-    <script src="./theme.js"></script>
-    <script src="./darkmode.js"></script>
     <script>
         document.querySelectorAll('.sidebar button').forEach(btn => {
             btn.addEventListener('click', function () {
-                // 忽略主题切换按钮的点击事件，让它们继续使用darkmode.js中的逻辑
-                if (this.id === 'theme-todark' || this.id === 'theme-tolight') {
-                    return; // 不执行任何操作，因为darkmode.js中的setTheme函数会处理这些按钮
-                }
                 // 移除所有按钮的'active'类
                 document.querySelectorAll('.sidebar button').forEach(button => {
                     button.classList.remove('active');

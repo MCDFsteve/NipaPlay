@@ -1,11 +1,10 @@
 // 读取 localStorage 中的已观看视频列表
 const watchedVideos = JSON.parse(localStorage.getItem('watchedVideos')) || [];
 // 假设在history.js或index.html的<script>中
-window.electron.receive('watched-video-updated', (videoRecord) => {
+ipcRenderer.on('watched-video-updated', (event, videoRecord) => {
     console.log("Received update for watched video:", videoRecord);
-    updateVideoHistory(); // 更新DOM显示，确保此函数定义了如何更新页面上的观看记录列表
+    updateVideoHistory(); // 更新DOM显示，此函数需定义更新页面上的观看记录列表
 });
-
 function pollWatchedVideos() {
     // 假设当前保存的观看记录数量
     let currentCount = watchedVideos.length;
@@ -36,20 +35,23 @@ function updateVideoHistory() {
         listItem.className = 'sidebar-button';
         listItem.textContent = videoRecord.name;
         listItem.addEventListener('click', () => {
-            // 使用完整的视频路径来播放视频
-            window.electron.sendToMain('open-video-file', videoRecord.path);
+            ipcRenderer.send('open-video-file', videoRecord.path);
         });
         listElement.appendChild(listItem);
     });
 }
 updateVideoHistory();
-// 在 index.html 中
-window.electron.receive('clear-watched-videos', () => {
+// 在主进程中监听来自渲染进程的请求
+ipcRenderer.on('clear-watched-videos', (event, arg) => {
+    // 执行清除观看视频历史的操作
     localStorage.removeItem('watchedVideos');
-    console.log("Writing to watchedVideos:", newWatchedVideosData);
     localStorage.setItem('watchedVideos', JSON.stringify([]));
     updateVideoHistory();
+
+    // 发送消息给渲染进程，告知操作已完成
+    event.reply('clear-watched-videos-done');
 });
+
 
 ipcRenderer.on('update-watched-video', (event, watchedVideo) => {
     // 在这里更新观看记录或执行其他操作

@@ -17,7 +17,67 @@ const subButton = document.getElementById('subtitle-button');
 const comButton = document.getElementById('comment-button');
 const setButton = document.getElementById('settings-button');
 const hideui = document.getElementById('uihide');
+const popAlpha = document.getElementById('pop-alpha');
+const popAlphabar = document.getElementById('pop-alphabar');
+const Alphaimage = document.getElementById('alpha-image');
+// 获取弹幕按钮和新的弹幕透明度控制面板元素
+const commentButton = document.getElementById('comment-button');
+const danmakuOpacityControl = document.getElementById('danmaku-opacity-control');
+const closeOpacityControl = document.getElementById('close-opacity-control');
+const opacitySlider = document.getElementById('opacity-slider');
+const danmakuContainer = document.getElementById('danmaku-container');
+const originalLog = console.log; // 保存原始的console.log函数，以便还可以在渲染器中本地打印日志
 
+console.log = function (...args) {
+    ipcRenderer.send('log-message', args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : arg)).join(' '));
+    originalLog.apply(console, args); // 保持渲染进程的控制台也可以输出日志
+};
+document.addEventListener('DOMContentLoaded', function () {
+    // 当视频元数据已加载，自动开始播放
+    videoPlayer.addEventListener('loadedmetadata', function () {
+        if (videoPlayer.readyState >= 2) { // 确保有足够的数据可以开始播放
+            videoPlayer.play();
+        }
+    });
+    const savedOpacity = localStorage.getItem('danmaku-opacity');
+    if (savedOpacity) {
+        opacitySlider.value = savedOpacity;
+        danmakuContainer.style.opacity = savedOpacity / 100;
+    }
+    // 初始化滑动条的样式和显示的透明度值
+    updateSliderBackground(opacitySlider, opacitySlider.value);
+
+    // 添加输入事件监听器来动态更新滑动条和透明度值
+    opacitySlider.addEventListener('input', function () {
+        updateSliderBackground(opacitySlider, opacitySlider.value);
+        danmakuContainer.style.opacity = opacitySlider.value / 100;
+        // 保存透明度值到localStorage
+        localStorage.setItem('danmaku-opacity', opacitySlider.value);
+    });
+});
+
+// 函数：根据滑动条的值更新背景样式
+function updateSliderBackground(slider, value) {
+    const percentage = value; // 直接使用value作为百分比
+    slider.style.background = `linear-gradient(to right, rgba(255, 255, 255, 0.5) ${percentage}%, rgba(216, 216, 216, 0.3) ${100 - percentage}%)`;
+    popAlphabar.style.left = `calc(${percentage}% / 8)`;
+    popAlphabar.textContent = `${percentage}%`;
+}
+
+// 弹幕按钮点击事件，显示透明度控制面板
+commentButton.addEventListener('click', () => {
+    danmakuOpacityControl.style.display = 'block';
+});
+
+// 关闭按钮点击事件，隐藏透明度控制面板
+closeOpacityControl.addEventListener('click', () => {
+    danmakuOpacityControl.style.display = 'none';
+});
+
+// 透明度滑块控制弹幕透明度
+opacitySlider.addEventListener('input', () => {
+    danmakuContainer.style.opacity = opacitySlider.value / 100;
+});
 document.addEventListener('DOMContentLoaded', function () {
     // 更新按钮状态的函数
     function updateButtonStatus() {
@@ -71,7 +131,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const remainingSeconds = Math.floor(seconds % 60);
         return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
     }
-
 
     function updateSeekBar() {
         const percentage = (videoPlayer.currentTime / videoPlayer.duration) * 100;
@@ -255,6 +314,18 @@ setButton.addEventListener('mouseenter', () => {
 setButton.addEventListener('mouseleave', () => {
     popSet.hidePopover()
 });
+Alphaimage.addEventListener('mouseenter', () => {
+    popAlpha.showPopover()
+});
+Alphaimage.addEventListener('mouseleave', () => {
+    popAlpha.hidePopover()
+});
+opacitySlider.addEventListener('mouseenter', () => {
+    popAlphabar.showPopover()
+});
+opacitySlider.addEventListener('mouseleave', () => {
+    popAlphabar.hidePopover()
+});
 document.addEventListener('DOMContentLoaded', function () {
     const playerContainer = document.getElementById('player-container');
     let mouseTimer = null; // 用于计时鼠标停留时间的变量
@@ -321,81 +392,252 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
-//////
-document.addEventListener('DOMContentLoaded', function() {
-    const subtitleButton = document.getElementById('subtitle-button');
-
-    subtitleButton.addEventListener('click', async () => {
-        try {
-            const subtitlePath = await window.electron.selectSubtitleFile();
-            if (subtitlePath) {
-                if (subtitlePath.endsWith('.ass')) {
-                    // 对于 ASS 文件，使用 ASS.js 渲染
-                    // 假设您已经在 video-player.html 中引入了 ASS.js
-                    const assRenderer = new ASS.Renderer(videoPlayer, {
-                        // 配置项，例如字体大小、边距等
-                    });
-                    fetch(subtitlePath)
-                        .then(response => response.text())
-                        .then(text => {
-                            const ass = new ASS(text, document.getElementById('subtitle-display'));
-                                // 可能的额外配置项
-                            // 在这里，ASS 字幕将会被渲染
-                        });
-                } else if (subtitlePath.endsWith('.vtt')) {
-                    // 创建一个track元素
-                    const track = document.createElement('track');
-                    track.kind = 'subtitles';
-                    track.label = '中文';
-                    track.srclang = 'zh';
-                    track.src = subtitlePath;
-                    track.default = true;
-                    videoPlayer.appendChild(track);
-                    
-                    // 可能需要重新加载视频元素，以便识别track
-                    videoPlayer.load();
-                }
+document.getElementById('subtitle-button').addEventListener('click', () => {
+    ipcRenderer.invoke('dialog:openFile', {
+        filters: [
+            { name: 'Subtitles', extensions: ['vtt', 'srt', 'ass', 'ssa'] }
+        ]
+    }).then(filePath => {
+        if (filePath) {
+            if (filePath.endsWith('.vtt')) {
+                // 处理 VTT 文件
+                vttSubtitles(filePath);
+            } else if (filePath.endsWith('.srt')) {
+                convertSRTtoVTT(filePath);
+            } else if (filePath.endsWith('.ass') || filePath.endsWith('.ssa')) {
+                // 处理 ASS 文件
+                prepareSubtitles(filePath);
             }
-        } catch (error) {
-            console.error('加载字幕文件失败:', error);
         }
-    });
-    
+    }).catch(err => console.error('Failed to open file:', err));
 });
-danmaku.emit({
-    text: 'example',
-  
-    // 默认为 rtl（从右到左），支持 ltr、rtl、top、bottom。
-    mode: 'rtl',
-  
-    // 弹幕显示的时间，单位为秒。
-    // 在使用媒体模式时，如果未设置，会默认为音视频的当前时间；实时模式不需要设置。
-    time: 233.3,
-  
-    // 在使用 DOM 引擎时，Danmaku 会为每一条弹幕创建一个 <div> 节点，
-    // style 对象会直接设置到 `div.style` 上，按 CSS 规则来写。
-    // 例如：
-    style: {
-      fontSize: '20px',
-      color: '#ffffff',
-      border: '1px solid #337ab7',
-      textShadow: '-1px -1px #000, -1px 1px #000, 1px -1px #000, 1px 1px #000'
-    },
-  
-    // 在使用 canvas 引擎时，Danmaku 会为每一条弹幕创建一个 <canvas> 对象，
-    // 需要按 CanvasRenderingContext2D 对象的格式来写。
-    // 例如：
-    style: {
-      font: '10px sans-serif',
-      textAlign: 'start',
-      // 注意 bottom 是默认的
-      textBaseline: 'bottom',
-      direction: 'inherit',
-      fillStyle: '#000',
-      strokeStyle: '#000',
-      lineWidth: 1.0,
-      // ...
-    },
-  });
-    
-  
+let currentAssInstance = null; // 用于存储当前的 ASS 字幕实例
+function convertSRTtoVTT(filePath) {
+    let downloadsPath;
+    ipcRenderer.send('get-downloads-path');
+    // 接收下载路径
+    ipcRenderer.on('downloads-path', (event, downloadsPath) => {
+        console.log('Downloads path:', downloadsPath);
+        // 这里你可以根据获取到的下载路径进行后续操作
+        handleDownloadsPath(filePath, downloadsPath);
+    });
+}
+function handlevttPath(title, vttPath) {
+    const fs = require('fs');
+    const path = require('path');
+    const nipaPath = path.join(vttPath, 'nipaplay');
+    const subPath = path.join(nipaPath, 'sub');
+    const vttFilePath = path.join(subPath, title + '.vtt');
+    console.log('player vtt路径:', vttFilePath);
+    loadVTTSubtitles(vttFilePath);
+}
+function handlesrtPath(title, vttPath) {
+    const fs = require('fs');
+    const path = require('path');
+    const nipaPath = path.join(vttPath, 'nipaplay');
+    const subPath = path.join(nipaPath, 'sub');
+    const srtFilePath = path.join(subPath, title + '.srt');
+    console.log('player srt路径:', srtFilePath);
+    handleDownloadsPath(srtFilePath, vttPath);
+}
+function handleassPath(title, assPath) {
+    const fs = require('fs');
+    const path = require('path');
+    const nipaPath = path.join(assPath, 'nipaplay');
+    const subPath = path.join(nipaPath, 'sub');
+    const assFilePath = path.join(subPath, title + '.ass');
+    console.log('ass路径:', assFilePath);
+    loadASSSubtitles(assFilePath);
+}
+function vttSubtitles(filePath) {
+    console.log('nipa~');
+    let downloadsPath;
+    // 在主进程中定义并发送下载路径
+    ipcRenderer.send('get-downloads-path');
+    ipcRenderer.on('downloads-path', (event, downloadsPath) => {
+        console.log('Downloads path:', downloadsPath);
+        // 这里你可以根据获取到的下载路径进行后续操作
+        handlevtt2Path(filePath, downloadsPath);
+    });
+}
+function handlevtt2Path(filePath, downloadsPath) {
+    const fs = require('fs');
+    const path = require('path');
+    const nipaPath = path.join(downloadsPath, 'nipaplay');
+    const subPath = path.join(nipaPath, 'sub');
+    const newFilePath = path.join(subPath, title + '.vtt');
+    console.log('newFilePath:', newFilePath);
+    // 拷贝文件到新位置
+    fs.copyFile(filePath, newFilePath, (err) => {
+        if (err) {
+            console.error('Failed to copy subtitle file:', err);
+            return;
+        }
+        console.log('Subtitle file copied to:', newFilePath);
+
+        // 文件拷贝成功后加载字幕
+        loadVTTSubtitles(newFilePath);
+    });
+}
+function prepareSubtitles(filePath) {
+    console.log('nipa~');
+    let downloadsPath;
+    // 在主进程中定义并发送下载路径
+    ipcRenderer.send('get-downloads-path');
+    ipcRenderer.on('downloads-path', (event, downloadsPath) => {
+        console.log('Downloads path:', downloadsPath);
+        // 这里你可以根据获取到的下载路径进行后续操作
+        handlessaPath(filePath, downloadsPath);
+    });
+}
+function handlessaPath(filePath, downloadsPath) {
+    const fs = require('fs');
+    const path = require('path');
+    const nipaPath = path.join(downloadsPath, 'nipaplay');
+    const subPath = path.join(nipaPath, 'sub');
+    const newFilePath = path.join(subPath, title + '.ass');
+    console.log('newFilePath:', newFilePath);
+    // 拷贝文件到新位置
+    fs.copyFile(filePath, newFilePath, (err) => {
+        if (err) {
+            console.error('Failed to copy subtitle file:', err);
+            return;
+        }
+        console.log('Subtitle file copied to:', newFilePath);
+
+        // 文件拷贝成功后加载字幕
+        loadASSSubtitles(newFilePath);
+    });
+}
+function handleDownloadsPath(filePath, downloadsPath) {
+    console.log("downloadsPath:", downloadsPath);
+    console.log("filePath:", filePath);
+    console.log("title name:", title);
+    const fs = require('fs');
+    const path = require('path');
+    const nipaPath = path.join(downloadsPath, 'nipaplay');
+    const subPath = path.join(nipaPath, 'sub');
+    console.log('I am lain.');
+    const vttFilePath = path.join(subPath, title + '.vtt');
+    console.log('vtt路径:', vttFilePath);
+    fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) {
+            console.error('Error reading SRT file:', err);
+            return;
+        }
+
+        // 转换逻辑：将 SRT 转为 VTT 格式，并添加样式
+        const vttData = `WEBVTT\n\nSTYLE\n::cue {\n    color: white;\n    background-color: transparent;\n    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; /* 黑色描边 */\n}\n\n` +
+            data.replace(/\r\n/g, '\n').replace(/\d{2}:\d{2}:\d{2},\d{3}/g, (time) => {
+                return time.replace(',', '.');
+            });
+
+        // 保存 VTT 文件到指定目录
+        fs.writeFile(vttFilePath, vttData, 'utf8', (err) => {
+            if (err) {
+                console.error('Error writing VTT file:', err);
+            } else {
+                console.log('VTT file saved:', vttFilePath);
+                loadVTTSubtitles(vttFilePath); // 加载转换后的 VTT 字幕
+            }
+        });
+    });
+}
+
+function loadASSSubtitles(filePath) {
+    // 如果已经有一个 ASS 实例，先销毁它
+    if (currentAssInstance) {
+        currentAssInstance.destroy();
+        currentAssInstance = null;
+    }
+
+    fetch(filePath)
+        .then(response => response.text())
+        .then(subtitles => {
+            const videoElement = document.getElementById('video-player');
+            // 创建新的 ASS 实例并保存引用
+            currentAssInstance = new ASS(subtitles, videoElement, {
+                videoWidth: videoElement.clientWidth,
+                videoHeight: videoElement.clientHeight
+            });
+            showSubtitleAlert();
+        })
+        .catch(error => {
+            console.error('Failed to load subtitles:', error);
+        });
+}
+function loadVTTSubtitles(filePath) {
+    showSubtitleAlert();
+    const videoElement = document.getElementById('video-player');
+    // 移除所有现有的字幕轨道
+    const tracks = videoElement.getElementsByTagName('track');
+    while (tracks.length > 0) {
+        videoElement.removeChild(tracks[0]);
+    }
+
+    // 添加新的字幕轨道
+    const trackElement = document.createElement('track');
+    trackElement.kind = 'subtitles';
+    trackElement.label = 'Chinese'; // 根据实际情况调整标签
+    trackElement.srclang = 'zh';    // 根据实际情况调整语言代码
+    trackElement.src = filePath;
+    trackElement.default = true;
+    videoElement.appendChild(trackElement);
+    const subtitleContainer = document.querySelector('.subtitle-container');
+    subtitleContainer.style.position= relative;
+    // 如果需要，确保新字幕立即显示
+    trackElement.addEventListener('load', () => {
+        trackElement.track.mode = 'showing';
+    });
+}
+function showSubtitleAlert() {
+    const alertBox = document.getElementById('subtitle-alert');
+    alertBox.style.display = 'block';
+    alertBox.classList.remove('hide');
+    setTimeout(() => {
+        alertBox.classList.add('hide');
+        setTimeout(() => alertBox.style.display = 'none', 500); // 确保动画完成后隐藏
+    }, 3000); // 3秒后开始隐藏通知
+}
+document.addEventListener('keydown', (event) => {
+    const video = document.getElementById('video-player');
+    const volumeDisplay = document.getElementById('volume-display'); // 确保您的 HTML 中有这个元素
+
+    switch(event.key) {
+        case 'ArrowUp': // 增大音量
+            if (video.volume < 1) {
+                video.volume = Math.min(video.volume + 0.1, 1);
+            }
+            break;
+        case 'ArrowDown': // 减小音量
+            if (video.volume > 0) {
+                video.volume = Math.max(video.volume - 0.1, 0);
+            }
+            break;
+        case 'ArrowLeft': // 视频后退五秒
+            video.currentTime = Math.max(video.currentTime - 5, 0);
+            break;
+        case 'ArrowRight': // 视频前进五秒
+            video.currentTime = Math.min(video.currentTime + 5, video.duration);
+            break;
+    }
+
+    // 更新音量显示
+    if (['ArrowUp', 'ArrowDown'].includes(event.key)) {
+        if (!volumeDisplay) {
+            volumeDisplay = document.createElement('div');
+            volumeDisplay.id = 'volume-display';
+            document.body.appendChild(volumeDisplay); // 添加音量显示到页面
+        }
+        volumeDisplay.innerText = `音量: ${Math.round(video.volume * 100)}%`;
+        volumeDisplay.style.display = 'block';
+        clearTimeout(window.volumeHideTimeout);
+        window.volumeHideTimeout = setTimeout(() => {
+            volumeDisplay.style.display = 'none';
+        }, 2000); // 2秒后隐藏音量显示
+    }
+});
+
+
+
+

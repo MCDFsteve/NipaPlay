@@ -11,7 +11,7 @@
 
 <body>
     <div id="player-container">
-        <video id="video-player"></video>
+        <video id="video-player" autoplay></video>
         <div id="danmaku-container"></div>
         <div id="subtitle-container"></div>
     </div>
@@ -30,6 +30,7 @@
                 <div id="time-display">00:00 / 00:00</div>
             </div>
             <div id="pop-bar" popover="auto" class="pop">进度条</div>
+            <div id="pop-alphabar" popover="auto" class="pop">不透明度</div>
             <div id="right-controls">
                 <button id="fullscreen-button" style="background-image: url('icons/fullscreen.png')">全屏</button>
                 <button id="windowed-button"
@@ -49,17 +50,29 @@
             <div id="pop-settings" popover="auto" class="pop">设置</div>
         </div>
     </div>
-    <div id="subtitle-display" class="subtitle"></div>
+    <!-- 弹幕透明度控制面板 -->
+    <div id="danmaku-opacity-control" style="display: none;">
+        <button id="close-opacity-control"></button>
+        <div id="alphamenu">
+            <div id="alpha-image"></div>
+            <div id="pop-alpha" popover="auto" class="pop">弹幕透明度</div>
+            <input type="range" id="opacity-slider" min="0" max="100" value="100">
+        </div>
+
+    </div>
+    <div id="volume-display">音量: 50%</div>
+    <div id="subtitle-alert" class="hide">字幕加载成功</div>
     <button id="video-title"></button>
+    <script src="node_modules/assjs/dist/ass.min.js"></script>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const videoElement = document.getElementById('video-player');
         const path = urlParams.get('path');
+        const { ipcRenderer } = require('electron');
         videoElement.src = path;
         videoElement.load();
         // 尝试从 URL 参数中获取提供的新标题
         const newTitle = urlParams.get('title');
-
         document.addEventListener('DOMContentLoaded', async () => {
             const savedTime = parseFloat(localStorage.getItem(videoElement.src)) || 0;
             if (savedTime > 0) {
@@ -99,22 +112,40 @@
         watchedVideos.unshift(videoRecord);
         localStorage.setItem('watchedVideos', JSON.stringify(watchedVideos));
         console.log("Updated watched video list with:", title);
-
-        window.electron.sendToMain('update-watched-video', videoRecord);
+        ipcRenderer.send('update-watched-video', videoRecord);
+        let vttPath;
+        ipcRenderer.send('get-downloads-path');
+        ipcRenderer.send('get-downloads-path2');
+        ipcRenderer.send('get-downloads-path3');
+        // 接收下载路径
+        ipcRenderer.on('downloads-path', (event, vttPath) => {
+            console.log('vttPath path:', vttPath);
+            console.log('title path:', title);
+            // 这里你可以根据获取到的下载路径进行后续操作
+            handlevttPath(title, vttPath);
+        });
+        ipcRenderer.on('downloads-path2', (event, vttPath) => {
+            // 这里你可以根据获取到的下载路径进行后续操作
+            handlesrtPath(title, vttPath);
+        });
+        ipcRenderer.on('downloads-path3', (event, vttPath) => {
+            // 这里你可以根据获取到的下载路径进行后续操作
+            handleassPath(title, vttPath);
+        });
     </script>
     <script src="player.js"></script>
     <script src="node_modules/danmaku/dist/danmaku.min.js"></script>
     <script id="dynamic-script"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            window.electron.receive('file-content', (content) => {
+            ipcRenderer.on('file-content', (event, content) => {
                 const dynamicScript = document.getElementById('dynamic-script');
-                dynamicScript.textContent = content; // 将接收到的内容作为脚本内容
-                document.body.appendChild(dynamicScript); // 确保脚本被执行
+                dynamicScript.textContent = content;
+                document.body.appendChild(dynamicScript);
             });
         });
     </script>
-    
+
     <script src="danmaku2.js"></script>
 </body>
 

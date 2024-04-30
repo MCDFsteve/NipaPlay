@@ -1,7 +1,20 @@
-// 触发选择视频文件的操作
-//document.getElementById('import-video').addEventListener('click', () => {
-    //window.electron.selectVideo();
-//});
+const { ipcRenderer } = require('electron');
+ipcRenderer.on('platform-info', (event, { isMac }) => {
+    if (isMac) {
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = `
+        .sidebar {
+            background-color: initial !important;
+}
+@media (prefers-color-scheme: dark) {
+    .sidebar {
+        background-color: initial !important;
+}
+}
+`;
+        document.head.appendChild(styleSheet);
+    }
+});
 function selectFile() {
     document.getElementById('file-input').click();
 }
@@ -33,9 +46,20 @@ function handleFile(file) {
         alert('请拖放视频文件');
     }
 }
-
+function openVideoFile2() {
+    ipcRenderer.send('select-video').then((filePath) => {
+      if (filePath) {
+        console.log('Selected video path:', filePath);
+        // 你可以在这里添加更多处理逻辑，例如打开视频播放器界面等
+      } else {
+        console.log('No file was selected');
+      }
+    }).catch((error) => {
+      console.error('Failed to select video:', error);
+    });
+  }
 function openVideoFile(file) {
     const filePath = file.path; // 获取文件路径
-    window.electron.sendToMain('open-video-file', filePath); // 使用定义好的方法发送消息
+    ipcRenderer.send('open-video-file', filePath);
 }
 

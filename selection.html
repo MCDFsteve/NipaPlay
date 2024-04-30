@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <title>选择视频应该匹配的结果</title>
@@ -7,17 +8,53 @@
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
+            background-color: #ffffff;
         }
+
         .selection-item {
             margin-bottom: 10px;
             padding: 10px;
-            background-color: #f0f0f0;
+            background-color: rgba(233, 233, 233, 1.0);
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+            color: #000000;
             cursor: pointer;
-            border-radius: 20px;
+            border-radius: 10px;
         }
+
+        h1 {
+            color: #000000;
+        }
+
         .selection-item:hover {
-            background-color: #aaaaaa;
+            background-color: #000000;
+            color: #ffffff;
         }
+
+        @media (prefers-color-scheme: dark) {
+            h1 {
+                color: #ffffff;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #202020;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .selection-item {
+                background-color: #373737;
+                color: #ffffff;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .selection-item:hover {
+                background-color: #545454;
+            }
+        }
+
         .no-matches {
             color: red;
             font-size: 16px;
@@ -25,6 +62,7 @@
     </style>
 </head>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+
 <body>
     <h1>请选择一个视频</h1>
     <div id="matchList">正在加载数据...</div>
@@ -32,4 +70,5 @@
     <script src="selection.js">
     </script>
 </body>
+
 </html>
