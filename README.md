@@ -1,5 +1,7 @@
 # 📺Nipaplay 一款跨平台本地弹幕视频播放器。
 ## 主要平台为macOS，也是基于macOS开发，其他平台仅做移植。
+<img width="800" alt="image" src="https://github.com/MCDFsteve/NipaPlay/assets/71605531/cc32f3db-479f-4fb7-9867-7f72b0ba7856">
+
 ### 如何部署？
 #### 首先为你的设备安装nodejs。
 在 Windows 上使用 Chocolatey 包管理器安装 Node.js：
