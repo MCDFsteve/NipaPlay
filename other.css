@@ -1,0 +1,24 @@
+#progress-bar {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px;
+    color: #000;
+    /* 文本颜色 */
+    text-align: center;
+    /* 文本居中 */
+}
+body{
+    background-color: rgba(255, 255, 255, 1);
+}
+@media (prefers-color-scheme: dark) {
+    #progress-bar {
+        color: #ffffff;
+    }
+}
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: rgba(27, 27, 27, 1.0);
+    }
+}

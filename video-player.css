@@ -1,0 +1,582 @@
+body,
+html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+#player-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+}
+
+#controls-container {
+    position: absolute;
+    bottom: 10px;
+    width: 90%;
+    height: 30px;
+    display: flex;
+    justify-content: space-between;
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 5px 10px;
+    border-radius: 8px;
+    opacity: 0.8;
+    left: 50%;
+    appearance: none;
+    transform: translateX(-50%);
+    /* 背景透明度 */
+    transition: opacity 0.5s ease;
+    /* 添加过渡效果 */
+    backdrop-filter: blur(15px);
+    /* 添加毛玻璃效果 */
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+    color: #fff;
+    /* 添加阴影 */
+}
+
+#seek-bar {
+    width: 80%;
+    position: absolute;
+    height: 4px;
+    /* 进度条高度 */
+    top: calc(50% - 4px);
+    /* 50% 减去 10px */
+    transform: translateY(-50%);
+    border-radius: 3px;
+    /* 圆角边框 */
+    backdrop-filter: blur(10px);
+    appearance: none;
+    /* 清除默认样式 */
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+#seek-bar::-webkit-slider-thumb {
+    width: 3px;
+    /* 滑块宽度 */
+    height: 16px;
+    /* 滑块高度 */
+    background-color: white;
+    /* 白色滑块颜色 */
+    border-radius: 3px;
+    /* 圆角边框 */
+    appearance: none;
+    /* 清除默认样式 */
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.5s ease;
+}
+
+#seek-bar::-webkit-slider-thumb:hover {
+    width: 3px;
+    /* 滑块宽度 */
+    height: 16px;
+    /* 滑块高度 */
+    background-color: white;
+    /* 白色滑块颜色 */
+    border-radius: 3px;
+    /* 圆角边框 */
+    appearance: none;
+    /* 清除默认样式 */
+    cursor: pointer;
+    opacity: 1.0;
+    transition: opacity 0.5s ease;
+}
+
+.control-button {
+    width: 25px;
+    /* 设置按钮的宽度 */
+    height: 25px;
+    /* 设置按钮的高度 */
+    padding: 0;
+    /* 移除按钮内边距 */
+    border: none;
+    /* 移除按钮边框 */
+    transform: translate(50%, 10%);
+    position: relative;
+    background-size: cover;
+    /* 使背景图片填满按钮 */
+    cursor: pointer;
+    /* 设置鼠标指针样式为手型 */
+    background-color: transparent;
+    /* 使按钮背景透明 */
+    box-shadow: none;
+    /* 移除按钮阴影 */
+    text-indent: -9999px;
+    /* 将文本缩进到看不见的位置 */
+    overflow: hidden;
+    /* 隐藏溢出的文本内容 */
+    z-index: 100;
+    opacity: 0.5;
+    transition: opacity 0.5s ease;
+}
+
+.control-button:hover {
+    opacity: 1.0;
+    transition: opacity 0.5s ease;
+}
+
+#pop-play {
+    margin-bottom: 4%;
+    margin-left: 5.5%;
+
+}
+
+#pop-pause {
+    margin-bottom: 4%;
+    margin-left: 5.5%;
+}
+
+#pop-full {
+    margin-bottom: 4%;
+    margin-right: 4.25%;
+}
+
+#pop-win {
+    margin-bottom: 4%;
+    margin-right: 4.25%;
+}
+
+#pop-bar {
+    margin-bottom: 4%;
+    position: absolute;
+    /* 移除 left 属性中的 CSS 变量，因为我们将通过 JS 动态设置它 */
+}
+
+#pop-alphabar {
+    right: -83%;
+    margin-bottom: 36%;
+    position: absolute;
+    /* 移除 left 属性中的 CSS 变量，因为我们将通过 JS 动态设置它 */
+}
+
+#pop-subtitle {
+    bottom: 10.5%;
+    margin-right: 3.5%;
+    width: 12px;
+    position: absolute;
+}
+
+#pop-comment {
+    bottom: 0%;
+    margin-right: 3.5%;
+    width: 12px;
+    position: absolute;
+}
+
+#pop-settings {
+    bottom: -10.5%;
+    margin-right: 3.5%;
+    width: 12px;
+    position: absolute;
+}
+
+#pop-alpha {
+    bottom: 8.5%;
+    margin-right: 12%;
+    width: 12px;
+    position: absolute;
+}
+
+.pop {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    backdrop-filter: blur(15px);
+    /* 添加毛玻璃效果 */
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+    user-select: none;
+    border: none;
+    /* 添加阴影 */
+    z-index: 100;
+}
+
+#volume-display {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    border-radius: 5px;
+    background-color: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(15px);
+    color: rgba(255, 255, 255, 0.5);
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+    user-select: none;
+    border: none;
+    padding: 10px;
+    display: none;
+}
+
+*:focus {
+    outline: none;
+}
+
+#time-display {
+    font-size: 0.8em;
+    margin-left: 44.4%;
+    position: absolute;
+    transform: translate(-50%, 30%);
+    min-width: 100px;
+    color: rgba(255, 255, 255, 0.5);
+    background-color: transparent;
+    user-select: none;
+    z-index: 100;
+    /* 添加其他样式以符合您的设计 */
+}
+
+#fullscreen-button,
+#windowed-button {
+    width: 25px;
+    /* 设置按钮的宽度 */
+    height: 25px;
+    /* 设置按钮的高度 */
+    transform: translateY(10%);
+    padding: 0;
+    /* 移除按钮内边距 */
+    border: none;
+    /* 移除按钮边框 */
+    background-size: cover;
+    /* 使背景图片填满按钮 */
+    cursor: pointer;
+    /* 设置鼠标指针样式为手型 */
+    background-color: transparent;
+    /* 使按钮背景透明 */
+    box-shadow: none;
+    /* 移除按钮阴影 */
+    text-indent: -9999px;
+    /* 将文本缩进到看不见的位置 */
+    overflow: hidden;
+    /* 隐藏溢出的文本内容 */
+    z-index: 100;
+    opacity: 0.5;
+    transition: opacity 0.5s ease;
+}
+
+#fullscreen-button:hover {
+    opacity: 1.0;
+    transition: opacity 0.5s ease;
+}
+
+#windowed-button:hover {
+    opacity: 1.0;
+    transition: opacity 0.5s ease;
+}
+
+#video-player {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    /* 或者根据实际需求调整高度 */
+    width: 100%;
+}
+
+#subtitle-container {
+    position: absolute;
+    bottom: 50px;
+    /* 字幕距离视频底部的距离，可调整 */
+    left: 0;
+    width: 100%;
+    text-align: center;
+    /* 保证字幕居中显示 */
+    pointer-events: none;
+    /* 确保字幕不会干扰到视频的点击事件 */
+}
+
+:root {
+    --plyr-color-main: #a1a1a1;
+    --plyr-range-track-height: 3px;
+    --plyr-font-smoothing: true;
+}
+
+#video-title {
+    position: absolute;
+    top: 35px;
+    left: 0px;
+    border: none;
+    /* 移除按钮边框 */
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 15px;
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 5px 10px;
+    padding-left: 5px;
+    border-radius: 5px;
+    opacity:1.0;
+    /* 背景透明度 */
+    /* 添加过渡效果 */
+    backdrop-filter: blur(10px);
+    /* 添加毛玻璃效果 */
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+    user-select: none;
+    z-index: 100;
+    transition: color 0.5s ease, opacity 0.5s ease;
+    /* 添加阴影 */
+}
+
+#video-title:hover {
+    opacity: 1.0;
+    color: rgba(255, 255, 255, 1.0);
+    transition: color 0.5s ease, opacity 0.5s ease;
+}
+
+/* 动画 */
+@-webkit-keyframes fadein {
+    from {
+        bottom: 0;
+        opacity: 0;
+    }
+
+    to {
+        bottom: 30px;
+        opacity: 1;
+    }
+}
+
+@keyframes fadein {
+    from {
+        bottom: 0;
+        opacity: 0;
+    }
+
+    to {
+        bottom: 30px;
+        opacity: 1;
+    }
+}
+
+@-webkit-keyframes fadeout {
+    from {
+        bottom: 30px;
+        opacity: 1;
+    }
+
+    to {
+        bottom: 0;
+        opacity: 0;
+    }
+}
+
+@keyframes fadeout {
+    from {
+        bottom: 30px;
+        opacity: 1;
+    }
+
+    to {
+        bottom: 0;
+        opacity: 0;
+    }
+}
+
+/*//////////////////*/
+#side-controls {
+
+    position: absolute;
+    right: 0.5%;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 5px;
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(15px);
+    border-radius: 10px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    transition: opacity 0.5s ease;
+}
+
+.side-button {
+    margin: 10px 0;
+    background-size: cover;
+    border: none;
+    cursor: pointer;
+    background-color: transparent;
+    /* 使按钮背景透明 */
+    box-shadow: none;
+    width: 25px;
+    /* 设置按钮的宽度 */
+    height: 25px;
+    opacity: 0.5;
+    transition: opacity 0.5s ease;
+}
+
+.side-button:hover {
+    opacity: 1.0;
+    /* 鼠标悬浮时的透明度为50% */
+    transition: opacity 0.5s ease;
+}
+
+.danmaku {
+    opacity: 0.9;
+    text-shadow: 1px 1px 2px #000;
+}
+
+#danmaku-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    /* 使容器宽度与视频播放器相同 */
+    height: 100%;
+    /* 使容器高度覆盖视频播放器 */
+    pointer-events: none;
+    /* 确保不会阻挡视频控件的交互 */
+    overflow: hidden;
+}
+
+#send-button {
+    position: absolute;
+    bottom: 100px;
+    /* 或根据实际需要调整 */
+    right: 20px;
+    /* 或根据实际需要调整 */
+    z-index: 10;
+    /* 确保在视频播放器之上 */
+}
+
+#subtitle-alert {
+    position: fixed;
+    bottom: 7%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    background: rgba(0, 0, 0, 0.2);
+    color: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(15px);
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    display: none;
+    /* 默认不显示 */
+    z-index: 1000;
+    /* 确保它显示在最上面 */
+}
+
+/* 隐藏类，用于动画 */
+.hide {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+#danmaku-opacity-control {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    justify-content: center;
+    right: 0.5%;
+    /* 调整为需要的位置 */
+    width: 10%;
+    height: 23%;
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(15px);
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    display: flex;
+    z-index: 100;
+    /* 确保在弹幕按钮之上 */
+    transition: opacity 0.5s ease;
+}
+
+#close-opacity-control {
+    background-image: url('icons/kill.png');
+    /* 替换为你的图像路径 */
+    background-size: cover;
+    position: absolute;
+    border: none;
+    top: 5px;
+    right: 5px;
+    cursor: pointer;
+    background-color: transparent;
+    width: 20px;
+    /* 设置按钮的宽度 */
+    height: 20px;
+    opacity: 0.5;
+    transition: opacity 0.5s ease;
+}
+
+#close-opacity-control:hover {
+    opacity: 1.0;
+    transition: opacity 0.5s ease;
+}
+
+#opacity-slider {
+    width: 70%;
+    position: absolute;
+    height: 4px;
+    color: 2px 2px 10px rgba(0, 0, 0, 0.5);
+    border-radius: 3px;
+    backdrop-filter: blur(10px);
+    appearance: none;
+    right: 4%;
+}
+
+#alpha-image {
+    background-image: url('icons/alpha.png');
+    background-size: cover;
+    border: none;
+    cursor: pointer;
+    background-color: transparent;
+    box-shadow: none;
+    width: 25px;
+    height: 25px;
+    opacity: 0.5;
+    transition: opacity 0.5s ease;
+    margin-left: -75%;
+    margin-top: -5%;
+}
+
+
+#opacity-value {
+    margin-left: 65%;
+    font-size: 0.4em;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+#alphamenu {
+    position: relative;
+    display: flex;
+    top: 30%;
+    transform: translateY(-50%);
+    justify-content: center;
+}
+
+#opacity-slider::-webkit-slider-thumb {
+    width: 4px;
+    /* 滑块宽度 */
+    height: 16px;
+    /* 滑块高度 */
+    background-color: white;
+    /* 白色滑块颜色 */
+    border-radius: 3px;
+    /* 圆角边框 */
+    appearance: none;
+    /* 清除默认样式 */
+    cursor: pointer;
+    opacity: 0.5;
+
+    transition: opacity 0.5s ease;
+}
+
+#alpha-image:hover {
+    opacity: 1.0;
+    transition: opacity 0.5s ease;
+}
+
+#opacity-slider::-webkit-slider-thumb:hover {
+    cursor: pointer;
+    opacity: 1.0;
+    transition: opacity 0.5s ease;
+}

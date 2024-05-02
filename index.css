@@ -1,0 +1,374 @@
+/* 全局样式 */
+:root {
+    --background-color: #fff;
+    /* 背景颜色 */
+    --text-color: #222;
+    /* 文字颜色 */
+    --sidebar-bg-color: rgba(200, 200, 200, 0.4);
+    /* 边栏背景颜色，更灰 */
+    --button-bg-color: transparent;
+    /* 按钮背景颜色，透明 */
+    --button-hover-bg-color: #000;
+    /* 按钮悬停背景颜色，深黑 */
+    --sidebar-width: 150px;
+    /* 边栏宽度，更窄 */
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background-color: #222; /* 夜间模式背景颜色 */
+        --text-color: #fff; /* 夜间模式文字颜色 */
+        --sidebar-bg-color: rgba(51, 51, 51, 0.75); /* 夜间模式边栏背景颜色 */
+        --button-bg-color: #444; /* 夜间模式按钮背景颜色 */
+        --button-hover-bg-color: #555; /* 夜间模式按钮悬停背景颜色 */
+        --sidebar-width: 150px;
+        /* 边栏宽度，更窄 */
+        /* 按钮背景颜色，透明 */
+        --button-bg-color: transparent;
+    }
+}
+.viewing-history-content {
+    background-color: var(--background-color);
+    /* 设置背景颜色与其他页面一致 */
+    padding: 20px;
+    /* 根据需要调整页面的内边距 */
+}
+
+/* 设置滚动条的宽度和轨道颜色 */
+::-webkit-scrollbar {
+    width: 12px;
+    /* 或任何您希望的宽度 */
+    background-color: var(--background-color);
+    /* 滚动条轨道颜色 */
+}
+
+/* 设置滚动条滑块的颜色 */
+::-webkit-scrollbar-thumb {
+    background-color: rgba(134, 134, 134, 0.4);
+    /* 滚动条滑块颜色 */
+    border-radius: 6px;
+    /* 如果需要，可以设置圆角 */
+}
+
+/* 设置当鼠标悬停在滚动条滑块上时的颜色 */
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--text-color);
+    /* 滚动条滑块悬停颜色 */
+
+}
+
+.sidebar button:hover,
+.sidebar button.active {
+    background-color: var(--button-hover-bg-color);
+    color: #fff;
+    /* 或其他高亮颜色 */
+    --sidebar-width: 150px;
+    border-radius: 5px;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: row;
+    /* 水平布局 */
+    height: 100vh;
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+}
+.sidebar {
+    width: 20%;
+    background-color: rgba(233, 233, 233, 1.0);
+    padding: 10px;
+    /* 边距调整为更窄 */
+    box-shadow: 1px 0 1px rgba(0, 0, 0, 0.3);
+    /* 调整阴影效果 */
+    transition: background-color 0.2s;
+    /* 毛玻璃效果 */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(5px);
+    -webkit-app-region: drag;
+    /* 兼容Safari */
+}
+@media (prefers-color-scheme: dark) {
+    .sidebar {
+        background-color: rgb(42, 42, 42);
+    }
+}
+
+.sidebar button {
+    width: 100%;
+    padding: 10px 0;
+    margin: 5px 0;
+    display: flex;
+    align-items: center;  /* 垂直居中对齐图标和文本 */
+    justify-content: flex-start;
+    background-color: var(--button-bg-color);
+    font-size: 16px;
+    color: var(--text-color);
+    border: none;
+    /* 去除边框 */
+    border-radius: 0;
+    /* 去除圆角 */
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+    text-align: left;
+    -webkit-app-region: no-drag;
+    /* 文字左对齐 */
+}
+.sidebar button img {
+    height: 1em;  /* 图标高度与文本大小相匹配 */
+    margin-left: 10px;
+    filter: invert(100%);
+}
+@media (prefers-color-scheme: dark) {
+    .sidebar button img {
+        filter: invert(0%);
+    }
+}
+.sidebar button.active img,
+.sidebar button:focus img,
+.sidebar button:hover img,
+.sidebar button:active img {
+    filter: invert(0%);
+}
+.sidebar button span {
+    display: block;
+    /* 如果需要向左移动，可以通过增加左边距来实现 */
+    padding-left: 10px;
+    /* 或根据需要调整 */
+}
+
+.sidebar button:hover {
+    background-color: var(--button-hover-bg-color);
+    color: #fff;
+    /* 鼠标悬停时文字颜色变为白色 */
+    text-decoration: none;
+    padding-left: 0;
+    /* 移除文字下划线 */
+    border-radius: 5px;
+}
+/* 适用于侧边栏按钮和观看记录项 */
+li.sidebar-button:hover {
+    background-color: var(--button-hover-bg-color);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+    display: block;
+    /* 如果需要向左移动，可以通过增加左边距来实现 */
+    padding-left: 25px;
+    cursor: pointer;
+    /* 设置鼠标指针样式为手型 */
+}
+li.sidebar-button {
+    position: relative;
+    /* 设置为相对定位，以便为::before伪元素定位 */
+    background-color: var(--background-color);
+    color: var(--text-color);
+    text-decoration: none;
+    /* 确保溢出的文本不可见 */
+    display: block;
+    white-space: nowrap;
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    /* 防止文本换行 */
+    border-radius: 5px;
+    /* 使用flex布局，确保内容垂直居中 */
+    align-items: center;
+    /* 垂直居中flex项 */
+    /* 如果需要向左移动，可以通过增加左边距来实现 */
+    padding-left: 25px;
+    cursor: pointer;
+    /* 设置鼠标指针样式为手型 */
+}
+span.text-container {
+    display: block; /* 使 span 表现得像块级元素 */
+    white-space: nowrap; /* 防止文本换行 */
+    overflow: hidden; /* 隐藏溢出的文本 */
+    text-overflow: ellipsis; 
+    max-width: 100%;
+}
+@keyframes scrollText {
+    to {
+      transform: translateX(-100%);
+    }
+  }
+  
+  
+#video-history li.sidebar-button {
+    margin-left: -40px;
+    /* 整体向左移动 */
+}
+
+li.sidebar-button::before {
+    content: "";
+    /* 必须设置，即使没有内容 */
+    position: absolute;
+    /* 绝对定位相对于其最近的相对定位祖先元素 */
+    left: 0;
+    /* 放在左侧边缘 */
+    top: 50%;
+    /* 与顶部对齐 */
+    width: 10px;
+    /* 设置宽度为5px */
+    height: 10px;
+    /* 高度与父元素一致 */
+    background-color: var(--button-hover-bg-color);
+    /* 白色背景 */
+    transform: translateY(-50%);
+}
+
+.content {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.3s;
+}
+
+.content-area {
+    margin-left: var(--sidebar-width);
+    /* 将内容偏移侧边栏宽度 */
+    width: 80%;
+    background-color: #fff;
+    overflow-y: auto;
+    /* 启用垂直滚动 */
+    height: 100vh;
+    /* 占满整个视窗高度 */
+    margin: 0;
+    /* 移除外边距 */
+    padding-left: 20px;
+}
+@media (prefers-color-scheme: dark) {
+    .content-area {
+        background-color: #222;
+    }
+}
+.upload-button {
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+    width: 200px;
+    height: 200px;
+    color: var(--text-color);
+    background-color: var(--sidebar-bg-color);
+    border-radius: 20px;
+    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    backdrop-filter: blur(20px);
+    border: none;
+    position: absolute;
+    left: calc(50% + var(--sidebar-width) / 2);
+    top: 50%;
+    /* 新增：设置距顶部的比例 */
+    transform: translate(-50%, -50%);
+    /* 修改：同时在X和Y方向居中 */
+    -webkit-app-region: no-drag;
+}
+
+
+
+
+.upload-button:hover {
+    background-color: var(--button-hover-bg-color);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 20px;
+    /* 修复悬停时的弧度 */
+}
+
+/* 新增的激活状态样式 */
+.active {
+    background-color: var(--button-hover-bg-color);
+    color: #fff;
+    border-radius: 20px;
+    /* 确保激活状态时的按钮样式 */
+}
+
+.drag-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    /* 高度足够用于拖放和放置图标 */
+    -webkit-app-region: drag;
+    /* Electron的拖动区域 */
+    z-index: 10;
+    /* 确保这个区域位于其他内容上方 */
+}
+
+/* 更新原有的 .upload-container 样式 */
+.upload-container {
+    width: 200px;
+    height: 200px;
+    background-color: -sidebar-bg-color;
+    border-radius: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    backdrop-filter: blur(10px);
+}
+
+/* 在 index.css 中添加样式 */
+#version-text {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    color: #999;
+    /* 文本颜色 */
+    font-size: 12px;
+    /* 字体大小 */
+}
+
+.scrollable-list {
+    height: 495px;
+    /* 根据您的页面设计调整高度 */
+    overflow-y: auto;
+    margin-top: 0;
+}
+
+hr.section-divider {
+    margin-bottom: 0;
+    /* 可选：如果您希望水平线与滚动区域之间没有空间，也可以移除下方边距 */
+}
+
+h2 {
+    margin-top: 43.8px;
+    /* 向下移动标题 */
+}
+
+#title-text {
+    position: fixed;
+    left: 20px;
+    font-weight: bold;
+    color: var(--text-color);
+    /* 文本颜色 */
+    font-size: 30px;
+    /* 字体大小 */
+    margin-top: 30px;
+}
+
+#import-video {
+    margin-top: 100px;
+}
+
+.section-divider {
+    border: none;
+    border-top: 1px solid #e5e5e5;
+    /* 设置顶部边框为1px高的灰色 */
+    margin: 20px 0;
+    /* 在横线上下添加空间 */
+    width: 95%;
+}
+
+.upload-icon {
+    width: 150px;
+    height: 150px;
+    background: url('icons/upload.png') no-repeat center;
+    background-size: contain;
+
+}

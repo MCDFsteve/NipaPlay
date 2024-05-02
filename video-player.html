@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>NipaPlay播放视图</title>
+    <link rel="stylesheet" href="video-player.css">
+    <style>
+    </style>
+</head>
+
+<body>
+    <div id="player-container">
+        <video id="video-player" autoplay></video>
+        <div id="danmaku-container"></div>
+        <div id="subtitle-container"></div>
+    </div>
+    <div id="uihide">
+        <div id="controls-container">
+            <div id="left-controls">
+                <button id="play-button" class="control-button"
+                    style="background-image: url('icons/play.png')"></button>
+                <button id="pause-button" class="control-button"
+                    style="background-image: url('icons/pause.png'); display: none;"></button>
+                <div id="pop-play" popover="auto" class="pop">播放</div>
+                <div id="pop-pause" popover="auto" class="pop">暂停</div>
+            </div>
+            <div id="center-controls">
+                <input id="seek-bar" type="range" min="0" max="100" value="0">
+                <div id="time-display">00:00 / 00:00</div>
+            </div>
+            <div id="pop-bar" popover="auto" class="pop">进度条</div>
+            <div id="pop-alphabar" popover="auto" class="pop">不透明度</div>
+            <div id="right-controls">
+                <button id="fullscreen-button" style="background-image: url('icons/fullscreen.png')">全屏</button>
+                <button id="windowed-button"
+                    style="background-image: url('icons/windowscreen.png'); display: none;">窗口化</button>
+                <div id="pop-full" popover="auto" class="pop">全屏</div>
+                <div id="pop-win" popover="auto" class="pop">窗口化</div>
+            </div>
+        </div>
+        <div id="side-controls">
+            <button id="subtitle-button" class="side-button"
+                style="background-image: url('icons/subtitle.png')"></button>
+            <button id="comment-button" class="side-button" style="background-image: url('icons/comment.png')"></button>
+            <button id="settings-button" class="side-button"
+                style="background-image: url('icons/settings.png')"></button>
+            <div id="pop-subtitle" popover="auto" class="pop">字幕</div>
+            <div id="pop-comment" popover="auto" class="pop">弹幕</div>
+            <div id="pop-settings" popover="auto" class="pop">设置</div>
+        </div>
+    </div>
+    <!-- 弹幕透明度控制面板 -->
+    <div id="danmaku-opacity-control" style="display: none;">
+        <button id="close-opacity-control"></button>
+        <div id="alphamenu">
+            <div id="alpha-image"></div>
+            <div id="pop-alpha" popover="auto" class="pop">弹幕透明度</div>
+            <input type="range" id="opacity-slider" min="0" max="100" value="100">
+        </div>
+
+    </div>
+    <div id="volume-display">音量: 50%</div>
+    <div id="subtitle-alert" class="hide">字幕加载成功</div>
+    <button id="video-title"></button>
+    <script src="node_modules/assjs/dist/ass.min.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const videoElement = document.getElementById('video-player');
+        const path = urlParams.get('path');
+        const { ipcRenderer } = require('electron');
+        videoElement.src = path;
+        videoElement.load();
+        // 尝试从 URL 参数中获取提供的新标题
+        const newTitle = urlParams.get('title');
+        document.addEventListener('DOMContentLoaded', async () => {
+            const savedTime = parseFloat(localStorage.getItem(videoElement.src)) || 0;
+            if (savedTime > 0) {
+                videoElement.currentTime = savedTime;
+            } else {
+                videoElement.currentTime = 0; // 如果播放位置不存在，默认从头开始播放
+            }
+            // 监听视频播放时间变化，并保存到 localStorage
+            videoElement.addEventListener('timeupdate', () => {
+                localStorage.setItem(videoElement.src, videoElement.currentTime);
+            });
+        });
+
+        // 根据是否提供了新标题来设置页面标题
+        const title = path.split('/').pop().split('.').slice(0, -1).join('.');
+        const videoTitle = document.getElementById('video-title');
+        if (newTitle) {
+            // 使用 URL 参数中提供的新标题
+            videoTitle.textContent = "正在播放：" + newTitle;
+        } else {
+            // 从视频文件路径中提取并使用原有逻辑设置标题
+            videoTitle.textContent = "正在播放：" + title;
+        }
+
+        let watchedVideos = JSON.parse(localStorage.getItem('watchedVideos')) || [];
+        const videoRecord = { name: newTitle ? decodeURIComponent(newTitle) : title, path: path };
+
+        // 查找数组中是否已存在该记录
+        const existingIndex = watchedVideos.findIndex(v => v.path === path);
+
+        if (existingIndex !== -1) {
+            // 如果找到了，先移除旧的记录
+            watchedVideos.splice(existingIndex, 1);
+        }
+
+        // 然后将新记录添加到数组的开头
+        watchedVideos.unshift(videoRecord);
+        localStorage.setItem('watchedVideos', JSON.stringify(watchedVideos));
+        console.log("Updated watched video list with:", title);
+        ipcRenderer.send('update-watched-video', videoRecord);
+        let vttPath;
+        ipcRenderer.send('get-downloads-path');
+        ipcRenderer.send('get-downloads-path2');
+        ipcRenderer.send('get-downloads-path3');
+        // 接收下载路径
+        ipcRenderer.on('downloads-path', (event, vttPath) => {
+            console.log('vttPath path:', vttPath);
+            console.log('title path:', title);
+            // 这里你可以根据获取到的下载路径进行后续操作
+            handlevttPath(title, vttPath);
+        });
+        ipcRenderer.on('downloads-path2', (event, vttPath) => {
+            // 这里你可以根据获取到的下载路径进行后续操作
+            handlesrtPath(title, vttPath);
+        });
+        ipcRenderer.on('downloads-path3', (event, vttPath) => {
+            // 这里你可以根据获取到的下载路径进行后续操作
+            handleassPath(title, vttPath);
+        });
+    </script>
+    <script src="player.js"></script>
+    <script src="node_modules/danmaku/dist/danmaku.min.js"></script>
+    <script id="dynamic-script"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            ipcRenderer.on('file-content', (event, content) => {
+                const dynamicScript = document.getElementById('dynamic-script');
+                dynamicScript.textContent = content;
+                document.body.appendChild(dynamicScript);
+            });
+        });
+    </script>
+
+    <script src="danmaku2.js"></script>
+</body>
+
+</html>

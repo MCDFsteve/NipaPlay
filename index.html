@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>NipaPlay</title>
+    <link rel="stylesheet" href="index.css">
+    <style id="theme-style"></style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <div id="title-text"><span>NipaPlay</span></div>
+        <button id="import-video" class="active"><img src="icons/playanime.png" alt="icon"><span>视频导入</span></button>
+        <button id="media-library"><img src="icons/animelibary.png" alt="icon"><span>媒体库</span></button>
+        <button id="new-series"><img src="icons/newanime.png" alt="icon"><span>新番更新</span></button>
+        <button id="viewing-history"><img src="icons/animehistory.png" alt="icon"><span>观看记录</span></button>
+        <button id="about-menu"><img src="icons/animestar.png" alt="icon"><span>关于NipaPlay</span></button>
+    </div>
+    <div class="content-area">
+        <!-- 视频导入功能区 -->
+        <div id="import-video-content" class="content-page">
+            <button id="import-video-button" class="upload-button" ondragover="allowDrop(event)"
+                ondrop="dropFile(event)" onclick="openVideoFile2()">
+                <div class="upload-icon"></div>
+                <div>导入视频/拖入视频</div>
+            </button>
+            <input type="file" id="file-input" style="display: none;" accept="video/*">
+        </div>
+        <!-- 媒体库内容区 -->
+        <div id="media-library-content" class="content-page" style="display:none;">
+            <h2>媒体库</h2>
+            <hr class="section-divider">
+            <h3>这里还什么都没有.....建设中......</h3>
+        </div>
+        <!-- 新番更新内容区 -->
+        <div id="new-series-content" class="content-page" style="display:none;">
+            <h2>新番更新</h2>
+            <hr class="section-divider">
+            <h3>这里还什么都没有.....建设中......</h3>
+        </div>
+        <!-- 观看记录内容区 -->
+        <!-- 观看记录内容区 -->
+        <div id="viewing-history-content" class="content-page" style="display:none;">
+            <h2>观看记录</h2>
+            <hr class="section-divider">
+            <div class="scrollable-list">
+                <ul id="video-history">
+                    <!-- 视频记录项将被动态添加到这里 -->
+                </ul>
+            </div>
+        </div> <!-- 正确结束观看记录内容区的div -->
+
+        <!-- 关于区 -->
+        <div id="about-menu-content" class="content-page" style="display:none;">
+            <h2>关于</h2>
+            <hr class="section-divider">
+            <div class="scrollable-list">
+            <h3>NipaPlay.<br>作者戴夫邻居史蒂夫.<br>咪啪～☆<br>Ver0.5.0.</h3>
+            <h4>
+                <br>0.5.0(2024.05.02) 更新内容：<br>1.修复了带有内嵌ass字幕的mkv视频在播放时字幕显示问题了。<br>2.修复了手动搜索的剧集播放时只显示章节标题而剧集名字显示undefined的问题了。<br>3.现在剧集可以精准匹配了，绝大部分动画可以不用经过选择自动识别出来。<br>4.现在鼠标双击可以切换全屏/窗口化了。<br>5.各种我做了但是忘了的修复和调整。<br>
+                <br>0.4.0(2024.05.01) 更新内容：<br>1.加载视频时支持了搜索功能，如果想看的番在预览里没有提供，可以通过手动搜索检索装载弹幕。<br>2.给菜单增加了图标。<br>
+                <br>0.3.0(2024.04.30) 更新内容：<br>1.支持方向键前进后退调节音量了。<br>2.已经装载过字幕的视频现在会自动装载字幕。<br>3.现在顶部弹幕能正常显示出来了。<br>4.现在带内嵌字幕的视频打开之前会询问使用什么字幕格式了。<br>
+                <br>0.2.0(2024.04.30) 更新内容:<br>1.现在可以装载 vtt ass ssa格式字幕了.<br>2.现在macOS版有毛玻璃效果了.<br>3.将弹幕文件保存位置迁移到了下载文件夹.<br>4.现在 选择弹幕库 的窗口也会跟随系统主题了.<br>5.移除了 深色浅色模式 开关，现在更换软件主题会自动跟随系统切换.<br>6.优化了弹幕菜单的界面，现在调整弹幕不透明度会记忆位置了.<br>7.更多细微调整和bug修复.<br>
+                <br>0.1.0(2024.04.13) 更新内容:<br>弹幕功能已经实装,记得联网.<br>
+                <br>0.0.7（2024.04.12）更新内容：<br>1.增加了弹幕功能(暂时没有开放使用)。<br>2.现在打开视频会识别是什么动画了。<br>
+                <br>0.0.6（2024.04.07）更新内容：<br>1.添加了还没做实际功能的右边菜单，悬浮可出现显示。<br>2.现在任务栏图标右键可以快捷进入最近播放的视频（前提是在使用这个功能之前先播放过视频。<br>3.现在播放器会自动记录上次视频的观看位置并自动从该位置开始播放了。<br>4.给ui按钮做了过渡动画，没被选中时是灰色。<br>6.更多细微调整。<br>
+            </h4>
+        </div>
+        </div>
+
+    </div>
+    <!-- 在页面底部添加版本号文本 -->
+    <div id="version-text">ver0.5.0</div>
+    </div>
+    <div class="drag-area">
+    </div>
+    <script src="./videoplay.js"></script>
+    <script src="./history.js"></script>
+    <script>
+        document.querySelectorAll('.sidebar button').forEach(btn => {
+            btn.addEventListener('click', function () {
+                // 移除所有按钮的'active'类
+                document.querySelectorAll('.sidebar button').forEach(button => {
+                    button.classList.remove('active');
+                });
+                // 给当前点击的按钮添加'active'类
+                this.classList.add('active');
+                // 显示对应的内容区
+                const contentId = this.id + '-content';
+                document.querySelectorAll('.content-page').forEach(page => {
+                    page.style.display = 'none';
+                });
+                const activeContent = document.getElementById(contentId);
+                if (activeContent) {
+                    activeContent.style.display = 'block';
+                }
+            });
+        });
+
+        function changeContent(content) {
+            const buttons = document.querySelectorAll('.sidebar button');
+            buttons.forEach(button => button.classList.remove('active'));
+            document.getElementById(content + '-video').classList.add('active');
+
+            // Hide all content divs
+            const contents = document.querySelectorAll('.content > button');
+            contents.forEach(content => content.classList.remove('active'));
+
+            // Show the selected content div
+            document.getElementById(content + '-content').classList.add('active');
+        }
+    </script>
+    </div>
+</body>
+
+</html>

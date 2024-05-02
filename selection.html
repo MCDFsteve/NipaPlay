@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>选择视频应该匹配的结果</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #ffffff;
+        }
+
+        .selection-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: rgba(233, 233, 233, 1.0);
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+            color: #000000;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+
+        h1 {
+            color: #000000;
+        }
+
+        .selection-item:hover {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            h1 {
+                color: #ffffff;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #202020;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .selection-item {
+                background-color: #373737;
+                color: #ffffff;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .selection-item:hover {
+                background-color: #545454;
+            }
+        }
+
+        #search-input {
+            flex: 1;
+            /* 输入框占据多余空间 */
+            margin-bottom: 20px;
+            /* 右侧间距 */
+            width: 70%;
+            /* 调整输入框宽度为容器宽度减去右侧间隔 */
+            border: none;
+            border-radius: 10px;
+            background-color: rgba(227, 227, 227, 0.8);
+            color: #3f3f3f;
+            box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.4);
+            font-size: 16px;
+            top: 5px;
+            /* 距离父元素顶部的距离 */
+            left: 5px;
+            /* 距离父元素左侧的距离 */
+            text-align: left;
+            /* 文本左对齐 */
+            vertical-align: top;
+            outline: none;
+            padding: 12px 15px;
+            /* 确保有空间显示进度条 */
+            resize: none;
+            z-index: 2;
+            /* 确保输入框在进度条之上 */
+        }
+
+        @media (prefers-color-scheme: dark) {
+            #search-input {
+                background-color: rgba(54, 54, 54, 0.8);
+                box-shadow: 0px 1px 1px rgba(255, 255, 255, 0.4);
+                color: #dfdfdf;
+            }
+        }
+
+        #search-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            background-color: #131313;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.4);
+            user-select: none;
+        }
+
+        #search-button:hover {
+            background-color: #484848;
+        }
+
+        @media (prefers-color-scheme: dark) {
+
+            #search-button {
+                background-color: #444444;
+                color: #b8b8b8;
+                box-shadow: 0px 1px 1px rgba(255, 255, 255, 0.4);
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+
+            #search-button:hover {
+                background-color: #2e2e2e;
+                color: #fff;
+            }
+        }
+
+        .no-matches {
+            color: red;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+
+<body>
+    <h1>选择匹配的弹幕库</h1>
+    <input type="text" id="search-input" style="display:none;" placeholder="都不是想要的结果？在此处搜索">
+    <button id="search-button">搜索</button>
+    <div id="matchList">正在加载数据...</div>
+    <script src="selection.js">
+    </script>
+</body>
+
+</html>
