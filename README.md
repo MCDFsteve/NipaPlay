@@ -1,4 +1,4 @@
-# 📺Nipaplay 一款跨平台本地弹幕视频播放器。弹弹play 的macOS代餐。主要平台为macOS，也是基于macOS开发，其他平台仅做移植。
+# Nipaplay 一款跨平台本地弹幕视频播放器。弹弹play 的macOS代餐。主要平台为macOS，也是基于macOS开发，其他平台仅做移植。
 ## 特色：
 #### •似乎没有（大嘘）。
 #### •electron开发，html5播放器内核（支持mkv），内存和性能消耗低，自动调用GPU解码。
