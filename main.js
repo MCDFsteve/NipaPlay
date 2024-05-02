@@ -12,7 +12,9 @@ const subPath = path.join(nipaPath, 'sub');
 const https = require('https');
 const Store = require('electron-store');
 const store = new Store();
-const { spawn } = require('child_process');
+const { exec } = require('child_process');
+const ffmpegmac = path.join(__dirname, 'ffmpeg', 'ffmpeg_mac');
+    const ffmpegwin = path.join(__dirname, 'ffmpeg', 'ffmpeg_win','bin','ffmpeg.exe')
 // 创建主窗口实例
 let mainWindow;
 // 创建关于窗口实例 s
@@ -761,45 +763,35 @@ function moveMessagesToNipa() {
         console.log('subPath directory created at:', subPath);
     }
 }
+
 function fetchSubtitleTracks(videoPath) {
     const isMac = process.platform === 'darwin';
-    const ffmpegmac = path.join(__dirname, 'ffmpeg', 'ffmpeg_mac');
-    const ffmpegwin = path.join(__dirname, 'ffmpeg', 'ffmpeg_win','bin','ffmpeg.exe')
     const ffmpegPath = isMac ? ffmpegmac : ffmpegwin;
     const videoName = path.basename(videoPath, path.extname(videoPath));
     const outputPath = path.join(subPath, `${videoName}.jpg`);
     return new Promise((resolve, reject) => {
-        const ffmpeg = spawn(ffmpegPath, [
+        const ffmpegArgs = [
             '-ss', 0,
-            '-i', videoPath,
+            '-i', `"${videoPath}"`,
             '-vframes', 1,
             '-y',
-            outputPath
-        ]);
-
-        let stderrData = '';
-        let stdoutData = '';
-        ffmpeg.stderr.on('data', (data) => {
-            stderrData += data.toString();
-        });
-
-        ffmpeg.stdout.on('data', (data) => {
-            stdoutData += data.toString();
-        });
-
-        ffmpeg.on('close', (code) => {
+            `"${outputPath}"`
+        ].join(' ');
+        const command = `${ffmpegPath} ${ffmpegArgs}`;
+        exec(command, (error, stdoutData, stderrData) => {
             console.log('FFmpeg stdout:', stdoutData);
             console.log('FFmpeg stderr:', stderrData);
 
-            if (code === 0) {
+            if (error) {
+                reject('FFmpeg failed to process video for subtitles: ' + stderrData);
+            } else {
                 const tracks = parseSubtitleTracks(stderrData);
                 resolve(tracks);
-            } else {
-                reject('FFmpeg failed to process video for subtitles: ' + stderrData);
             }
         });
     });
 }
+
 function parseSubtitleTracks(stderrData) {
     const subtitleTracks = [];
     const streamPattern = /Stream #(\d+:\d+)(?:.*?): Subtitle: ([^\n]+)\n.*Metadata:\n(?:.*handler_name\s+:\s([^\n]+))?[\s\S]*?(?:.*title\s+:\s([^\n]+))?/g;
@@ -846,28 +838,30 @@ function showSubtitleSelection(tracks) {
     });
 }
 
+
 function extractSubtitles(videoPath, trackId, outputDir) {
     const videoName = path.basename(videoPath, path.extname(videoPath));
-    console.log('trackId:',trackId);
+    console.log('trackId:', trackId);
     const trackIDID = trackId.id;
     const subtitleFormat = trackId.format.includes('ass') ? 'ass' : 'srt';
-    console.log('subtitleFormat:',subtitleFormat);
+    console.log('subtitleFormat:', subtitleFormat);
     const outputPath = path.join(subPath, `${videoName}.${subtitleFormat}`);
-    console.log('ffmpeg sub:', outputPath)
-    console.log('trackId:', trackId)
-    const ffmpegArgs = ['-i', videoPath, '-map', trackIDID, '-c:s', subtitleFormat, '-y', outputPath];
+    console.log('ffmpeg sub:', outputPath);
+    console.log('trackId:', trackId);
+    const ffmpegArgs = ['-i', `"${videoPath}"`, '-map', trackIDID, '-c:s', subtitleFormat, '-y', `"${outputPath}"`];
     const isMac = process.platform === 'darwin';
-    const ffmpegPath = isMac ? './ffmpeg/ffmpeg_mac' : './ffmpeg/ffmpeg_win/bin/ffmpeg.exe';
+    const ffmpegPath = isMac ? ffmpegmac : ffmpegwin;
     return new Promise((resolve, reject) => {
-        const ffmpeg = spawn(ffmpegPath, ffmpegArgs);
-        ffmpeg.on('close', (code) => {
-            if (code === 0) {
+        const command = `${ffmpegPath} ${ffmpegArgs.join(' ')}`;
+        exec(command, (error, stdout, stderr) => {
+            if (error) {
+                reject('Failed to extract subtitles: ' + stderr);
+            } else {
                 console.log('Subtitle extracted to:', outputPath);
                 resolve(outputPath);
-            } else {
-                reject('Failed to extract subtitles');
             }
         });
     });
 }
+
 

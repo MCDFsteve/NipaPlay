@@ -1,7 +1,7 @@
 {
   "name": "nipaplay",
   "productName": "NipaPlay",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "咪啪～☆",
   "main": "main.js",
   "author": "DFsteve",
@@ -17,5 +17,45 @@
     "node-addon-api": "^8.0.0",
     "plyr": "^3.7.8",
     "xml2js": "^0.6.2"
+  },
+  "scripts": {
+    "start": "electron .",
+    "win": "electron-builder --win --x64",
+    "woa": "electron-builder --win --arm64",
+    "mac": "electron-builder --mac"
+  },
+  "build": {
+    "appId": "com.dfsteve.nipaplay",
+    "asar": false,
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "identity": null
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ],
+      "icon": "icon.ico",
+      "extraResources": [
+        "assets"
+      ]
+    }
+  },
+  "keywords": [],
+  "devDependencies": {
+    "electron": "^29.3.0",
+    "electron-builder": "^24.13.3",
+    "electron-packager": "^17.1.2"
   }
 }
