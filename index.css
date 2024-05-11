@@ -13,19 +13,26 @@
     --sidebar-width: 150px;
     /* 边栏宽度，更窄 */
 }
+
 @media (prefers-color-scheme: dark) {
     :root {
-        --background-color: #222; /* 夜间模式背景颜色 */
-        --text-color: #fff; /* 夜间模式文字颜色 */
-        --sidebar-bg-color: rgba(51, 51, 51, 0.75); /* 夜间模式边栏背景颜色 */
-        --button-bg-color: #444; /* 夜间模式按钮背景颜色 */
-        --button-hover-bg-color: #555; /* 夜间模式按钮悬停背景颜色 */
+        --background-color: #222;
+        /* 夜间模式背景颜色 */
+        --text-color: #fff;
+        /* 夜间模式文字颜色 */
+        --sidebar-bg-color: rgba(51, 51, 51, 0.75);
+        /* 夜间模式边栏背景颜色 */
+        --button-bg-color: #444;
+        /* 夜间模式按钮背景颜色 */
+        --button-hover-bg-color: #555;
+        /* 夜间模式按钮悬停背景颜色 */
         --sidebar-width: 150px;
         /* 边栏宽度，更窄 */
         /* 按钮背景颜色，透明 */
         --button-bg-color: transparent;
     }
 }
+
 .viewing-history-content {
     background-color: var(--background-color);
     /* 设置背景颜色与其他页面一致 */
@@ -35,15 +42,15 @@
 
 /* 设置滚动条的宽度和轨道颜色 */
 ::-webkit-scrollbar {
-    width: 12px;
+    width: 8px;
     /* 或任何您希望的宽度 */
-    background-color: var(--background-color);
+    background-color: transparent;
     /* 滚动条轨道颜色 */
 }
 
 /* 设置滚动条滑块的颜色 */
 ::-webkit-scrollbar-thumb {
-    background-color: rgba(134, 134, 134, 0.4);
+    background-color: rgba(64, 64, 64, 0.4);
     /* 滚动条滑块颜色 */
     border-radius: 6px;
     /* 如果需要，可以设置圆角 */
@@ -51,9 +58,20 @@
 
 /* 设置当鼠标悬停在滚动条滑块上时的颜色 */
 ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--text-color);
+    background-color: rgba(130, 130, 130, 0.4);
     /* 滚动条滑块悬停颜色 */
+}
 
+@media (prefers-color-scheme: dark) {
+    ::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(198, 198, 198, 0.4);
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    ::-webkit-scrollbar-thumb {
+        background-color: rgba(134, 134, 134, 0.4);
+    }
 }
 
 .sidebar button:hover,
@@ -75,6 +93,7 @@ body {
     color: var(--text-color);
     transition: background-color 0.3s, color 0.3s;
 }
+
 .sidebar {
     width: 20%;
     background-color: rgba(233, 233, 233, 1.0);
@@ -89,9 +108,41 @@ body {
     -webkit-app-region: drag;
     /* 兼容Safari */
 }
+
 @media (prefers-color-scheme: dark) {
     .sidebar {
         background-color: rgb(42, 42, 42);
+    }
+}
+
+.folder-item {
+    margin-bottom: 10px;
+    margin-top: 20px;
+    border: none;
+    padding: 5px 50px;
+    background-color: rgba(233, 233, 233, 1.0);
+    font-size: 16px;
+    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
+    color: #000000;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.folder-item:hover {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+    .folder-item {
+        background-color: #373737;
+        color: #ffffff;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .folder-item:hover {
+        background-color: #545454;
     }
 }
 
@@ -100,14 +151,15 @@ body {
     padding: 10px 0;
     margin: 5px 0;
     display: flex;
-    align-items: center;  /* 垂直居中对齐图标和文本 */
+    align-items: center;
+    /* 垂直居中对齐图标和文本 */
     justify-content: flex-start;
     background-color: var(--button-bg-color);
     font-size: 16px;
     color: var(--text-color);
     border: none;
     /* 去除边框 */
-    border-radius: 0;
+    border-radius: 5px;
     /* 去除圆角 */
     cursor: pointer;
     transition: background-color 0.3s, color 0.3s;
@@ -115,22 +167,27 @@ body {
     -webkit-app-region: no-drag;
     /* 文字左对齐 */
 }
+
 .sidebar button img {
-    height: 1em;  /* 图标高度与文本大小相匹配 */
+    height: 1em;
+    /* 图标高度与文本大小相匹配 */
     margin-left: 10px;
     filter: invert(100%);
 }
+
 @media (prefers-color-scheme: dark) {
     .sidebar button img {
         filter: invert(0%);
     }
 }
+
 .sidebar button.active img,
 .sidebar button:focus img,
 .sidebar button:hover img,
 .sidebar button:active img {
     filter: invert(0%);
 }
+
 .sidebar button span {
     display: block;
     /* 如果需要向左移动，可以通过增加左边距来实现 */
@@ -147,6 +204,7 @@ body {
     /* 移除文字下划线 */
     border-radius: 5px;
 }
+
 /* 适用于侧边栏按钮和观看记录项 */
 li.sidebar-button:hover {
     background-color: var(--button-hover-bg-color);
@@ -159,6 +217,7 @@ li.sidebar-button:hover {
     cursor: pointer;
     /* 设置鼠标指针样式为手型 */
 }
+
 li.sidebar-button {
     position: relative;
     /* 设置为相对定位，以便为::before伪元素定位 */
@@ -168,8 +227,8 @@ li.sidebar-button {
     /* 确保溢出的文本不可见 */
     display: block;
     white-space: nowrap;
-    overflow: hidden; 
-    text-overflow: ellipsis; 
+    overflow: hidden;
+    text-overflow: ellipsis;
     /* 防止文本换行 */
     border-radius: 5px;
     /* 使用flex布局，确保内容垂直居中 */
@@ -180,20 +239,39 @@ li.sidebar-button {
     cursor: pointer;
     /* 设置鼠标指针样式为手型 */
 }
+
 span.text-container {
-    display: block; /* 使 span 表现得像块级元素 */
-    white-space: nowrap; /* 防止文本换行 */
-    overflow: hidden; /* 隐藏溢出的文本 */
-    text-overflow: ellipsis; 
+    display: block;
+    /* 使 span 表现得像块级元素 */
+    white-space: nowrap;
+    /* 防止文本换行 */
+    overflow: hidden;
+    /* 隐藏溢出的文本 */
+    text-overflow: ellipsis;
     max-width: 100%;
 }
+
 @keyframes scrollText {
     to {
-      transform: translateX(-100%);
+        transform: translateX(-100%);
     }
-  }
-  
-  
+}
+#return-media-library {
+    opacity: 0.5; /* 设置透明度为50% */
+    pointer-events: none; /* 禁用鼠标事件，使按钮无法被点击 */
+    cursor: default; /* 设置鼠标样式为默认样式，不是指针 */
+}
+
+#video-list li.sidebar-button {
+    margin-left: -40px;
+    /* 整体向左移动 */
+}
+
+#folder-list li.sidebar-button {
+    margin-left: -40px;
+    /* 整体向左移动 */
+}
+
 #video-history li.sidebar-button {
     margin-left: -40px;
     /* 整体向左移动 */
@@ -216,7 +294,12 @@ li.sidebar-button::before {
     /* 白色背景 */
     transform: translateY(-50%);
 }
-
+.delete-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
 .content {
     flex-grow: 1;
     display: flex;
@@ -238,11 +321,13 @@ li.sidebar-button::before {
     /* 移除外边距 */
     padding-left: 20px;
 }
+
 @media (prefers-color-scheme: dark) {
     .content-area {
         background-color: #222;
     }
 }
+
 .upload-button {
     cursor: pointer;
     transition: background-color 0.3s, color 0.3s;

@@ -11,6 +11,40 @@
             background-color: #ffffff;
         }
 
+        /* 设置滚动条的宽度和轨道颜色 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            /* 或任何您希望的宽度 */
+            background-color: transparent;
+            /* 滚动条轨道颜色 */
+        }
+
+        /* 设置滚动条滑块的颜色 */
+        ::-webkit-scrollbar-thumb {
+            background-color: rgba(64, 64, 64, 0.4);
+            /* 滚动条滑块颜色 */
+            border-radius: 6px;
+            /* 如果需要，可以设置圆角 */
+        }
+
+        /* 设置当鼠标悬停在滚动条滑块上时的颜色 */
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(130, 130, 130, 0.4);
+            /* 滚动条滑块悬停颜色 */
+        }
+
+        @media (prefers-color-scheme: dark) {
+            ::-webkit-scrollbar-thumb:hover {
+                background-color: rgba(198, 198, 198, 0.4);
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            ::-webkit-scrollbar-thumb {
+                background-color: rgba(134, 134, 134, 0.4);
+            }
+        }
+
         .selection-item {
             margin-bottom: 10px;
             padding: 10px;
@@ -137,6 +171,10 @@
     <h1>选择匹配的弹幕库</h1>
     <input type="text" id="search-input" style="display:none;" placeholder="都不是想要的结果？在此处搜索">
     <button id="search-button">搜索</button>
+    <!-- 在搜索框下方添加一个新的按钮 -->
+    <div id="no-danmaku-play" class="selection-item" style="cursor: pointer;">
+        不加载弹幕直接开始播放
+    </div>
     <div id="matchList">正在加载数据...</div>
     <script src="selection.js">
     </script>

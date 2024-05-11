@@ -49,6 +49,11 @@ function updateMatchList(matches, isEpisodes = false, animeInfo = null) {
         matchList.innerHTML = '<div class="no-matches">没有可以选择的视频</div>'; // 如果没有匹配项，显示提示信息
     }
 }
+document.getElementById('no-danmaku-play').addEventListener('click', function() {
+    // 发送到主进程的对象不包括episodeId
+    ipcRenderer.invoke('process-selection', { animeTitle: "直接播放" });
+    console.log('yes');
+});
 
 // 监听来自主进程的 'update-selection' 事件，以更新匹配列表
 ipcRenderer.on('update-selection', (event, matches) => {

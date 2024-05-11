@@ -7,7 +7,8 @@ function convertHexColorToCSS(hex) {
 }
 function escapeStringForJS(str) {
     return str
-        .replace(/\\/g, '\\\\')  // 双反斜杠：首先转义反斜杠本身
+        .replace(/\"/g,"\"")
+        .replace(/\\/g,'')
         .replace(/'/g, "\\'")    // 单引号
         .replace(/"/g, '\\"')    // 双引号
         .replace(/\r/g, '')   // 回车

@@ -28,7 +28,6 @@ function updateVideoHistory() {
     const listElement = document.getElementById("video-history");
     listElement.innerHTML = ''; // 清空当前的列表
     const watchedVideos = JSON.parse(localStorage.getItem('watchedVideos')) || [];
-    console.log("Updating video history with data:", watchedVideos);
     // 倒序添加记录，以确保最新的在上面
     watchedVideos.forEach(videoRecord => {
         const listItem = document.createElement("li");

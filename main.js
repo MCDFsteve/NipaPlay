@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog, session, screen, nativeTheme, Menu, globalShortcut, isMac } = require('electron');
 const fs = require('fs');
+const fs2 = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
 const os = require('os');
@@ -14,7 +15,10 @@ const Store = require('electron-store');
 const store = new Store();
 const { exec } = require('child_process');
 const ffmpegmac = path.join(__dirname, 'ffmpeg', 'ffmpeg_mac');
-    const ffmpegwin = path.join(__dirname, 'ffmpeg', 'ffmpeg_win','bin','ffmpeg.exe')
+const ffmpegwin = path.join(__dirname, 'ffmpeg', 'ffmpeg_win', 'bin', 'ffmpeg.exe')
+//const steamworks = require('steamworks.js');
+//const client = steamworks.init(2520710);
+//const steamId = client.localplayer.getSteamId();
 // 创建主窗口实例
 let mainWindow;
 // 创建关于窗口实例 s
@@ -68,12 +72,97 @@ app.on('ready', () => {
     // 创建主窗口
     createMainWindow();
 });
+ipcMain.on('log-message', (event, message) => {
+    console.log(message);
+});
 ipcMain.on('window-action', (event, action) => {
     const window = BrowserWindow.getFocusedWindow();
     if (action === 'close') {
         window.close();
     }
 });
+ipcMain.on('load-folder-contents', async (event, folderPath) => {
+    try {
+        console.log("Received folder path:", folderPath);
+        if (!folderPath) {
+            console.error("folderPath is undefined");
+            event.reply('folder-contents-loaded', []);
+            return;
+        }
+        const videoFiles = await getVideoFiles(folderPath);
+        console.log('Found video files:', videoFiles);
+        event.reply('folder-contents-loaded', videoFiles);
+        event.reply('config-updated2');
+    } catch (err) {
+        console.error("Error reading directory:", err);
+        event.reply('folder-contents-loaded', []);
+    }
+});
+ipcMain.on('import-folder', async (event) => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+        properties: ['openDirectory']
+    });
+    if (!canceled && filePaths.length > 0) {
+        const configPath = path.join(app.getPath('downloads'), 'nipaplay', 'nipaplay_config.json');
+        const configDir = path.dirname(configPath);
+
+        if (!fs.existsSync(configDir)) {
+            fs.mkdirSync(configDir, { recursive: true });
+        }
+
+        let config = {};
+        if (fs.existsSync(configPath)) {
+            config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        }
+        if (!config.selectedFolders) {
+            config.selectedFolders = [];
+        }
+        if (!config.selectedFolders.includes(filePaths[0])) {
+            config.selectedFolders.push(filePaths[0]);
+        }
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+        event.reply('config-updated');
+    }
+});
+ipcMain.on('remove-folder', async (event, folderToRemove) => {
+    const configPath = path.join(app.getPath('downloads'), 'nipaplay', 'nipaplay_config.json');
+
+    if (fs.existsSync(configPath)) {
+        const data = fs.readFileSync(configPath, 'utf8');
+        const config = JSON.parse(data);
+
+        // 过滤掉要删除的文件夹路径
+        config.selectedFolders = config.selectedFolders.filter(folderPath => folderPath !== folderToRemove);
+
+        // 保存更新后的配置
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+        // 可以发送一个事件回渲染进程以更新界面
+        event.reply('config-updated');
+    }
+});
+
+ipcMain.on('load-config', async (event) => {
+    const configPath = path.join(app.getPath('downloads'), 'nipaplay', 'nipaplay_config.json');
+    try {
+        console.log('Config path:', configPath); // 输出配置文件路径
+        if (fs.existsSync(configPath)) {
+            const fileContent = fs.readFileSync(configPath, 'utf8');
+            console.log('Config content:', fileContent); // 输出文件内容
+            const config = JSON.parse(fileContent);
+            console.log('Parsed config:', config.selectedFolders); // 输出解析后的配置
+            event.reply('config-loaded', config.selectedFolders);
+        } else {
+            console.log('Config file does not exist.');
+            event.reply('config-loaded', null);
+        }
+    } catch (error) {
+        console.error('Failed to read config:', error);
+        event.reply('config-loaded', null);
+    }
+});
+
+
 ipcMain.on('get-downloads-path', (event) => {
     console.log('下载文件夹路径：', downloadsPath);
     event.reply('downloads-path', downloadsPath);
@@ -109,9 +198,6 @@ ipcMain.handle('dialog:openFile', async (event, options) => {
     } else {
         return filePaths[0]; // 返回选择的第一个文件路径
     }
-});
-ipcMain.on('log-message', (event, message) => {
-    console.log(message);
 });
 ipcMain.handle('read-file', async (event, filePath) => {
     try {
@@ -274,6 +360,20 @@ function ffmpegWindow(videoPath) {
         }
     });
 }
+// 递归遍历目录以查找视频文件
+async function getVideoFiles(dir) {
+    let results = [];
+    const entries = await fs2.readdir(dir, { withFileTypes: true });
+    for (let entry of entries) {
+        const entryPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+            results = results.concat(await getVideoFiles(entryPath)); // 递归遍历子目录
+        } else if (entry.isFile() && /\.(mp4|avi|mov|mkv)$/i.test(entry.name)) {
+            results.push(entryPath); // 添加视频文件
+        }
+    }
+    return results;
+}
 // 创建主窗口
 function createMainWindow() {
     mainWindow = new BrowserWindow({
@@ -381,6 +481,7 @@ function createMainWindow() {
     });
     let isMac = process.platform === 'darwin';
     mainWindow.loadFile('index.html');
+    console.log('Window loaded URL:', 'index.html');
     mainWindow.webContents.on('did-finish-load', () => {
         mainWindow.webContents.send('platform-info', { isMac });
     });
@@ -463,29 +564,18 @@ async function openVideoAndFetchDetails(videoPath, episodeId) {
             // Step 3: Extract selected subtitle
             subtitlePath = await extractSubtitles(videoPath, selectedTrack, subPath);
         }
-
-        // 检查是否已有识别结果
-        const existingResult = await getRecognitionResult(videoPath);
-        if (existingResult) {
-            console.log("使用已存储的识别结果:", existingResult);
-            const episodeId = existingResult.episodeId;
-            const newTitle = existingResult.newTitle;
-            // 弹幕处理完毕后，继续创建视频窗口，传入字幕路径
-            danmakudownload(newTitle, videoPath, episodeId);
-        } else {
             console.log("未找到存储结果，开始识别:", videoPath);
             const response = await recognizeVideo(videoPath);
-            console.log('response:',response);
-            console.log("post结果:", response.isMatched, response.animeTitle,response.episodeId,response.animeId);
+            console.log('response:', response);
+            console.log("post结果:", response.isMatched, response.animeTitle, response.episodeId, response.animeId);
             if (response.isMatched) {
                 const newTitle = `${response.animeTitle} ${response.episodeTitle}`;
                 const newepisodeId = response.episodeId;
-                console.log('id+title:',newTitle,newepisodeId)
+                console.log('id+title:', newTitle, newepisodeId)
                 danmakudownload(newTitle, videoPath, newepisodeId);
             } else {
                 createSelectionWindow(response.matches, videoPath, episodeId);
             }
-        }
     } catch (error) {
         console.error("请求过程中发生错误:", error);
     } finally {
@@ -556,9 +646,6 @@ async function recognizeVideo(videoPath) {
         request.end();
     });
 }
-
-
-
 // 创建视频窗口
 function createVideoWindow(videoPath, newTitle, episodeId) {
     console.log("创建视频窗口，使用的视频路径：", videoPath);
@@ -585,11 +672,14 @@ function createVideoWindow(videoPath, newTitle, episodeId) {
         },
         resizable: process.platform === 'darwin' ? false : true // MacOS不允许调整窗口大小，Windows允许
     });
-    videoWindow.webContents.on('did-finish-load', () => {
-        const filePath = path.join(danmakuFilePath);
-        const content = fs.readFileSync(filePath, 'utf8');
-        videoWindow.webContents.send('file-content', content);
-    });
+    if (fs.existsSync(danmakuFilePath)) {
+        const content = fs.readFileSync(danmakuFilePath, 'utf8');
+        videoWindow.webContents.on('did-finish-load', () => {
+            videoWindow.webContents.send('file-content', content);
+        });
+    } else {
+        console.log("弹幕文件不存在，将不加载弹幕.");
+    }
     // 使用 encodeURIComponent 确保标题中的特殊字符被正确处理
     const encodedTitle = encodeURIComponent(newTitle || '');
     const url = `file://${__dirname}/video-player.html?path=${encodeURIComponent(videoPath)}&title=${encodeURIComponent(newTitle)}&episodeId=${episodeId}`;
@@ -612,42 +702,42 @@ function createVideoWindow(videoPath, newTitle, episodeId) {
 
 
 }
-function danmakudownload(newTitle, videoPath, episodeId){
+function danmakudownload(newTitle, videoPath, episodeId) {
     const jsonFilePath = path.join(video_commentPath, `${episodeId}.json`);
-    console.log('jsonFilePath:',jsonFilePath);
+    console.log('jsonFilePath:', jsonFilePath);
     const outputDir = path.join(danmakuPath);
 
-        const url = `https://api.dandanplay.net/api/v2/comment/${episodeId}?withRelated=true&chConvert=1`;
+    const url = `https://api.dandanplay.net/api/v2/comment/${episodeId}?withRelated=true&chConvert=1`;
 
-        return new Promise((resolve, reject) => {
-            import('got').then(({ default: got }) => {
-                got(url, {
-                    responseType: 'json',
-                    headers: {
-                        'Accept': 'application/json'
+    return new Promise((resolve, reject) => {
+        import('got').then(({ default: got }) => {
+            got(url, {
+                responseType: 'json',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            }).then(response => {
+                saveCommentToJson(response.body, episodeId, videoPath);
+                resolve(response.body);
+
+                // 在异步请求完成后执行处理评论的函数
+                processComments(jsonFilePath, outputDir, (err) => {
+                    if (err) {
+                        console.error('Error processing comments:', err);
+                        return;
                     }
-                }).then(response => {
-                    saveCommentToJson(response.body,episodeId, videoPath);
-                    resolve(response.body);
-
-                    // 在异步请求完成后执行处理评论的函数
-                    processComments(jsonFilePath, outputDir, (err) => {
-                        if (err) {
-                            console.error('Error processing comments:', err);
-                            return;
-                        }
-                        // 弹幕处理完毕后，继续创建视频窗口
-                        createVideoWindow(videoPath, newTitle, episodeId);
-                    });
-                }).catch(error => {
-                    console.error('发送 HTTPS 请求时发生错误:', error);
-                    reject(error);
+                    // 弹幕处理完毕后，继续创建视频窗口
+                    createVideoWindow(videoPath, newTitle, episodeId);
                 });
             }).catch(error => {
-                console.error('导入 got 模块时发生错误:', error);
+                console.error('发送 HTTPS 请求时发生错误:', error);
                 reject(error);
             });
+        }).catch(error => {
+            console.error('导入 got 模块时发生错误:', error);
+            reject(error);
         });
+    });
 }
 // 在 createSelectionWindow 中检查并移除旧的处理器
 function createSelectionWindow(matches, videoPath, episodeId) {
@@ -682,7 +772,7 @@ function createSelectionWindow(matches, videoPath, episodeId) {
     // 修改或添加在 ipcMain.handle('process-selection', ...) 中的逻辑
     ipcMain.handle('process-selection', async (event, selectedMatch) => {
         const newTitle = `${selectedMatch.animeTitle} ${selectedMatch.episodeTitle}`;
-        console.log('newTitle 114:',newTitle);
+        console.log('newTitle 114:', newTitle);
         const episodeId = selectedMatch.episodeId;
         const jsonFilePath = path.join(video_commentPath, `${episodeId}.json`);
         const outputDir = path.join(danmakuPath);
@@ -719,6 +809,9 @@ function createSelectionWindow(matches, videoPath, episodeId) {
                     reject(error);
                 });
             });
+        }else{
+            const defaultTitle = videoPath.split('/').pop().split('.').slice(0, -1).join('.');
+            createVideoWindow(videoPath, defaultTitle);
         }
 
         // 如果没有 episodeId，则直接返回
@@ -777,7 +870,7 @@ function fetchSubtitleTracks(videoPath) {
             '-y',
             `"${outputPath}"`
         ].join(' ');
-        const command = `${ffmpegPath} ${ffmpegArgs}`;
+        const command = `"${ffmpegPath}" ${ffmpegArgs}`;
         exec(command, (error, stdoutData, stderrData) => {
             console.log('FFmpeg stdout:', stdoutData);
             console.log('FFmpeg stderr:', stderrData);
@@ -852,7 +945,7 @@ function extractSubtitles(videoPath, trackId, outputDir) {
     const isMac = process.platform === 'darwin';
     const ffmpegPath = isMac ? ffmpegmac : ffmpegwin;
     return new Promise((resolve, reject) => {
-        const command = `${ffmpegPath} ${ffmpegArgs.join(' ')}`;
+        const command = `"${ffmpegPath}" ${ffmpegArgs.join(' ')}`;
         exec(command, (error, stdout, stderr) => {
             if (error) {
                 reject('Failed to extract subtitles: ' + stderr);

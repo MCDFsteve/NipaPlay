@@ -1,7 +1,7 @@
 {
   "name": "nipaplay",
   "productName": "NipaPlay",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "咪啪～☆",
   "main": "main.js",
   "author": "DFsteve",
@@ -16,6 +16,9 @@
     "got": "^14.2.1",
     "node-addon-api": "^8.0.0",
     "plyr": "^3.7.8",
+    "python": "^0.0.4",
+    "steamworks": "^0.0.11",
+    "steamworks.js": "^0.3.1",
     "xml2js": "^0.6.2"
   },
   "scripts": {
@@ -27,6 +30,21 @@
   "build": {
     "appId": "com.dfsteve.nipaplay",
     "asar": false,
+    "files": [
+      "**/*",
+      "!**/*.ts",
+      "!*.code-workspace",
+      "!**/*.js.map",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/*.d.ts",
+      "!**/node_modules/.bin",
+      "!**/*.{o,hprof,orig,pyc,pyo,rbc}",
+      "!**/._*",
+      "!**/electron-builder.yml",
+      "!**/.DS_Store",
+      "!**/*.bak"
+    ],
     "mac": {
       "target": [
         "dmg",
@@ -56,6 +74,7 @@
   "devDependencies": {
     "electron": "^29.3.0",
     "electron-builder": "^24.13.3",
-    "electron-packager": "^17.1.2"
+    "electron-packager": "^17.1.2",
+    "electron-rebuild": "^3.2.9"
   }
 }
