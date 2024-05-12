@@ -32,6 +32,14 @@
         --button-bg-color: transparent;
     }
 }
+a.normal-link {
+    color: inherit; /* 继承父元素的文字颜色 */
+}
+a.normal-link:hover,
+a.normal-link:focus {
+    text-decoration: underline; /* 鼠标悬停或聚焦时添加下划线 */
+    color: inherit; /* 继承父元素的颜色，可调整为其他颜色 */
+}
 
 .viewing-history-content {
     background-color: var(--background-color);

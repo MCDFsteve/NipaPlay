@@ -592,7 +592,6 @@ function handleDownloadsPath(filePath, downloadsPath) {
     });
 }
 function loadASSSubtitles(filePath) {
-    // 如果已经有一个 ASS 实例，先销毁它
     if (currentAssInstance) {
         currentAssInstance.destroy();
         currentAssInstance = null;
@@ -602,17 +601,37 @@ function loadASSSubtitles(filePath) {
         .then(response => response.text())
         .then(subtitles => {
             const videoElement = document.getElementById('video-player');
-            // 创建新的 ASS 实例并保存引用
-            currentAssInstance = new ASS(subtitles, videoElement, {
-                videoWidth: videoElement.clientWidth,
-                videoHeight: videoElement.clientHeight
-            });
+            initializeSubtitles(subtitles, videoElement);
             showSubtitleAlert();
+            observeVideoResize(videoElement, subtitles);
         })
         .catch(error => {
             console.error('Failed to load subtitles:', error);
         });
 }
+
+function initializeSubtitles(subtitles, videoElement) {
+    // 创建新的 ASS 实例并保存引用
+    if (currentAssInstance) {
+        currentAssInstance.destroy();
+    }
+    currentAssInstance = new ASS(subtitles, videoElement, {
+        videoWidth: videoElement.clientWidth,
+        videoHeight: videoElement.clientHeight
+    });
+}
+
+function observeVideoResize(videoElement, subtitles) {
+    const resizeObserver = new ResizeObserver(entries => {
+        for (let entry of entries) {
+            if (entry.target === videoElement) {
+                initializeSubtitles(subtitles, videoElement);
+            }
+        }
+    });
+    resizeObserver.observe(videoElement);
+}
+
 function loadVTTSubtitles(filePath) {
     const videoElement = document.getElementById('video-player');
     // 移除所有现有的字幕轨道

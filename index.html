@@ -64,174 +64,21 @@
             <h2>关于</h2>
             <hr class="section-divider">
             <div class="scrollable-list">
-                <h3>NipaPlay.<br>作者戴夫邻居史蒂夫.<br>咪啪～☆<br>Ver0.6.0.</h3>
-                <h4>
-                    <br>0.6.0(2024.05.11)
-                    更新内容：<br>1. 媒体库 功能开放使用，支持导入文件夹，程序会自动列出文件夹内包含的所有视频文件来列表播放。<br>2.对接了steam，支持在看番的时候在好友列表显示了（仅通过steam下载的版本）。<br>
-                    <br>0.5.0(2024.05.02)
-                    更新内容：<br>1.修复了带有内嵌ass字幕的mkv视频在播放时字幕显示问题了。<br>2.修复了手动搜索的剧集播放时只显示章节标题而剧集名字显示undefined的问题了。<br>3.现在剧集可以精准匹配了，绝大部分动画可以不用经过选择自动识别出来。<br>4.现在鼠标双击可以切换全屏/窗口化了。<br>5.各种我做了但是忘了的修复和调整。<br>
-                    <br>0.4.0(2024.05.01) 更新内容：<br>1.加载视频时支持了搜索功能，如果想看的番在预览里没有提供，可以通过手动搜索检索装载弹幕。<br>2.给菜单增加了图标。<br>
-                    <br>0.3.0(2024.04.30)
-                    更新内容：<br>1.支持方向键前进后退调节音量了。<br>2.已经装载过字幕的视频现在会自动装载字幕。<br>3.现在顶部弹幕能正常显示出来了。<br>4.现在带内嵌字幕的视频打开之前会询问使用什么字幕格式了。<br>
-                    <br>0.2.0(2024.04.30) 更新内容:<br>1.现在可以装载 vtt ass
-                    ssa格式字幕了.<br>2.现在macOS版有毛玻璃效果了.<br>3.将弹幕文件保存位置迁移到了下载文件夹.<br>4.现在 选择弹幕库 的窗口也会跟随系统主题了.<br>5.移除了 深色浅色模式
-                    开关，现在更换软件主题会自动跟随系统切换.<br>6.优化了弹幕菜单的界面，现在调整弹幕不透明度会记忆位置了.<br>7.更多细微调整和bug修复.<br>
-                    <br>0.1.0(2024.04.13) 更新内容:<br>弹幕功能已经实装,记得联网.<br>
-                    <br>0.0.7（2024.04.12）更新内容：<br>1.增加了弹幕功能(暂时没有开放使用)。<br>2.现在打开视频会识别是什么动画了。<br>
-                    <br>0.0.6（2024.04.07）更新内容：<br>1.添加了还没做实际功能的右边菜单，悬浮可出现显示。<br>2.现在任务栏图标右键可以快捷进入最近播放的视频（前提是在使用这个功能之前先播放过视频。<br>3.现在播放器会自动记录上次视频的观看位置并自动从该位置开始播放了。<br>4.给ui按钮做了过渡动画，没被选中时是灰色。<br>6.更多细微调整。<br>
-                </h4>
+                <h3 class="about-version"></h3>
+                <div class="updates-content"></div>
             </div>
         </div>
 
     </div>
     <!-- 在页面底部添加版本号文本 -->
-    <div id="version-text">ver0.5.0</div>
+    <div id="version-text"></div>
     </div>
     <div class="drag-area">
     </div>
     <script src="./videoplay.js"></script>
     <script src="./history.js"></script>
-    <script>
-        const originalLog = console.log;
-        const path = require('path');
-        console.log = function (...args) {
-            ipcRenderer.send('log-message', args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : arg)).join(' '));
-            originalLog.apply(console, args); // 保持渲染进程的控制台也可以输出日志
-        };
-        console.log('I\'m lain.2');
-        document.getElementById('import-media-library').addEventListener('click', () => {
-            ipcRenderer.send('import-folder');
-        });
-        document.getElementById('return-media-library').addEventListener('click', () => {
-            const mediaLibraryContent = document.getElementById('folder-list');
-            mediaLibraryContent.style.display = 'block';
-            const videoList = document.getElementById('video-list');
-            videoList.style.display = 'none';
-            const returnList = document.getElementById('return-media-library');
-            // 设置透明度为50%
-            returnList.style.opacity = '0.5';
-            // 禁止鼠标事件
-            returnList.style.pointerEvents = 'none';
-            // 设置鼠标样式为默认
-            returnList.style.cursor = 'default';
-        });
-        // 渲染进程
-        ipcRenderer.send('load-config');
-        ipcRenderer.on('config-updated', () => {
-            updateMediaLibraryFromConfig();
-        });
-
-        function updateMediaLibraryFromConfig() {
-            ipcRenderer.send('load-config');
-        }
-        ipcRenderer.on('config-loaded', (event, selectedFolders) => {
-            if (selectedFolders && Array.isArray(selectedFolders)) {
-                console.log('Loaded folders:', selectedFolders);
-                updateMediaLibrary(selectedFolders);
-            } else {
-                console.log('No folders loaded or the data format is incorrect');
-            }
-        });
-
-        function updateMediaLibrary(folders) {
-            const library = document.getElementById('folder-list');
-            library.innerHTML = ''; // 清空现有列表，避免重复添加
-            folders.forEach(folderPath => {
-                const item = document.createElement('li');
-                item.className = 'sidebar-button';
-                item.textContent = path.basename(folderPath); // 设置按钮显示的文本为文件夹名
-                item.dataset.path = folderPath; // 将文件夹路径存储在元素上，以便后续使用
-                item.onclick = () => loadFolderContents(folderPath); // 点击时加载该文件夹内容
-                item.style.cursor = 'pointer'; // 设置鼠标为指针形状
-                item.style.position = 'relative'; // 设置相对定位
-                item.onclick = () => {
-                    console.log('Folder clicked:', folderPath); // 打印被点击的文件夹路径
-                    ipcRenderer.send('load-folder-contents', (folderPath));
-                };
-                const deleteIcon = document.createElement('img');
-                deleteIcon.src = './icons/delete.png'; // 设置图标路径
-                deleteIcon.className = 'delete-icon'; // 添加类名
-                deleteIcon.style.cssText = `width: 1em; height: 1em; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: none; cursor: pointer;`;
-                deleteIcon.onclick = function () {
-                    event.stopPropagation(); // 阻止事件冒泡
-                    ipcRenderer.send('remove-folder', folderPath);
-                };
-                item.appendChild(deleteIcon);
-                item.onmouseenter = function () {
-                    deleteIcon.style.display = 'block'; // 鼠标移入时显示图标
-                };
-
-                item.onmouseleave = function () {
-                    deleteIcon.style.display = 'none'; // 鼠标移出时隐藏图标
-                };
-                library.appendChild(item);
-            });
-        }
-        ipcRenderer.on('folder-contents-loaded', (event, files) => {
-            // 清除媒体库中的现有内容
-            const mediaLibraryContent = document.getElementById('folder-list');
-            mediaLibraryContent.style.display = 'none';
-            const videoList = document.getElementById('video-list');
-            videoList.style.display = 'block';
-            const returnList = document.getElementById('return-media-library');
-            // 恢复透明度为100%
-            returnList.style.opacity = '1';
-            // 恢复鼠标事件
-            returnList.style.pointerEvents = 'auto';
-            // 恢复鼠标样式为指针
-            returnList.style.cursor = 'pointer';
-
-            files.forEach(file => {
-                const videoItem = document.createElement('li');
-                videoItem.className = 'sidebar-button';
-                videoItem.textContent = path.basename(file);
-                videoItem.onclick = () => playVideo(file);
-                videoList.appendChild(videoItem);
-            });
-            const existingList = document.getElementById('video-list');
-            if (existingList) mediaLibraryContent.removeChild(existingList);
-            mediaLibraryContent.appendChild(videoList);
-        });
-
-        function playVideo(filePath) {
-            console.log('Playing video:', filePath);
-            // 可以在这里调用播放视频的逻辑或发送IPC消息到主进程打开视频播放窗口
-            ipcRenderer.send('open-video-file', filePath);
-        }
-
-        document.querySelectorAll('.sidebar button').forEach(btn => {
-            btn.addEventListener('click', function () {
-                // 移除所有按钮的'active'类
-                document.querySelectorAll('.sidebar button').forEach(button => {
-                    button.classList.remove('active');
-                });
-                // 给当前点击的按钮添加'active'类
-                this.classList.add('active');
-                // 显示对应的内容区
-                const contentId = this.id + '-content';
-                document.querySelectorAll('.content-page').forEach(page => {
-                    page.style.display = 'none';
-                });
-                const activeContent = document.getElementById(contentId);
-                if (activeContent) {
-                    activeContent.style.display = 'block';
-                }
-            });
-        });
-
-        function changeContent(content) {
-            const buttons = document.querySelectorAll('.sidebar button');
-            buttons.forEach(button => button.classList.remove('active'));
-            document.getElementById(content + '-video').classList.add('active');
-
-            // Hide all content divs
-            const contents = document.querySelectorAll('.content > button');
-            contents.forEach(content => content.classList.remove('active'));
-
-            // Show the selected content div
-            document.getElementById(content + '-content').classList.add('active');
-        }
-    </script>
+    <script src="updata_log.js"></script>
+    <script src="other.js"></script>
     </div>
 </body>
 
