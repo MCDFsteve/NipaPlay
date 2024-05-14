@@ -85,47 +85,22 @@
                 localStorage.setItem(videoElement.src, videoElement.currentTime);
             });
         });
-        const steamworks = require('steamworks.js');
-        const client = steamworks.init(2520710);
         // 根据是否提供了新标题来设置页面标题
         const title = path.split('/').pop().split('.').slice(0, -1).join('.');
         const videoTitle = document.getElementById('video-title');
-        const mess = "#helloworld";
-        function setRichPresence(key, value) {
-            console.log(`Trying to set Rich Presence with key: ${key}, value: ${value}`);
-            if (client && client.localplayer) {
-                client.localplayer.setRichPresence(key, value);
-                console.log('Rich Presence set successfully.');
-                console.log(client.localplayer.setRichPresence(key, value));
-            } else {
-                logger(`Could not set the rich presence, steamworks was not properly loaded!`);
-            }
-        }
-        if (newTitle) {
-            const bangumi = newTitle;
-            // 使用 URL 参数中提供的新标题
-            videoTitle.textContent = "正在播放：" + newTitle;
-            setRichPresence("steam_display", `${mess}`);
-            setRichPresence("bangumi", `${bangumi}`);
-        } else {
-            const bangumi = title;
-            // 从视频文件路径中提取并使用原有逻辑设置标题
-            videoTitle.textContent = "正在播放：" + title;
-            setRichPresence("steam_display", `${mess}`);
-            setRichPresence("bangumi", `${bangumi}`);
-        }
-
         let watchedVideos = JSON.parse(localStorage.getItem('watchedVideos')) || [];
         const videoRecord = { name: newTitle ? decodeURIComponent(newTitle) : title, path: path };
-
         // 查找数组中是否已存在该记录
         const existingIndex = watchedVideos.findIndex(v => v.path === path);
-
+        if (newTitle) {
+            videoTitle.textContent = "正在播放：" + newTitle;
+        } else {
+            videoTitle.textContent = "正在播放：" + title;
+        }
         if (existingIndex !== -1) {
             // 如果找到了，先移除旧的记录
             watchedVideos.splice(existingIndex, 1);
         }
-
         // 然后将新记录添加到数组的开头
         watchedVideos.unshift(videoRecord);
         localStorage.setItem('watchedVideos', JSON.stringify(watchedVideos));

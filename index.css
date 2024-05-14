@@ -2,7 +2,7 @@
 :root {
     --background-color: #fff;
     /* 背景颜色 */
-    --text-color: #222;
+    --text-color: #3b3b3b;
     /* 文字颜色 */
     --sidebar-bg-color: rgba(200, 200, 200, 0.4);
     /* 边栏背景颜色，更灰 */
@@ -279,7 +279,11 @@ span.text-container {
     margin-left: -40px;
     /* 整体向左移动 */
 }
-
+#anime-lib {
+    margin-top:-20px;
+    margin-left: -20px;
+    /* 整体向左移动 */
+}
 #video-history li.sidebar-button {
     margin-left: -40px;
     /* 整体向左移动 */
@@ -320,11 +324,10 @@ li.sidebar-button::before {
     margin-left: var(--sidebar-width);
     /* 将内容偏移侧边栏宽度 */
     width: 80%;
+    height: 100%;
     background-color: #fff;
-    overflow-y: auto;
+    overflow-y: hidden;
     /* 启用垂直滚动 */
-    height: 100vh;
-    /* 占满整个视窗高度 */
     margin: 0;
     /* 移除外边距 */
     padding-left: 20px;
@@ -335,7 +338,11 @@ li.sidebar-button::before {
         background-color: #222;
     }
 }
-
+.scrollable-list {
+    height: 550px;
+    /* 根据您的页面设计调整高度 */
+    overflow-y: auto;
+}
 .upload-button {
     cursor: pointer;
     transition: background-color 0.3s, color 0.3s;
@@ -416,14 +423,6 @@ li.sidebar-button::before {
     font-size: 12px;
     /* 字体大小 */
 }
-
-.scrollable-list {
-    height: 495px;
-    /* 根据您的页面设计调整高度 */
-    overflow-y: auto;
-    margin-top: 0;
-}
-
 hr.section-divider {
     margin-bottom: 0;
     /* 可选：如果您希望水平线与滚动区域之间没有空间，也可以移除下方边距 */
@@ -431,20 +430,29 @@ hr.section-divider {
 
 h2 {
     margin-top: 43.8px;
+    color: #000000;
     /* 向下移动标题 */
 }
-
+@media (prefers-color-scheme: dark) {
+    h2 {
+        color:#ffffff;
+    }
+}
 #title-text {
     position: fixed;
     left: 20px;
     font-weight: bold;
-    color: var(--text-color);
+    color: #000000;
     /* 文本颜色 */
     font-size: 30px;
     /* 字体大小 */
     margin-top: 30px;
 }
-
+@media (prefers-color-scheme: dark) {
+    #title-text {
+        color:#ffffff;
+    }
+}
 #import-video {
     margin-top: 100px;
 }
@@ -464,4 +472,152 @@ h2 {
     background: url('icons/upload.png') no-repeat center;
     background-size: contain;
 
+}
+.anime-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.anime-item {
+    display: flex;
+    flex-direction: column;
+    width: 20%;
+    margin-top:20px;
+    margin-right:25px;
+    margin-bottom:-15px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.anime-image {
+    width: 100%;
+    height: 100%;
+    max-height: 200px; /* 根据需要调整图片的最大高度 */
+    border-radius: 2px; /* 添加圆角 */
+    box-shadow: 7px 10px 10px rgba(0, 0, 0, 0.3);
+}
+.anime-image img {
+    border-radius: 2px; /* 添加圆角 */
+    width: 100%;
+    height: 100%;
+    max-height: 200px; /* 根据需要调整图片的最大高度 */
+    cursor: pointer;
+}
+.anime-title {
+    flex: 0 0 auto;
+    font-size: 13px;
+    margin-top: 15px; /* 增加与图片的距离 */
+    height: 3em; /* 固定高度以显示两行文本 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* 显示两行 */
+    -webkit-box-orient: vertical;
+    white-space: normal;
+    color:#595959;
+}
+.day-section h2 {
+    margin-top: 20px; /* 减少顶部的空白 */
+    margin-bottom: 5px; /* 减少标题和分割线之间的空白 */
+    font-size: 20px;
+    color:#373737;
+}
+.anime-deta h2{
+    margin-top: 10px;
+}
+@media (prefers-color-scheme: dark) {
+    .anime-title {
+        color:#fdfdfd;
+    }
+}
+@media (prefers-color-scheme: dark) {
+    .day-section h2 {
+        color:#ffffff;
+    }
+}
+
+#anime-detail-content {
+    padding: 20px;
+}
+
+#anime-detail-content h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+#anime-detail-content p, #anime-detail-content ul {
+    margin: 10px 0;
+}
+
+#anime-detail-content ul {
+    list-style-type: disc;
+    padding-left: 20px;
+}
+
+.anime-detail-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.anime-detail-image {
+    flex: 0 0 30%;
+    max-width: 30%;
+    height: auto;
+    max-height: auto;
+    border-radius: 2px;
+}
+
+.anime-detail-image img {
+    width: 100%;
+    height: auto;
+    max-height: auto;
+    border-radius: 2px;
+    box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.3);
+}
+.anime-detail-text {
+    flex: 1;
+    max-height: 250px; /* 让其默认高度适应图像 */
+    overflow-y: auto; /* 当内容超过高度时，出现垂直滚动条 */
+}
+.related-anime-item {
+    color:#7e7e7e;
+    cursor: pointer;
+}
+.related-anime-item:hover {
+    color:#00d5ff;
+    cursor: pointer;
+}
+.anime-summary {
+    font-size: 14px;
+}
+.anime-summary2 {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    list-style-type: none;
+    padding: 0;
+}
+
+.anime-summary2 li {
+    background-color: var(--sidebar-bg-color);
+    color:var(--text-color);
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin: 2px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
+}
+.anime-summary2 li:hover {
+    background-color:var(--button-hover-bg-color);
+    color:#ffffff;
+    cursor: pointer;
+}
+.anime-detail-info {
+    margin-top: 20px;
 }

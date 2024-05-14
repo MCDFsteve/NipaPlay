@@ -390,7 +390,8 @@ function createMainWindow() {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false
-        }
+        },
+        autoHideMenuBar: process.platform !== 'darwin'
     });
     // 等待窗口加载完成后发送文件路径
     const menuTemplate = [

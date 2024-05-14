@@ -181,7 +181,7 @@ document.addEventListener('keydown', (event) => {
         }
     }
 });
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const videoPlayer = document.getElementById('video-player');
 
     videoPlayer.addEventListener('dblclick', () => {
@@ -564,9 +564,9 @@ function handleDownloadsPath(filePath, downloadsPath) {
         for (let className in styles) {
             vttData += `::cue(.${className}) {\n${styles[className]}\n}\n`;
         }
-
         // 默认样式
-        vttData += '::cue {\n    color: white;\n    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;\n}\n\n';
+        vttData += '::cue {\n    color: white;\n    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000,\n               -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000,\n               0px -2px 0 #000, 0px 2px 0 #000, -2px 0px 0 #000, 2px 0px 0 #000;\n}\n\n';
+
         // 按照时间轴排序字幕
         subtitles.sort((a, b) => parseFloat(a.start) - parseFloat(b.start));
 
@@ -707,7 +707,28 @@ document.addEventListener('keydown', (event) => {
         }, 2000); // 2秒后隐藏音量显示
     }
 });
-
+    const steamworks = require('steamworks.js');
+    const client = steamworks.init(2520710);
+    const mess = "#helloworld";
+    function setRichPresence(key, value) {
+        console.log(`Trying to set Rich Presence with key: ${key}, value: ${value}`);
+        if (client && client.localplayer) {
+            client.localplayer.setRichPresence(key, value);
+            console.log('Rich Presence set successfully.');
+            console.log(client.localplayer.setRichPresence(key, value));
+        } else {
+            console.error(`Could not set the rich presence, steamworks was not properly loaded!`);
+        }
+    }
+    if (newTitle) {
+        const bangumi = newTitle;
+        setRichPresence("steam_display", `${mess}`);
+        setRichPresence("bangumi", `${bangumi}`);
+    } else {
+        const bangumi = title;
+        setRichPresence("steam_display", `${mess}`);
+        setRichPresence("bangumi", `${bangumi}`);
+    }
 
 
 

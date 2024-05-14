@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // 更新所有需要显示版本号的元素
     document.getElementById('version-text').textContent = `ver${nipaplayVersion}`;
     document.querySelectorAll('.about-version').forEach(function (element) {
-        element.innerHTML = `NipaPlay.Ver${nipaplayVersion}<br>咪啪～☆<br>作者戴夫邻居史蒂夫.<br>项目地址：<br> <a href="https://github.com/MCDFsteve/NipaPlay" class="normal-link">https://github.com/MCDFsteve/NipaPlay</a>`;
+        element.innerHTML = `NipaPlay.Ver${nipaplayVersion}<br>咪啪～☆<br>作者：戴夫邻居史蒂夫 ©️copyright2024 Aimes Soft.<br>项目地址：<br> <a href="https://github.com/MCDFsteve/NipaPlay" class="normal-link">https://github.com/MCDFsteve/NipaPlay</a>`;
     });
 
 });
@@ -180,3 +180,146 @@ function changeContent(content) {
     // Show the selected content div
     document.getElementById(content + '-content').classList.add('active');
 }
+document.addEventListener('DOMContentLoaded', function () {
+    loadNewSeries();
+});
+
+function loadNewSeries() {
+    fetch('https://api.dandanplay.net/api/v2/bangumi/shin?filterAdultContent=false')
+        .then(response => response.json())
+        .then(data => {
+            const bangumiList = data.bangumiList;
+            const daysOfWeek = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+
+            // 按 airDay 排序
+            bangumiList.sort((a, b) => a.airDay - b.airDay);
+
+            // 获取当前的星期几
+            const today = new Date().getDay();
+
+            // 重新排序 daysOfWeek 数组，使今天排在最前面
+            const reorderedDays = daysOfWeek.slice(today).concat(daysOfWeek.slice(0, today));
+
+            // 创建按天分组的 HTML 内容
+            const content = reorderedDays.map((day, index) => {
+                const realIndex = (today + index) % 7;
+                const dayItems = bangumiList.filter(item => item.airDay === realIndex);
+
+                if (dayItems.length === 0) {
+                    return '';
+                }
+
+                const itemsHtml = dayItems.map(item => `
+                    <div class="anime-item" data-anime-id="${item.animeId}">
+                        <div class="anime-image">
+                            <img src="${item.imageUrl}" alt="${item.animeTitle}">
+                        </div>
+                        <p class="anime-title">${item.animeTitle}</p>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="day-section">
+                        <h2>${day}</h2>
+                        <hr class="section-divider">
+                        <div class="anime-list">
+                            ${itemsHtml}
+                        </div>
+                        <hr class="section-divider"> <!-- 添加分割线 -->
+                    </div>
+                `;
+            }).join('');
+
+            // 将内容插入到页面中
+            document.getElementById('new-series-container').innerHTML = content;
+
+            // 为每个 anime-item 添加点击事件
+            document.querySelectorAll('.anime-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const animeId = this.getAttribute('data-anime-id');
+                    fetchAnimeDetail(animeId);
+                });
+            });
+        })
+        .catch(error => console.error('Error fetching bangumi data:', error));
+}
+
+// 获取动画详细信息并显示
+function fetchAnimeDetail(animeId) {
+    fetch(`https://api.dandanplay.net/api/v2/bangumi/${animeId}`)
+        .then(response => response.json())
+        .then(data => {
+            displayAnimeDetail(data.bangumi);
+        })
+        .catch(error => console.error('Error fetching anime detail:', error));
+}
+
+function displayAnimeDetail(bangumi) {
+    const detailContent = `
+    <div id="anime-lib">
+    <button id="return-anime-library" class="folder-item" onclick="returnToanime()">返回新番界面</button>
+    <div class="anime-deta">
+        <h2>${bangumi.titles.find(title => title.language === '主标题').title}</h2>
+        </div>
+        <hr class="section-divider">
+        <p>${bangumi.typeDescription}</p>
+        <div class="anime-detail-container">
+            <div class="anime-detail-image">
+                <img src="${bangumi.relateds[0].imageUrl}" alt="${bangumi.titles.find(title => title.language === '主标题').title}">
+            </div>
+            <div class="anime-detail-text">
+                <p class="anime-summary">${bangumi.summary}</p>
+            </div>
+        </div>
+        <hr class="section-divider">
+            <p><strong>评分:</strong></p>
+            <ul class="anime-summary">
+                ${Object.entries(bangumi.ratingDetails).map(([key, value]) => `<li>${key}: ${value}</li>`).join('')}
+            </ul>
+            <hr class="section-divider">
+            <p><strong>相关作品:</strong></p>
+            <ul class="anime-summary">
+            ${bangumi.relateds.map(related => `<li class="related-anime-item" data-anime-id="${related.animeId}">${related.animeTitle}</li>`).join('')}
+            </ul>
+            <hr class="section-divider">
+            <p><strong>标签:</strong></p>
+            <ul class="anime-summary2">
+                ${bangumi.tags.map(tag => `<li>${tag.name}</li>`).join('')}
+            </ul>
+        <hr class="section-divider">
+        <div class="anime-detail-info">
+            <p><strong>放送信息:</strong></p>
+            <ul class="anime-summary">
+                ${bangumi.metadata.map(info => `<li>${info}</li>`).join('')}
+            </ul>
+        </div>
+        </div>
+    `;
+
+    document.getElementById('anime-detail-content').innerHTML = detailContent;
+    document.getElementById('new-series-container').style.display = 'none';
+    document.getElementById('anime-detail-content').style.display = 'block';
+    // 滚动到顶部
+
+    // 为每个 related-anime-item 添加点击事件
+    document.querySelectorAll('.related-anime-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const relatedAnimeId = this.getAttribute('data-anime-id');
+            fetchAnimeDetail(relatedAnimeId);
+        });
+    });
+}
+
+// 回到新番更新界面
+function returnToNewSeries() {
+    console.log('returnToNewSeries');
+    document.getElementById('anime-detail-content').style.display = 'none';
+    document.getElementById('new-series-container').style.display = 'block';
+    loadNewSeries();  // 重新加载新番更新内容
+}
+function returnToanime() {
+    console.log('return-anime-library');
+    document.getElementById('anime-detail-content').style.display = 'none';
+    document.getElementById('new-series-container').style.display = 'block';
+    loadNewSeries();  // 重新加载新番更新内容
+};
