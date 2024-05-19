@@ -1,7 +1,7 @@
 {
   "name": "nipaplay",
   "productName": "NipaPlay",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "咪啪～☆",
   "main": "main.js",
   "author": "DFsteve",
@@ -14,6 +14,7 @@
     "electron-store": "^8.2.0",
     "express": "^4.19.2",
     "got": "^14.2.1",
+    "jsdom": "^24.0.0",
     "node-addon-api": "^8.0.0",
     "plyr": "^3.7.8",
     "ps-node": "^0.1.6",
@@ -50,11 +51,15 @@
     "mac": {
       "target": [
         "dmg",
+        "mas",
+        "pkg",
         "zip"
       ],
-      "hardenedRuntime": false,
+      "hardenedRuntime": true,
       "gatekeeperAssess": false,
-      "identity": null
+      "identity": null,
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.inherit.plist"
     },
     "nsis": {
       "oneClick": false,

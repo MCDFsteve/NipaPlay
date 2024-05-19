@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>加载url链接</title>
+    <style>
+        input {
+            flex: 1;
+            /* 输入框占据多余空间 */
+            /* 右侧间距 */
+            width: auto;
+            /* 调整输入框宽度为容器宽度减去右侧间隔 */
+            border: 10px;
+            border-radius: 10px;
+            background-color: rgba(227, 227, 227, 0.8);
+            color: #3f3f3f;
+            box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.4);
+            font-size: 16px;
+            top: 5px;
+            left:10px;
+            margin-bottom:15px;
+            /* 距离父元素顶部的距离 */
+            /* 距离父元素左侧的距离 */
+            text-indent: 7px !important;
+            /* 文本左对齐 */
+            vertical-align: top;
+            outline: none;
+            padding: 12px 0;
+            /* 确保有空间显示进度条 */
+            resize: none;
+            z-index: 2;
+            /* 确保输入框在进度条之上 */
+        }
+        @media (prefers-color-scheme: dark) {
+            input {
+                background-color: rgba(54, 54, 54, 0.8);
+                box-shadow: 0px 1px 1px rgba(255, 255, 255, 0.4);
+                color: #dfdfdf;
+            }
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #ffffff;
+        }
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #202020;
+            }
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            background-color: #131313;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.4);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: #484848;
+        }
+
+        @media (prefers-color-scheme: dark) {
+
+            button {
+                background-color: #444444;
+                color: #b8b8b8;
+                box-shadow: 0px 1px 1px rgba(255, 255, 255, 0.4);
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+
+            button:hover {
+                background-color: #2e2e2e;
+                color: #fff;
+            }
+        }
+        /* 设置滚动条的宽度和轨道颜色 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            /* 或任何您希望的宽度 */
+            background-color: transparent;
+            /* 滚动条轨道颜色 */
+        }
+
+        /* 设置滚动条滑块的颜色 */
+        ::-webkit-scrollbar-thumb {
+            background-color: rgba(64, 64, 64, 0.4);
+            /* 滚动条滑块颜色 */
+            border-radius: 6px;
+            /* 如果需要，可以设置圆角 */
+        }
+
+        /* 设置当鼠标悬停在滚动条滑块上时的颜色 */
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(130, 130, 130, 0.4);
+            /* 滚动条滑块悬停颜色 */
+        }
+
+        @media (prefers-color-scheme: dark) {
+            ::-webkit-scrollbar-thumb:hover {
+                background-color: rgba(198, 198, 198, 0.4);
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            ::-webkit-scrollbar-thumb {
+                background-color: rgba(134, 134, 134, 0.4);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h2></h2>
+    <input type="text" id="url-input" placeholder="在此键入url" style="width: 100%;">
+    <button id="submit-url">加载url</button>
+    <script>
+        const { ipcRenderer } = require('electron');
+        document.getElementById('submit-url').addEventListener('click', () => {
+            const urlinput = document.getElementById('url-input');
+            const submiturl = document.getElementById('submit-url');
+            urlinput.style.display = 'none';
+            submiturl.style.display = 'none';
+            const url = document.getElementById('url-input').value;
+            ipcRenderer.send('load-url', url);
+        });
+
+        // Enable shortcuts for Cut, Copy, and Paste
+        document.getElementById('url-input').addEventListener('keydown', (event) => {
+            if ((event.ctrlKey || event.metaKey) && ['x', 'c', 'v'].includes(event.key.toLowerCase())) {
+                switch (event.key.toLowerCase()) {
+                    case 'x':
+                        document.execCommand('cut');
+                        break;
+                    case 'c':
+                        document.execCommand('copy');
+                        break;
+                    case 'v':
+                        document.execCommand('paste');
+                        break;
+                }
+                event.preventDefault();
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -68,7 +68,9 @@ ipcRenderer.send('load-config');
 ipcRenderer.on('config-updated', () => {
     updateMediaLibraryFromConfig();
 });
-
+ipcRenderer.on('video-url', (event, videoUrl) => {
+    ipcRenderer.send('open-video-file', videoUrl); // 将视频链接传到main.js处理
+});
 function updateMediaLibraryFromConfig() {
     ipcRenderer.send('load-config');
 }
@@ -147,7 +149,9 @@ function playVideo(filePath) {
     // 可以在这里调用播放视频的逻辑或发送IPC消息到主进程打开视频播放窗口
     ipcRenderer.send('open-video-file', filePath);
 }
-
+document.getElementById('internet-library').addEventListener('click', () => {
+    ipcRenderer.send('open-url-window');
+});
 document.querySelectorAll('.sidebar button').forEach(btn => {
     btn.addEventListener('click', function () {
         // 移除所有按钮的'active'类

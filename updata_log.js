@@ -1,6 +1,13 @@
 
 var updatesData = [
     {
+        version: "1.1.0",
+        date: "2024.05.19",
+        changes: [
+            "媒体库 界面新增了 播放网络媒体库 按钮，可以播放url链接内的视频。",
+        ]
+    },
+    {
         version: "1.0.1",
         date: "2024.05.14",
         changes: [

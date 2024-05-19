@@ -1,11 +1,11 @@
-const { app, BrowserWindow, ipcMain, dialog, session, screen, nativeTheme, Menu, globalShortcut, isMac } = require('electron');
+const { app, BrowserWindow, BrowserView, ipcMain, dialog, session, screen, nativeTheme, Menu, globalShortcut, isMac } = require('electron');
 const fs = require('fs');
 const fs2 = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
 const os = require('os');
 const { processComments } = require('./danmaku_tran.js');
-const downloadsPath = path.join(os.homedir(), 'Downloads');
+const downloadsPath = app.getPath('userData');
 const nipaPath = path.join(downloadsPath, 'nipaplay');
 const video_commentPath = path.join(nipaPath, 'video_comment');
 const danmakuPath = path.join(nipaPath, 'danmaku');
@@ -13,18 +13,28 @@ const subPath = path.join(nipaPath, 'sub');
 const https = require('https');
 const Store = require('electron-store');
 const store = new Store();
+const { JSDOM } = require('jsdom');
 const { exec } = require('child_process');
 const ffmpegmac = path.join(__dirname, 'ffmpeg', 'ffmpeg_mac');
 const ffmpegwin = path.join(__dirname, 'ffmpeg', 'ffmpeg_win', 'bin', 'ffmpeg.exe')
+const logFilePath = path.join(downloadsPath, 'app.log');
+// 获取应用的用户数据目录
+const userDataPath = app.getPath('userData');
+log(`User Data Path: ${userDataPath}`);
+function log(message) {
+    fs.appendFileSync(logFilePath, `${new Date().toISOString()} - ${message}\n`);
+}
 //const steamworks = require('steamworks.js');
 //const client = steamworks.init(2520710);
 //const steamId = client.localplayer.getSteamId();
 // 创建主窗口实例
 let mainWindow;
+let urlWindow;
 // 创建关于窗口实例 s
 let videoWindow; // 假设这是创建视频播放窗口时的引用
 let loadingWindow;  // 确保这是全局变量
-let selectionWindow
+let selectionWindow;
+let browserView;
 // 监听应用程序退出事件
 app.on('window-all-closed', () => {
     // 在 macOS 上，关闭所有窗口后退出应用程序
@@ -58,6 +68,16 @@ app.on('ready', () => {
     // 清除缓存
     session.defaultSession.clearCache().then(() => {
         console.log('Cache cleared');
+    });
+    // 监听下载事件
+    session.defaultSession.on('will-download', async (event, item, webContents) => {
+        const url = item.getURL();
+        console.log('Download URL detected:', url);
+        urlWindow.webContents.close();
+        // 阻止默认的下载行为
+        event.preventDefault();
+        // 处理捕获到的下载 URL
+        handleDownloadURL(url);
     });
     // 注册全局快捷键 Command + Q
     const ret = globalShortcut.register('Command+Q', () => {
@@ -103,7 +123,7 @@ ipcMain.on('import-folder', async (event) => {
         properties: ['openDirectory']
     });
     if (!canceled && filePaths.length > 0) {
-        const configPath = path.join(app.getPath('downloads'), 'nipaplay', 'nipaplay_config.json');
+        const configPath = path.join(downloadsPath, 'nipaplay', 'nipaplay_config.json');
         const configDir = path.dirname(configPath);
 
         if (!fs.existsSync(configDir)) {
@@ -125,7 +145,7 @@ ipcMain.on('import-folder', async (event) => {
     }
 });
 ipcMain.on('remove-folder', async (event, folderToRemove) => {
-    const configPath = path.join(app.getPath('downloads'), 'nipaplay', 'nipaplay_config.json');
+    const configPath = path.join(downloadsPath, 'nipaplay', 'nipaplay_config.json');
 
     if (fs.existsSync(configPath)) {
         const data = fs.readFileSync(configPath, 'utf8');
@@ -141,9 +161,11 @@ ipcMain.on('remove-folder', async (event, folderToRemove) => {
         event.reply('config-updated');
     }
 });
-
+ipcMain.on('open-url-window', () => {
+    createUrlWindow();
+});
 ipcMain.on('load-config', async (event) => {
-    const configPath = path.join(app.getPath('downloads'), 'nipaplay', 'nipaplay_config.json');
+    const configPath = path.join(downloadsPath, 'nipaplay', 'nipaplay_config.json');
     try {
         console.log('Config path:', configPath); // 输出配置文件路径
         if (fs.existsSync(configPath)) {
@@ -215,7 +237,20 @@ ipcMain.on('open-video-file', (event, filePath) => {
         console.error('No file path provided');
     }
 });
-
+ipcMain.on('load-url', (event, url) => {
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'http://' + url; // 默认添加http://协议
+    }
+    createBrowserView();
+    urlWindow.setSize(800, 600);
+    urlWindow.center(); // 调整大小后重新居中
+    console.log('URL loaded:', url);
+    browserView.webContents.loadURL(url);
+    browserView.webContents.on('did-finish-load', () => {
+        console.log('BrowserView loaded:', url);
+        setTimeout(startCheckingForVideo, 2000); // 延迟2秒再启动检查视频的逻辑
+    });
+});
 ipcMain.on('toggle-fullscreen', (event) => {
     if (videoWindow) {
         videoWindow.setFullScreen(!videoWindow.isFullScreen());
@@ -288,6 +323,35 @@ ipcMain.handle('search-anime', async (event, searchTerm) => {
         });
     });
 });
+function createUrlWindow() {
+    urlWindow = new BrowserWindow({
+        width: 300,
+        height: 200,
+        fullscreen:false,
+        alwaysOnTop: true,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            webSecurity: false, // 允许跨域
+            experimentalFeatures: true // 启用实验性功能
+        }
+    });
+
+    urlWindow.webContents.loadFile('urlmenu.html'); // 加载外部的HTML文件
+}
+function createBrowserView() {
+    browserView = new BrowserView({
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            webSecurity: false,
+            experimentalFeatures: true
+        }
+    });
+
+    urlWindow.setBrowserView(browserView);
+    browserView.setBounds({ x: 0, y: 0, width: mainWindow.getBounds().width, height: mainWindow.getBounds().height });
+}
 function calculateFileHash(filePath, algorithm = 'sha256') {
     return new Promise((resolve, reject) => {
         const hash = crypto.createHash(algorithm);
@@ -317,7 +381,78 @@ function calculateFileHash(filePath, algorithm = 'sha256') {
         });
     });
 }
+function startCheckingForVideo() {
+    const checkInterval = 1000; // 每秒检查一次
+    const timeoutDuration = 300000; // 超时时间设为300秒
+    let elapsedTime = 0;
 
+    const interval = setInterval(async () => {
+        if (browserView) {
+            try {
+                const result = await browserView.webContents.executeJavaScript(`
+                    (function() {
+                        const videoElement = document.querySelector('video');
+                        const title = document.title;
+                        if (videoElement && videoElement.src) {
+                            return { videoUrl: videoElement.src, title: title };
+                        } else {
+                            return null;
+                        }
+                    })()
+                `);
+
+                if (result && result.videoUrl) {
+                    console.log("Video found:", result.videoUrl);
+                    clearInterval(interval);
+                    const response = await recognizeVideo2(result.title);
+                    console.log('response:', response);
+                    console.log("post结果:", response.isMatched, response.animeTitle, response.episodeId, response.animeId);
+                    if (response.isMatched) {
+                        const newTitle = `${response.animeTitle} ${response.episodeTitle}`;
+                        const newepisodeId = response.episodeId;
+                        console.log('id+title:', newTitle, newepisodeId);
+                        urlWindow.webContents.close();
+                        danmakudownload(newTitle, result.videoUrl, newepisodeId);
+                    } else {
+                        urlWindow.webContents.close();
+                        createSelectionWindow(response.matches, result.videoUrl, response.episodeId);
+                    }
+                } else {
+                    elapsedTime += checkInterval;
+                    if (elapsedTime >= timeoutDuration) {
+                        clearInterval(interval);
+                        dialog.showErrorBox('Error', 'No video found within the timeout period.');
+                    }
+                }
+            } catch (err) {
+                clearInterval(interval);
+                console.log('Error checking for video:', err);
+            }
+        } else {
+            clearInterval(interval);
+            console.error('urlWindow is undefined or has been destroyed');
+        }
+    }, checkInterval);
+}
+async function handleDownloadURL(url) {
+    console.log('Handling download URL:', url);
+
+    // 调用 recognizeVideo2 识别视频
+    const response = await recognizeVideo2(url);
+    console.log('response:', response);
+    console.log("post结果:", response.isMatched, response.animeTitle, response.episodeId, response.animeId);
+
+    if (response.isMatched) {
+        const newTitle = `${response.animeTitle} ${response.episodeTitle}`;
+        const episodeId = response.episodeId;
+        console.log('id+title:', newTitle, episodeId);
+
+        // 下载并处理弹幕
+        await danmakudownload(newTitle, url, episodeId);
+    } else {
+        createSelectionWindow(response.matches, url, response.episodeId);
+    }
+}
 function ffmpegif(videoPath) {
     const ext = path.extname(videoPath).toLowerCase();
     if (ext === '.gif') {
@@ -526,7 +661,19 @@ function saveRecognitionResult(videoPath, result) {
     console.log(`Saving result for hash: ${hash}`);
     store.set(hash, result);
 }
-
+async function getVideoUrlFromPage(url) {
+    return new Promise((resolve, reject) => {
+        JSDOM.fromURL(url).then(dom => {
+            const videoElement = dom.window.document.querySelector('video');
+            console.log('DOM Content:', dom.window.document.body.innerHTML); // 添加这行调试信息
+            if (videoElement && videoElement.src) {
+                resolve(videoElement.src);
+            } else {
+                reject('No video found');
+            }
+        }).catch(err => reject(err));
+    });
+}
 // 获取识别结果
 function getRecognitionResult(videoPath) {
     const hash = crypto.createHash('md5').update(videoPath).digest('hex');
@@ -565,20 +712,26 @@ async function openVideoAndFetchDetails(videoPath, episodeId) {
             // Step 3: Extract selected subtitle
             subtitlePath = await extractSubtitles(videoPath, selectedTrack, subPath);
         }
-            console.log("未找到存储结果，开始识别:", videoPath);
-            const response = await recognizeVideo(videoPath);
-            console.log('response:', response);
-            console.log("post结果:", response.isMatched, response.animeTitle, response.episodeId, response.animeId);
-            if (response.isMatched) {
-                const newTitle = `${response.animeTitle} ${response.episodeTitle}`;
-                const newepisodeId = response.episodeId;
-                console.log('id+title:', newTitle, newepisodeId)
-                danmakudownload(newTitle, videoPath, newepisodeId);
-            } else {
-                createSelectionWindow(response.matches, videoPath, episodeId);
-            }
+        console.log("未找到存储结果，开始识别:", videoPath);
+        let response;
+        if (videoPath.startsWith('https')) {
+            response = await recognizeVideo2(videoPath);
+        } else {
+            response = await recognizeVideo(videoPath);
+        }
+        console.log('response:', response);
+        console.log("post结果:", response.isMatched, response.animeTitle, response.episodeId, response.animeId);
+        if (response.isMatched) {
+            const newTitle = `${response.animeTitle} ${response.episodeTitle}`;
+            const newepisodeId = response.episodeId;
+            console.log('id+title:', newTitle, newepisodeId)
+            danmakudownload(newTitle, videoPath, newepisodeId);
+        } else {
+            createSelectionWindow(response.matches, videoPath, episodeId);
+        }
     } catch (error) {
-        console.error("请求过程中发生错误:", error);
+        console.log("请求过程中发生错误:", error);
+        dialog.showErrorBox('视频链接无效', error.message || error.toString());
     } finally {
         // 无论如何关闭加载中窗口
         if (loadingWindow && !loadingWindow.isDestroyed()) {
@@ -637,12 +790,67 @@ async function recognizeVideo(videoPath) {
                 }
             });
         });
-
         request.on('error', (error) => {
             console.error('发送 HTTPS 请求时发生错误:', error);
             reject(error);
         });
+        request.write(requestData);
+        request.end();
+    });
+}
+async function recognizeVideo2(title) {
+    const fileName = path.basename(title);
+    const hash = 'd41d8cd98f00b204e9800998ecf8427e';
+    const fileSize = 0;
 
+    const requestData = JSON.stringify({
+        fileName: fileName,
+        fileHash: hash,
+        fileSize: fileSize,
+        matchMode: 'hashAndFileName'
+    });
+
+    const options = {
+        hostname: 'api.dandanplay.net',
+        path: '/api/v2/match',
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Content-Length': Buffer.byteLength(requestData)
+        }
+    };
+
+    return new Promise((resolve, reject) => {
+        const request = https.request(options, (response) => {
+            let data = '';
+
+            response.on('data', (chunk) => {
+                data += chunk;
+            });
+
+            response.on('end', () => {
+                try {
+                    const responseData = JSON.parse(data);
+                    console.log('HTTPS 请求响应:', responseData);
+                    resolve({
+                        isMatched: responseData.isMatched,
+                        matches: responseData.matches,
+                        episodeId: responseData.matches[0]?.episodeId,
+                        animeId: responseData.matches[0]?.animeId,
+                        animeTitle: responseData.matches[0]?.animeTitle,
+                        episodeTitle: responseData.matches[0]?.episodeTitle
+                    });
+                } catch (parseError) {
+                    console.error('解析 HTTPS 请求响应时发生错误:', parseError);
+                    reject(parseError);
+                }
+            });
+        });
+        request.on('error', (error) => {
+            console.error('发送 HTTPS 请求时发生错误:', error);
+            reject(error);
+        });
         request.write(requestData);
         request.end();
     });
@@ -743,7 +951,9 @@ function danmakudownload(newTitle, videoPath, episodeId) {
 // 在 createSelectionWindow 中检查并移除旧的处理器
 function createSelectionWindow(matches, videoPath, episodeId) {
     console.log("匹配成功，即将播放的视频路径：", videoPath);
-    loadingWindow.close();
+    if (loadingWindow) {
+        loadingWindow.close();
+    }
     if (selectionWindow) {
         selectionWindow.close();  // 确保关闭旧的选择窗口
     }
@@ -810,7 +1020,7 @@ function createSelectionWindow(matches, videoPath, episodeId) {
                     reject(error);
                 });
             });
-        }else{
+        } else {
             const defaultTitle = videoPath.split('/').pop().split('.').slice(0, -1).join('.');
             createVideoWindow(videoPath, defaultTitle);
         }
@@ -877,7 +1087,8 @@ function fetchSubtitleTracks(videoPath) {
             console.log('FFmpeg stderr:', stderrData);
 
             if (error) {
-                reject('FFmpeg failed to process video for subtitles: ' + stderrData);
+                const tracks = 0;
+                resolve(tracks);
             } else {
                 const tracks = parseSubtitleTracks(stderrData);
                 resolve(tracks);
