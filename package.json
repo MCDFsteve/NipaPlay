@@ -1,7 +1,7 @@
 {
   "name": "nipaplay",
   "productName": "NipaPlay",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "咪啪～☆",
   "main": "main.js",
   "author": "DFsteve",
@@ -13,7 +13,7 @@
     "danmaku": "^2.0.6",
     "electron-store": "^8.2.0",
     "express": "^4.19.2",
-    "got": "^14.2.1",
+    "got": "^14.3.0",
     "jsdom": "^24.0.0",
     "node-addon-api": "^8.0.0",
     "plyr": "^3.7.8",
@@ -21,6 +21,7 @@
     "python": "^0.0.4",
     "steamworks": "^0.0.11",
     "steamworks.js": "^0.3.1",
+    "uuid": "^9.0.1",
     "xml2js": "^0.6.2"
   },
   "scripts": {
@@ -28,7 +29,8 @@
     "win": "electron-builder --win --x64",
     "woa": "electron-builder --win --arm64",
     "mac": "electron-builder --mac",
-    "macx64": "electron-builder --mac --x64"
+    "macx64": "electron-builder --mac --x64",
+    "build": "npm run win && npm run mac && npm run macx64"
   },
   "build": {
     "appId": "com.dfsteve.nipaplay",

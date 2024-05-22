@@ -68,6 +68,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const videoElement = document.getElementById('video-player');
         const path = urlParams.get('path');
+        const path2 = urlParams.get('path2');
         const { ipcRenderer } = require('electron');
         videoElement.src = path;
         videoElement.load();
@@ -86,7 +87,7 @@
             });
         });
         // 根据是否提供了新标题来设置页面标题
-        const title = path.split('/').pop().split('.').slice(0, -1).join('.');
+        const title = path2;
         const videoTitle = document.getElementById('video-title');
         let watchedVideos = JSON.parse(localStorage.getItem('watchedVideos')) || [];
         const videoRecord = { name: newTitle ? decodeURIComponent(newTitle) : title, path: path };

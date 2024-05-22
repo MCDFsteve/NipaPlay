@@ -13,6 +13,7 @@ const subPath = path.join(nipaPath, 'sub');
 const https = require('https');
 const Store = require('electron-store');
 const store = new Store();
+const { v4: uuidv4 } = require('uuid');
 const { JSDOM } = require('jsdom');
 const { exec } = require('child_process');
 const ffmpegmac = path.join(__dirname, 'ffmpeg', 'ffmpeg_mac');
@@ -33,6 +34,7 @@ let urlWindow;
 // 创建关于窗口实例 s
 let videoWindow; // 假设这是创建视频播放窗口时的引用
 let loadingWindow;  // 确保这是全局变量
+let loadWindow;
 let selectionWindow;
 let browserView;
 // 监听应用程序退出事件
@@ -65,6 +67,10 @@ app.on('open-file', (event, filePath) => {
 });
 // 监听应用程序准备就绪事件
 app.on('ready', () => {
+    // 清空指定文件夹
+    clearDirectory(subPath);
+    clearDirectory(danmakuPath);
+    clearDirectory(video_commentPath);
     // 清除缓存
     session.defaultSession.clearCache().then(() => {
         console.log('Cache cleared');
@@ -327,7 +333,7 @@ function createUrlWindow() {
     urlWindow = new BrowserWindow({
         width: 300,
         height: 200,
-        fullscreen:false,
+        fullscreen: false,
         alwaysOnTop: true,
         webPreferences: {
             nodeIntegration: true,
@@ -352,12 +358,13 @@ function createBrowserView() {
     urlWindow.setBrowserView(browserView);
     browserView.setBounds({ x: 0, y: 0, width: mainWindow.getBounds().width, height: mainWindow.getBounds().height });
 }
-function calculateFileHash(filePath, algorithm = 'sha256') {
+function calculateFileHash(filePath, algorithm = 'md5') {
     return new Promise((resolve, reject) => {
         const hash = crypto.createHash(algorithm);
         const stream = fs.createReadStream(filePath);
         let totalBytes = 0;
         const limit = 16 * 1024 * 1024; // 16 MB的限制
+        let digestCalled = false; // 添加标志位，防止多次调用digest
 
         stream.on('error', err => reject(err));
         stream.on('data', chunk => {
@@ -371,13 +378,17 @@ function calculateFileHash(filePath, algorithm = 'sha256') {
         });
         stream.on('end', () => {
             // 仅在正常结束流（未提前关闭）时返回哈希
-            if (totalBytes <= limit) {
+            if (totalBytes <= limit && !digestCalled) {
+                digestCalled = true;
                 resolve(hash.digest('hex'));
             }
         });
         stream.on('close', () => {
             // 如果流被提前关闭，返回当前哈希状态
-            resolve(hash.digest('hex'));
+            if (!digestCalled) {
+                digestCalled = true;
+                resolve(hash.digest('hex'));
+            }
         });
     });
 }
@@ -400,9 +411,19 @@ function startCheckingForVideo() {
                         }
                     })()
                 `);
-
                 if (result && result.videoUrl) {
                     console.log("Video found:", result.videoUrl);
+                    // Step 1: Fetch subtitle tracks from the video file
+                    const subtitleTracks = await fetchSubtitleTracks(result.videoUrl);
+                    if (subtitleTracks.length > 0) {
+                        // Step 2: Show subtitle selection window
+                        const selectedTrack = await showSubtitleSelection(subtitleTracks);
+                        // Step 3: Extract selected subtitle
+                        const subtitlePath = await extractSubtitles(result.videoUrl, selectedTrack, subPath);
+                        console.log("Subtitle extracted to:", subtitlePath);
+                    } else {
+                        console.log("No subtitle tracks found.");
+                    }
                     clearInterval(interval);
                     const response = await recognizeVideo2(result.title);
                     console.log('response:', response);
@@ -421,7 +442,6 @@ function startCheckingForVideo() {
                     elapsedTime += checkInterval;
                     if (elapsedTime >= timeoutDuration) {
                         clearInterval(interval);
-                        dialog.showErrorBox('Error', 'No video found within the timeout period.');
                     }
                 }
             } catch (err) {
@@ -436,22 +456,33 @@ function startCheckingForVideo() {
 }
 async function handleDownloadURL(url) {
     console.log('Handling download URL:', url);
-
+    CreateloadWindow();
+    console.log("Video found:", url);
+    // Step 1: Fetch subtitle tracks from the video file
+    const subtitleTracks = await fetchSubtitleTracks(url);
+    if (subtitleTracks.length > 0) {
+        // Step 2: Show subtitle selection window
+        const selectedTrack = await showSubtitleSelection(subtitleTracks);
+        // Step 3: Extract selected subtitle
+        const subtitlePath = await extractSubtitles(url, selectedTrack, subPath);
+        console.log("Subtitle extracted to:", subtitlePath);
+    } else {
+        console.log("No subtitle tracks found.");
+    }
     // 调用 recognizeVideo2 识别视频
     const response = await recognizeVideo2(url);
     console.log('response:', response);
     console.log("post结果:", response.isMatched, response.animeTitle, response.episodeId, response.animeId);
-
     if (response.isMatched) {
         const newTitle = `${response.animeTitle} ${response.episodeTitle}`;
         const episodeId = response.episodeId;
         console.log('id+title:', newTitle, episodeId);
-
         // 下载并处理弹幕
         await danmakudownload(newTitle, url, episodeId);
     } else {
         createSelectionWindow(response.matches, url, response.episodeId);
     }
+    loadWindow.webContents.close();
 }
 function ffmpegif(videoPath) {
     const ext = path.extname(videoPath).toLowerCase();
@@ -680,6 +711,20 @@ function getRecognitionResult(videoPath) {
     console.log(`Getting result for hash: ${hash}`);
     return store.get(hash);
 }
+function CreateloadWindow() {
+    loadWindow = new BrowserWindow({
+        width: 300,
+        height: 200,
+        frame: false,
+        alwaysOnTop: true,
+        vibrancy: 'sidebar',
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        }
+    });
+    loadWindow.loadFile('./loading.html');
+}
 async function openVideoAndFetchDetails(videoPath, episodeId) {
     console.log("函数开始执行，视频路径：", videoPath);
     const outputDir = path.join(danmakuPath);
@@ -799,9 +844,41 @@ async function recognizeVideo(videoPath) {
     });
 }
 async function recognizeVideo2(title) {
-    const fileName = path.basename(title);
-    const hash = 'd41d8cd98f00b204e9800998ecf8427e';
-    const fileSize = 0;
+    let videoPath = title;
+    let hash = 'd41d8cd98f00b204e9800998ecf8427e'; // 默认的哈希值
+    let fileSize = 0;
+
+    if (title.startsWith('https')) {
+        const url = title;
+        const ext = path.extname(url);
+        const filename = `${uuidv4()}${ext}`;
+        const filepath = path.join(danmakuPath, filename);
+
+        console.log(`Downloading first 16MB of video from: ${url}`);
+
+        try {
+            const { default: got } = await import('got'); // 动态导入 got 模块
+            const response = await got(url, {
+                headers: {
+                    'Range': 'bytes=0-16777215'
+                },
+                responseType: 'buffer'
+            });
+
+            fs.writeFileSync(filepath, response.body);
+            console.log(`Video segment saved to: ${filepath}`);
+            videoPath = filepath;
+
+            // 计算下载文件的哈希值
+            hash = await calculateFileHash(videoPath, 'md5');
+            fileSize = response.body.length; // 设置文件大小
+        } catch (error) {
+            console.error('Error downloading video:', error);
+            throw new Error('Failed to download video');
+        }
+    }
+
+    const fileName = path.basename(videoPath);
 
     const requestData = JSON.stringify({
         fileName: fileName,
@@ -864,7 +941,9 @@ function createVideoWindow(videoPath, newTitle, episodeId) {
     if (selectionWindow && !selectionWindow.isDestroyed()) {
         selectionWindow.close();
     }
-
+    if (loadWindow && !loadWindow.isDestroyed()) {
+        loadWindow.close();
+    }
     // 创建一个新的 BrowserWindow 实例
     const videoWindow = new BrowserWindow({
         width: width,
@@ -889,9 +968,10 @@ function createVideoWindow(videoPath, newTitle, episodeId) {
     } else {
         console.log("弹幕文件不存在，将不加载弹幕.");
     }
+    const videoPath2 =  sanitizeFileName(path.basename(videoPath, path.extname(videoPath)));
     // 使用 encodeURIComponent 确保标题中的特殊字符被正确处理
     const encodedTitle = encodeURIComponent(newTitle || '');
-    const url = `file://${__dirname}/video-player.html?path=${encodeURIComponent(videoPath)}&title=${encodeURIComponent(newTitle)}&episodeId=${episodeId}`;
+    const url = `file://${__dirname}/video-player.html?path=${encodeURIComponent(videoPath)}&path2=${encodeURIComponent(videoPath2)}&title=${encodeURIComponent(newTitle)}&episodeId=${episodeId}`;
     videoWindow.loadURL(url);
     console.log(url);
     const recognitionResult = {
@@ -987,7 +1067,7 @@ function createSelectionWindow(matches, videoPath, episodeId) {
         const episodeId = selectedMatch.episodeId;
         const jsonFilePath = path.join(video_commentPath, `${episodeId}.json`);
         const outputDir = path.join(danmakuPath);
-
+        CreateloadWindow();
         if (selectedMatch.episodeId) {
             const url = `https://api.dandanplay.net/api/v2/comment/${selectedMatch.episodeId}?withRelated=true&chConvert=1`;
 
@@ -1067,11 +1147,13 @@ function moveMessagesToNipa() {
         console.log('subPath directory created at:', subPath);
     }
 }
-
+function sanitizeFileName(fileName) {
+    return fileName.replace(/[^a-zA-Z0-9]/g, '');
+}
 function fetchSubtitleTracks(videoPath) {
     const isMac = process.platform === 'darwin';
     const ffmpegPath = isMac ? ffmpegmac : ffmpegwin;
-    const videoName = path.basename(videoPath, path.extname(videoPath));
+    const videoName = sanitizeFileName(path.basename(videoPath, path.extname(videoPath)));
     const outputPath = path.join(subPath, `${videoName}.jpg`);
     return new Promise((resolve, reject) => {
         const ffmpegArgs = [
@@ -1082,6 +1164,7 @@ function fetchSubtitleTracks(videoPath) {
             `"${outputPath}"`
         ].join(' ');
         const command = `"${ffmpegPath}" ${ffmpegArgs}`;
+        console.log("有进行字幕扫描:", ffmpegArgs);
         exec(command, (error, stdoutData, stderrData) => {
             console.log('FFmpeg stdout:', stdoutData);
             console.log('FFmpeg stderr:', stderrData);
@@ -1142,10 +1225,8 @@ function showSubtitleSelection(tracks) {
         return tracks[result.response];
     });
 }
-
-
 function extractSubtitles(videoPath, trackId, outputDir) {
-    const videoName = path.basename(videoPath, path.extname(videoPath));
+    const videoName =  sanitizeFileName(path.basename(videoPath, path.extname(videoPath)));
     console.log('trackId:', trackId);
     const trackIDID = trackId.id;
     const subtitleFormat = trackId.format.includes('ass') ? 'ass' : 'srt';
