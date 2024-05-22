@@ -12,8 +12,10 @@
 
 ### 软件截图
 #### 主界面截图
-<img width="800" alt="image" src="https://github.com/MCDFsteve/NipaPlay/assets/71605531/6a6f7805-23bf-4712-b709-afb12447b884">
+![7bfeeadb52c4bc9cad1f97936bcd9c3c](https://github.com/MCDFsteve/NipaPlay/assets/71605531/71c9086a-394f-47e7-b0e1-e7b1255d8fc1)
+
 
 #### 播放器界面截图
-<img width="1440" alt="image" src="https://github.com/MCDFsteve/NipaPlay/assets/71605531/2c37c540-abad-4490-ba55-94f28c33f4fc">
+![eac419ba1bf9c1ab1a1b4fbb79353b29](https://github.com/MCDFsteve/NipaPlay/assets/71605531/cccd6f6f-0e49-4a1a-a32a-aefc72e1441e)
+
 
