@@ -8,7 +8,7 @@
 - 支持跟随系统自动切换深色浅色模式。
 - 播放器窗口和主窗口分离，可以同时播放多个视频（谁会需要这玩意）。
 ### 下载
-- 直接在右侧[Releases](https://github.com/MCDFsteve/NipaPlay/releases)下载最新包即可使用。目前支持Windows版和macOS版。
+- 直接在右侧[Releases](https://github.com/MCDFsteve/NipaPlay/releases)下载最新包即可使用。目前支持Windows版和macOS版，Linux版。
 
 ### 软件截图
 #### 主界面截图
