@@ -9,6 +9,7 @@
             font-family: Arial, sans-serif;
             margin: 20px;
             background-color: #ffffff;
+            user-select: none; 
         }
 
         /* 设置滚动条的宽度和轨道颜色 */
@@ -169,11 +170,11 @@
 
 <body>
     <h1>选择匹配的弹幕库</h1>
-    <input type="text" id="search-input" style="display:none;" placeholder="都不是想要的结果？在此处搜索">
+    <input type="text" id="search-input" style="display:none;" placeholder="没有想要的？哼！勉为其难帮你找吧！！">
     <button id="search-button">搜索</button>
     <!-- 在搜索框下方添加一个新的按钮 -->
     <div id="no-danmaku-play" class="selection-item" style="cursor: pointer;">
-        不加载弹幕直接开始播放
+        什么？你不想要弹幕？好吧好吧点这里直接开始播放！
     </div>
     <div id="matchList">正在加载数据...</div>
     <script src="selection.js">

@@ -17,6 +17,7 @@ const { v4: uuidv4 } = require('uuid');
 const { JSDOM } = require('jsdom');
 const { exec } = require('child_process');
 const ffmpegmac = path.join(__dirname, 'ffmpeg', 'ffmpeg_mac');
+const ffmpeglinux = path.join(__dirname, 'ffmpeg','ffmpeg_linux');
 const ffmpegwin = path.join(__dirname, 'ffmpeg', 'ffmpeg_win', 'bin', 'ffmpeg.exe')
 const logFilePath = path.join(downloadsPath, 'app.log');
 // 获取应用的用户数据目录
@@ -37,6 +38,7 @@ let loadingWindow;  // 确保这是全局变量
 let loadWindow;
 let selectionWindow;
 let browserView;
+let subtitleSelectionWindow;
 // 监听应用程序退出事件
 app.on('window-all-closed', () => {
     // 在 macOS 上，关闭所有窗口后退出应用程序
@@ -67,6 +69,8 @@ app.on('open-file', (event, filePath) => {
 });
 // 监听应用程序准备就绪事件
 app.on('ready', () => {
+    console.log('Chrome version:', process.versions.chrome);
+    console.log('Electron version:', process.versions.electron);
     // 清空指定文件夹
     clearDirectory(subPath);
     clearDirectory(danmakuPath);
@@ -334,7 +338,7 @@ function createUrlWindow() {
         width: 300,
         height: 200,
         fullscreen: false,
-        alwaysOnTop: true,
+        autoHideMenuBar: true,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
@@ -605,6 +609,11 @@ function createMainWindow() {
                     }
                 },
                 {
+                    label: '播放网络媒体库',
+                    click: () =>
+                        createUrlWindow()
+                },
+                {
                     label: '清除观看记录',
                     click: () =>
                         confirmDeleteWatchHistory()
@@ -713,10 +722,10 @@ function getRecognitionResult(videoPath) {
 }
 function CreateloadWindow() {
     loadWindow = new BrowserWindow({
-        width: 300,
-        height: 200,
+        width: 200,
+        height: 100,
         frame: false,
-        alwaysOnTop: true,
+        autoHideMenuBar: true,
         vibrancy: 'sidebar',
         webPreferences: {
             nodeIntegration: true,
@@ -732,11 +741,10 @@ async function openVideoAndFetchDetails(videoPath, episodeId) {
     // 显示加载中窗口
     if (!loadingWindow || loadingWindow.isDestroyed()) {
         loadingWindow = new BrowserWindow({
-            width: 300,
-            height: 200,
+            width: 200,
+            height: 100,
             frame: false,
             show: false,
-            alwaysOnTop: true,
             vibrancy: 'sidebar',
             webPreferences: {
                 nodeIntegration: true,
@@ -968,7 +976,7 @@ function createVideoWindow(videoPath, newTitle, episodeId) {
     } else {
         console.log("弹幕文件不存在，将不加载弹幕.");
     }
-    const videoPath2 =  sanitizeFileName(path.basename(videoPath, path.extname(videoPath)));
+    const videoPath2 = sanitizeFileName(path.basename(videoPath, path.extname(videoPath)));
     // 使用 encodeURIComponent 确保标题中的特殊字符被正确处理
     const encodedTitle = encodeURIComponent(newTitle || '');
     const url = `file://${__dirname}/video-player.html?path=${encodeURIComponent(videoPath)}&path2=${encodeURIComponent(videoPath2)}&title=${encodeURIComponent(newTitle)}&episodeId=${episodeId}`;
@@ -1040,7 +1048,7 @@ function createSelectionWindow(matches, videoPath, episodeId) {
     selectionWindow = new BrowserWindow({
         width: 500,
         height: 333,
-        alwaysOnTop: true,
+        autoHideMenuBar: true,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false
@@ -1151,8 +1159,18 @@ function sanitizeFileName(fileName) {
     return fileName.replace(/[^a-zA-Z0-9]/g, '');
 }
 function fetchSubtitleTracks(videoPath) {
-    const isMac = process.platform === 'darwin';
-    const ffmpegPath = isMac ? ffmpegmac : ffmpegwin;
+    const ffmpegPath = (() => {
+        switch (os.platform()) {
+            case 'darwin': // macOS
+                return ffmpegmac;
+            case 'win32': // Windows
+                return ffmpegwin;
+            case 'linux': // Linux
+                return ffmpeglinux;
+            default:
+                throw new Error('Unsupported platform');
+        }
+    })();
     const videoName = sanitizeFileName(path.basename(videoPath, path.extname(videoPath)));
     const outputPath = path.join(subPath, `${videoName}.jpg`);
     return new Promise((resolve, reject) => {
@@ -1179,12 +1197,17 @@ function fetchSubtitleTracks(videoPath) {
         });
     });
 }
-
 function parseSubtitleTracks(stderrData) {
     const subtitleTracks = [];
-    const streamPattern = /Stream #(\d+:\d+)(?:.*?): Subtitle: ([^\n]+)\n.*Metadata:\n(?:.*handler_name\s+:\s([^\n]+))?[\s\S]*?(?:.*title\s+:\s([^\n]+))?/g;
+    // 将所有换行符统一为 \n
+    const normalizedData = stderrData.replace(/\r\n/g, '\n');
+    // 调试信息：打印规范化后的输入数据
+    console.log('Normalized stderrData:', JSON.stringify(normalizedData));
+
+    const streamPattern = /Stream #(\d+:\d+)(?:.*?): Subtitle: ([^\n]+)\n.*?Metadata:\n(?:.*?handler_name\s*:\s*([^\n]+))?[\s\S]*?(?:.*?title\s*:\s*([^\n]+))?/g;
+    
     let match;
-    while ((match = streamPattern.exec(stderrData)) !== null) {
+    while ((match = streamPattern.exec(normalizedData)) !== null) {
         const [_, id, format, handlerName, title] = match;
         const subtitleTrack = {
             id: id,
@@ -1192,7 +1215,7 @@ function parseSubtitleTracks(stderrData) {
             handlerName: handlerName ? handlerName.trim() : '',
             title: title ? title.trim() : ''
         };
-        console.log('subtitleTrack:', subtitleTrack)
+        console.log('Parsed subtitleTrack:', subtitleTrack); // 调试信息：打印匹配的字幕轨道
         if (handlerName) {
             subtitleTrack.handlerName = handlerName.trim();
         }
@@ -1207,26 +1230,39 @@ function parseSubtitleTracks(stderrData) {
     return subtitleTracks;
 }
 function showSubtitleSelection(tracks) {
-    const options = tracks.map(track => {
-        if (track.title) {
-            return `${track.handlerName ? track.handlerName + ' - ' : ''}${track.title}`;
-        } else {
-            return `${track.handlerName}`;
-        }
-    });
+    return new Promise((resolve, reject) => {
+        subtitleSelectionWindow = new BrowserWindow({
+            width: 300,
+            height: 200,
+            alwaysOnTop: true,
+            autoHideMenuBar: true,
+            webPreferences: {
+                nodeIntegration: true,
+                contextIsolation: false
+            }
+        });
+        loadingWindow.webContents.close();
+        subtitleSelectionWindow.loadFile('subtitle_selection.html');
 
-    return dialog.showMessageBox({
-        type: 'question',
-        buttons: options,
-        title: '选择字幕',
-        message: '请选择您想要的字幕轨道：',
-        noLink: true
-    }).then(result => {
-        return tracks[result.response];
+        // 当窗口加载完成后，发送字幕轨道信息
+        subtitleSelectionWindow.webContents.on('did-finish-load', () => {
+            subtitleSelectionWindow.webContents.send('subtitle-tracks', tracks);
+        });
+
+        // 接收从渲染进程发来的选中字幕信息
+        ipcMain.once('subtitle-selected', (event, selectedIndex) => {
+            subtitleSelectionWindow.close();
+            CreateloadWindow();
+            resolve(tracks[selectedIndex]);
+        });
+
+        subtitleSelectionWindow.on('closed', () => {
+            subtitleSelectionWindow = null;
+        });
     });
 }
 function extractSubtitles(videoPath, trackId, outputDir) {
-    const videoName =  sanitizeFileName(path.basename(videoPath, path.extname(videoPath)));
+    const videoName = sanitizeFileName(path.basename(videoPath, path.extname(videoPath)));
     console.log('trackId:', trackId);
     const trackIDID = trackId.id;
     const subtitleFormat = trackId.format.includes('ass') ? 'ass' : 'srt';
@@ -1235,8 +1271,18 @@ function extractSubtitles(videoPath, trackId, outputDir) {
     console.log('ffmpeg sub:', outputPath);
     console.log('trackId:', trackId);
     const ffmpegArgs = ['-i', `"${videoPath}"`, '-map', trackIDID, '-c:s', subtitleFormat, '-y', `"${outputPath}"`];
-    const isMac = process.platform === 'darwin';
-    const ffmpegPath = isMac ? ffmpegmac : ffmpegwin;
+    const ffmpegPath = (() => {
+        switch (os.platform()) {
+            case 'darwin': // macOS
+                return ffmpegmac;
+            case 'win32': // Windows
+                return ffmpegwin;
+            case 'linux': // Linux
+                return ffmpeglinux;
+            default:
+                throw new Error('Unsupported platform');
+        }
+    })();
     return new Promise((resolve, reject) => {
         const command = `"${ffmpegPath}" ${ffmpegArgs.join(' ')}`;
         exec(command, (error, stdout, stderr) => {

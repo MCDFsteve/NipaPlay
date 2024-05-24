@@ -1,11 +1,11 @@
 {
   "name": "nipaplay",
   "productName": "NipaPlay",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "咪啪～☆",
   "main": "main.js",
   "author": "DFsteve",
-  "license": "GPLv2",
+  "license": "GPLv3",
   "asar": false,
   "dependencies": {
     "assjs": "^0.0.11",
@@ -16,12 +16,17 @@
     "got": "^14.3.0",
     "jsdom": "^24.0.0",
     "node-addon-api": "^8.0.0",
+    "node-mpv": "^1.5.0",
     "plyr": "^3.7.8",
     "ps-node": "^0.1.6",
     "python": "^0.0.4",
     "steamworks": "^0.0.11",
     "steamworks.js": "^0.3.1",
     "uuid": "^9.0.1",
+    "video.js": "^8.12.0",
+    "videojs-contrib-hls": "^5.15.0",
+    "vlc.js": "^5.0.0-alpha",
+    "wcjs-player": "^6.0.1",
     "xml2js": "^0.6.2"
   },
   "scripts": {
@@ -30,7 +35,9 @@
     "woa": "electron-builder --win --arm64",
     "mac": "electron-builder --mac",
     "macx64": "electron-builder --mac --x64",
-    "build": "npm run win && npm run mac && npm run macx64"
+    "linux": "electron-builder --linux --x64",
+    "linuxarm": "electron-builder --linux",
+    "build": "npm run win && npm run mac && npm run macx64 && npm run linux && npm run linuxarm"
   },
   "build": {
     "appId": "com.dfsteve.nipaplay",
@@ -67,6 +74,17 @@
       "oneClick": false,
       "perMachine": true,
       "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "zip"
+      ],
+      "category": "Utility",
+      "icon": "icon.png",
+      "extraResources": [
+        "assets"
+      ]
     },
     "win": {
       "target": [

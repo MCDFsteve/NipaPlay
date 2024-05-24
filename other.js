@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 // 导入 shell 模块，注意这行代码需要在 Electron 环境中运行
 const { shell } = require('electron');
-
 document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', function (event) {
         // 检查被点击的元素是否为超链接

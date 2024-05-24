@@ -42,6 +42,7 @@
             font-family: Arial, sans-serif;
             margin: 20px;
             background-color: #ffffff;
+            user-select: none; 
         }
         @media (prefers-color-scheme: dark) {
             body {
@@ -119,7 +120,7 @@
 
 <body>
     <h2></h2>
-    <input type="text" id="url-input" placeholder="在此键入url" style="width: 100%;">
+    <input type="text" id="url-input" placeholder="在这里！放入神秘的蓝色链接！！" style="width: 100%;">
     <button id="submit-url">加载url</button>
     <script>
         const { ipcRenderer } = require('electron');

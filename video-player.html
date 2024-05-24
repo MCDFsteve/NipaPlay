@@ -130,6 +130,8 @@
     <script src="player.js"></script>
     <script src="node_modules/danmaku/dist/danmaku.min.js"></script>
     <script id="dynamic-script"></script>
+    <script src="node_modules/video.js/dist/video.js"></script>
+  <script src="node_modules/videojs-contrib-hls/dist/videojs-contrib-hls.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             ipcRenderer.on('file-content', (event, content) => {
@@ -138,6 +140,7 @@
                 document.body.appendChild(dynamicScript);
             });
         });
+        //var myVideoPlayer = videojs('video-player');
     </script>
 
     <script src="danmaku2.js"></script>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>选择字幕</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            user-select: none; 
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #202020;
+            }
+        }
+
+        #subtitle-options {
+            display: flex;
+        }
+
+        .subtitle-button {
+            margin: 6px;
+            border: none;
+            padding: 5px 30px;
+            background-color: rgba(233, 233, 233, 1.0);
+            font-size: 16px;
+            box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
+            color: #000000;
+            cursor: pointer;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 {
+            color: #000000;
+            font-size: 20px;
+            justify-content: center;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            h1 {
+                color: #ffffff;
+            }
+        }
+
+        .subtitle-button:hover {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .subtitle-button {
+                background-color: #373737;
+                color: #ffffff;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .subtitle-button:hover {
+                background-color: #545454;
+            }
+        }
+
+        #cen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 设置滚动条的宽度和轨道颜色 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            /* 或任何您希望的宽度 */
+            background-color: transparent;
+            /* 滚动条轨道颜色 */
+        }
+
+        /* 设置滚动条滑块的颜色 */
+        ::-webkit-scrollbar-thumb {
+            background-color: rgba(64, 64, 64, 0.4);
+            /* 滚动条滑块颜色 */
+            border-radius: 6px;
+            /* 如果需要，可以设置圆角 */
+        }
+
+        /* 设置当鼠标悬停在滚动条滑块上时的颜色 */
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(130, 130, 130, 0.4);
+            /* 滚动条滑块悬停颜色 */
+        }
+
+        @media (prefers-color-scheme: dark) {
+            ::-webkit-scrollbar-thumb:hover {
+                background-color: rgba(198, 198, 198, 0.4);
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            ::-webkit-scrollbar-thumb {
+                background-color: rgba(134, 134, 134, 0.4);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="cen">
+        <h1>选择想要加载的字幕</h1>
+        <div id="subtitle-options"></div>
+    </div>
+    <script>
+        const { ipcRenderer } = require('electron');
+    
+        ipcRenderer.on('subtitle-tracks', (event, tracks) => {
+            const optionsDiv = document.getElementById('subtitle-options');
+            optionsDiv.innerHTML = ''; // 清空之前的选项
+    
+            tracks.forEach((track, index) => {
+                const option = document.createElement('div');
+                option.className = 'subtitle-option';
+    
+                const button = document.createElement('button');
+                button.className = 'subtitle-button';
+    
+                let titleText = track.title || `字幕${index + 1}`;
+                const lowerTitle = titleText.toLowerCase();
+                if (lowerTitle.includes('tw') || lowerTitle.includes('tc')) {
+                    titleText = '繁体中文';
+                } else if (lowerTitle.includes('cn') || lowerTitle.includes('sc')) {
+                    titleText = '简体中文';
+                }
+    
+                button.textContent = titleText;
+    
+                button.addEventListener('click', () => {
+                    ipcRenderer.send('subtitle-selected', index);
+                });
+    
+                option.appendChild(button);
+                optionsDiv.appendChild(option);
+            });
+        });
+    </script>
+    
+</body>
+
+</html>
