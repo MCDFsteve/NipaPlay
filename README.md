@@ -1,7 +1,7 @@
 # NipaPlay 一款本地弹幕播放器。看番专用。弹弹play的macOS代餐。
 ## 特色
 ### 似乎没有（大嘘）
-- electron开发，html5播放器内核（支持mkv），自动调用GPU解码。
+- electron开发，html5播放器内核（支持mkv），支持硬解hevc/h265，加载内嵌字幕，自动调用GPU解码。
 - 支持加载内嵌字幕（ass和srt）的视频。
 - 支持跨平台，不管是Windows还是macOS还是linux都提供一致的视觉体验和操作。
 - macOS风格的界面UI，支持毛玻璃效果，visionPro风格的播放器界面。
