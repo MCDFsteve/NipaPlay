@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', function () {
         `).join('');
     }
 });
-
 const packageJson = require('./package.json'); // 确保路径正确
 const nipaplayVersion = packageJson.version;
 document.addEventListener('DOMContentLoaded', function () {
@@ -326,3 +325,24 @@ function returnToanime() {
     document.getElementById('new-series-container').style.display = 'block';
     loadNewSeries();  // 重新加载新番更新内容
 };
+function isMacOS() {
+    return navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+}
+if (isMacOS()) {
+    console.log('mac');
+} else {
+    const closeButton = document.getElementById('close-button');
+    const miniButton = document.getElementById('minimize-button');
+    closeButton.classList.add('close-button-other');
+    closeButton.style.display = 'block';
+    closeButton.addEventListener('click', () => {
+        console.log('nipa');
+        ipcRenderer.send('close-main-window');
+    });
+    miniButton.classList.add('minimize-button-other');
+    miniButton.style.display = 'block';
+    miniButton.addEventListener('click', () => {
+        console.log('nipa');
+        ipcRenderer.send('minimize-window');
+    });
+}

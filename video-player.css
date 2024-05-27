@@ -582,3 +582,125 @@ html {
     opacity: 1.0;
     transition: opacity 0.5s ease;
 }
+
+.windowbutton{
+    position: flex;
+}
+/* 关闭按钮的样式 */
+.close-button-other {
+    margin: 10px;
+    right:0px;
+    position: absolute;
+    /* 绝对定位，方便放置在特定位置 */
+    width: 30px;
+    /* 按钮宽度 30 像素 */
+    height: 30px;
+    /* 按钮高度 30 像素 */
+    /* 水平居中 */
+    cursor: pointer;
+    /* 鼠标悬停时显示为指针 */
+    background:none;
+    /* 无背景色 */
+    border: none;
+    /* 无边框 */
+    outline: none;
+    /* 无轮廓 */
+    transition: color 0.3s;
+    /* 颜色渐变效果 */
+    z-index: 114514;
+}
+
+/* 使用伪元素绘制 "X" */
+.close-button-other::before,
+.close-button-other::after {
+    content: '';
+    /* 伪元素内容为空 */
+    position: absolute;
+    top: 22%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /* 绝对定位 */
+    width: 1.5px;
+    /* 线条宽度 */
+    height: 18px;
+    /* 线条高度 */
+    background-color: #ffffff;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
+    /* 线条颜色为深灰色 */
+    border-radius: 2px;
+    /* 圆角效果 */
+}
+/* 第一条线条，旋转形成对角线 */
+.close-button-other::before {
+    transform: rotate(45deg);
+    /* 顺时针旋转 45 度 */
+}
+
+/* 第二条线条，旋转形成对角线 */
+.close-button-other::after {
+    transform: rotate(-45deg);
+    /* 逆时针旋转 45 度 */
+}
+
+/* 悬停时的样式 */
+.close-button-other:hover::before,
+.close-button-other:hover::after {
+    background-color: #ff5f57;
+    /* 悬停时线条颜色变为红色 */
+}
+/* 最小化按钮的样式 */
+.minimize-button-other {
+    margin: 10px;
+    right:30px;
+    position: absolute;
+    /* 绝对定位，方便放置在特定位置 */
+    /* 距离右侧 40 像素 */
+    width: 30px;
+    /* 按钮宽度 30 像素 */
+    height: 30px;
+    /* 水平居中 */
+    cursor: pointer;
+    /* 鼠标悬停时显示为指针 */
+    background:none;
+    /* 无背景色 */
+    border: none;
+    /* 无边框 */
+    outline: none;
+    /* 无轮廓 */
+    transition: color 0.3s;
+    /* 颜色渐变效果 */
+    z-index: 114514;
+}
+
+/* 使用伪元素绘制 "-" */
+.minimize-button-other::before {
+    content: '';
+    /* 伪元素内容为空 */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /* 绝对定位 */
+    width: 15px;
+    /* 线条宽度 */
+    height: 1.5px;
+    /* 线条高度 */
+    background-color: #ffffff;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
+    /* 线条颜色为深灰色 */
+    border-radius: 2px;
+    /* 圆角效果 */
+}
+/* 悬停时的样式 */
+.minimize-button-other:hover::before {
+    background-color: #f4bf4f;
+    /* 悬停时线条颜色变为红色 */
+}
+.menuclose{
+    top:-10px;
+    right:-10px;
+}
+.playclose{
+    position: fixed;
+    top:0px;
+}

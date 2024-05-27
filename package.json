@@ -1,7 +1,7 @@
 {
   "name": "nipaplay",
   "productName": "NipaPlay",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "咪啪～☆",
   "main": "main.js",
   "author": "DFsteve",
@@ -31,13 +31,16 @@
   },
   "scripts": {
     "start": "electron .",
-    "win": "electron-builder --win --x64",
-    "woa": "electron-builder --win --arm64",
-    "mac": "electron-builder --mac",
-    "macx64": "electron-builder --mac --x64",
-    "linux": "electron-builder --linux --x64",
-    "linuxarm": "electron-builder --linux",
-    "build": "npm run win && npm run mac && npm run macx64 && npm run linux && npm run linuxarm"
+    "prebuild:mac": "node scripts/prebuild.js mac",
+    "prebuild:win": "node scripts/prebuild.js win",
+    "prebuild:linux": "node scripts/prebuild.js linux",
+    "win": "npm run prebuild:win && electron-builder --win --x64",
+    "woa": "npm run prebuild:win && electron-builder --win --arm64",
+    "mac": "npm run prebuild:mac && electron-builder --mac",
+    "macx64": "npm run prebuild:mac && electron-builder --mac --x64",
+    "linux": "npm run prebuild:linux && electron-builder --linux --x64",
+    "linuxarm": "npm run prebuild:linux && electron-builder --linux",
+    "build": "npm run win && npm run mac && npm run macx64 && npm run linux && npm run linuxarm && npm run woa"
   },
   "build": {
     "appId": "com.dfsteve.nipaplay",
@@ -55,7 +58,10 @@
       "!**/._*",
       "!**/electron-builder.yml",
       "!**/.DS_Store",
-      "!**/*.bak"
+      "!**/*.bak",
+      "!**/ffmpeg/ffmpeg_mac",
+      "!**/ffmpeg/ffmpeg_linux64",
+      "!**/ffmpeg/ffmpeg_linuxarm"
     ],
     "mac": {
       "target": [
@@ -66,6 +72,7 @@
       ],
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
       "identity": null,
       "entitlements": "entitlements.mac.plist",
       "entitlementsInherit": "entitlements.mac.inherit.plist"
@@ -84,7 +91,8 @@
       "icon": "icon.png",
       "extraResources": [
         "assets"
-      ]
+      ],
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
     },
     "win": {
       "target": [
@@ -94,7 +102,8 @@
       "icon": "icon.ico",
       "extraResources": [
         "assets"
-      ]
+      ],
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
     }
   },
   "keywords": [],

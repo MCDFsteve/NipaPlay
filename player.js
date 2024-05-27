@@ -90,12 +90,18 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     document.addEventListener('fullscreenchange', (event) => {
+        const closeButton = document.getElementById('close-button');
+        const miniButton = document.getElementById('minimize-button');
         if (document.fullscreenElement) {
             winscreenButton.style.display = 'block';
             fullscreenButton.style.display = 'none';
+            closeButton.style.display = 'none';
+            miniButton.style.display = 'none';
         } else {
             winscreenButton.style.display = 'none';
             fullscreenButton.style.display = 'block';
+            closeButton.style.display = 'block';
+            miniButton.style.display = 'block';
         }
     });
     fullscreenButton.addEventListener('click', function () {
@@ -669,66 +675,81 @@ function showSubtitleAlert() {
         setTimeout(() => alertBox.style.display = 'none', 500); // 确保动画完成后隐藏
     }, 3000); // 3秒后开始隐藏通知
 }
-document.addEventListener('keydown', (event) => {
+document.addEventListener('DOMContentLoaded', () => {
     const video = document.getElementById('video-player');
-    const volumeDisplay = document.getElementById('volume-display'); // 确保您的 HTML 中有这个元素
+    let volumeDisplay = document.getElementById('volume-display');
 
-    switch (event.key) {
-        case 'ArrowUp': // 增大音量
-            if (video.volume < 1) {
-                video.volume = Math.min(video.volume + 0.1, 1);
-            }
-            break;
-        case 'ArrowDown': // 减小音量
-            if (video.volume > 0) {
-                video.volume = Math.max(video.volume - 0.1, 0);
-            }
-            break;
-        case 'ArrowLeft': // 视频后退五秒
-            video.currentTime = Math.max(video.currentTime - 5, 0);
-            break;
-        case 'ArrowRight': // 视频前进五秒
-            video.currentTime = Math.min(video.currentTime + 5, video.duration);
-            break;
+    // 从 localStorage 中获取音量值并设置
+    const savedVolume = localStorage.getItem('videoVolume');
+    if (savedVolume !== null) {
+        video.volume = parseFloat(savedVolume);
     }
 
-    // 更新音量显示
-    if (['ArrowUp', 'ArrowDown'].includes(event.key)) {
-        if (!volumeDisplay) {
-            volumeDisplay = document.createElement('div');
-            volumeDisplay.id = 'volume-display';
-            document.body.appendChild(volumeDisplay); // 添加音量显示到页面
+    document.addEventListener('keydown', (event) => {
+        switch (event.key) {
+            case 'ArrowUp': // 增大音量
+                if (video.volume < 1) {
+                    video.volume = Math.min(video.volume + 0.1, 1);
+                }
+                break;
+            case 'ArrowDown': // 减小音量
+                if (video.volume > 0) {
+                    video.volume = Math.max(video.volume - 0.1, 0);
+                }
+                break;
+            case 'ArrowLeft': // 视频后退五秒
+                video.currentTime = Math.max(video.currentTime - 5, 0);
+                break;
+            case 'ArrowRight': // 视频前进五秒
+                video.currentTime = Math.min(video.currentTime + 5, video.duration);
+                break;
         }
-        volumeDisplay.innerText = `音量: ${Math.round(video.volume * 100)}%`;
-        volumeDisplay.style.display = 'block';
-        clearTimeout(window.volumeHideTimeout);
-        window.volumeHideTimeout = setTimeout(() => {
-            volumeDisplay.style.display = 'none';
-        }, 2000); // 2秒后隐藏音量显示
-    }
+
+        // 将音量值存储到 localStorage 中
+        if (['ArrowUp', 'ArrowDown'].includes(event.key)) {
+            localStorage.setItem('videoVolume', video.volume);
+
+            if (!volumeDisplay) {
+                volumeDisplay = document.createElement('div');
+                volumeDisplay.id = 'volume-display';
+                document.body.appendChild(volumeDisplay); // 添加音量显示到页面
+            }
+            volumeDisplay.innerText = `音量: ${Math.round(video.volume * 100)}%`;
+            volumeDisplay.style.display = 'block';
+
+            // 清除之前的定时器，重新设置定时器
+            if (window.volumeHideTimeout) {
+                clearTimeout(window.volumeHideTimeout);
+            }
+            window.volumeHideTimeout = setTimeout(() => {
+                volumeDisplay.style.display = 'none';
+            }, 2000); // 2秒后隐藏音量显示
+        }
+    });
 });
-    const steamworks = require('steamworks.js');
-    const client = steamworks.init(2520710);
-    const mess = "#helloworld";
-    function setRichPresence(key, value) {
-        console.log(`Trying to set Rich Presence with key: ${key}, value: ${value}`);
-        if (client && client.localplayer) {
-            client.localplayer.setRichPresence(key, value);
-            console.log('Rich Presence set successfully.');
-            console.log(client.localplayer.setRichPresence(key, value));
-        } else {
-            console.error(`Could not set the rich presence, steamworks was not properly loaded!`);
-        }
-    }
-    if (newTitle) {
-        const bangumi = newTitle;
-        setRichPresence("steam_display", `${mess}`);
-        setRichPresence("bangumi", `${bangumi}`);
+
+const steamworks = require('steamworks.js');
+const client = steamworks.init(2520710);
+const mess = "#helloworld";
+function setRichPresence(key, value) {
+    console.log(`Trying to set Rich Presence with key: ${key}, value: ${value}`);
+    if (client && client.localplayer) {
+        client.localplayer.setRichPresence(key, value);
+        console.log('Rich Presence set successfully.');
+        console.log(client.localplayer.setRichPresence(key, value));
     } else {
-        const bangumi = title;
-        setRichPresence("steam_display", `${mess}`);
-        setRichPresence("bangumi", `${bangumi}`);
+        console.error(`Could not set the rich presence, steamworks was not properly loaded!`);
     }
+}
+if (newTitle) {
+    const bangumi = newTitle;
+    setRichPresence("steam_display", `${mess}`);
+    setRichPresence("bangumi", `${bangumi}`);
+} else {
+    const bangumi = title;
+    setRichPresence("steam_display", `${mess}`);
+    setRichPresence("bangumi", `${bangumi}`);
+}
 
 
 

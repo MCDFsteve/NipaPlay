@@ -340,7 +340,7 @@ li.sidebar-button::before {
     }
 }
 .scrollable-list {
-    height: 550px;
+    height: 490px;
     /* 根据您的页面设计调整高度 */
     overflow-y: auto;
 }

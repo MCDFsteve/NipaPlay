@@ -5,6 +5,11 @@ console.log = function (...args) {
     ipcRenderer.send('log-message', args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : arg)).join(' '));
     originalLog.apply(console, args); // 保持渲染进程的控制台也可以输出日志
 };
+// 关闭按钮点击事件
+closeButton.addEventListener('click', () => {
+    console.log('nipa');
+    ipcRenderer.send('close-selection-window');
+});
 function updateMatchList(matches, isEpisodes = false, animeInfo = null) {
     const matchList = document.getElementById('matchList');
     matchList.innerHTML = ''; // 清空现有条目
@@ -49,7 +54,7 @@ function updateMatchList(matches, isEpisodes = false, animeInfo = null) {
         matchList.innerHTML = '<div class="no-matches">没有可以选择的视频</div>'; // 如果没有匹配项，显示提示信息
     }
 }
-document.getElementById('no-danmaku-play').addEventListener('click', function() {
+document.getElementById('no-danmaku-play').addEventListener('click', function () {
     // 发送到主进程的对象不包括episodeId
     ipcRenderer.invoke('process-selection', { animeTitle: "直接播放" });
     console.log('yes');
@@ -60,7 +65,7 @@ ipcRenderer.on('update-selection', (event, matches) => {
     updateMatchList(matches);
 });
 document.getElementById('search-button').addEventListener('click', handleSearch);
-document.getElementById('search-input').addEventListener('keydown', function(event) {
+document.getElementById('search-input').addEventListener('keydown', function (event) {
     if (event.keyCode === 13) { // 检查是否为回车键
         handleSearch();
     }

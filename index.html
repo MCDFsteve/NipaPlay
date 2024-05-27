@@ -5,15 +5,21 @@
     <meta charset="UTF-8">
     <title>NipaPlay</title>
     <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="close.css">
     <style id="theme-style"></style>
 </head>
 
 <body>
+    <div class="windowbutton">
+        <div id="close-button" style="display: none;"></div>
+        <div id="minimize-button" style="display: none;"></div>
+    </div>
     <div class="sidebar">
         <div id="title-text"><span>NipaPlay</span></div>
         <button id="import-video" class="active"><img src="icons/playanime.png" alt="icon"><span>视频导入</span></button>
         <button id="media-library"><img src="icons/animelibary.png" alt="icon"><span>媒体库</span></button>
-        <button id="new-series" onclick="returnToNewSeries()"><img src="icons/newanime.png" alt="icon"><span>新番更新</span></button>
+        <button id="new-series" onclick="returnToNewSeries()"><img src="icons/newanime.png"
+                alt="icon"><span>新番更新</span></button>
         <button id="viewing-history"><img src="icons/animehistory.png" alt="icon"><span>观看记录</span></button>
         <button id="about-menu"><img src="icons/animestar.png" alt="icon"><span>关于NipaPlay</span></button>
     </div>
@@ -47,11 +53,11 @@
             <h2>新番更新</h2>
             <hr class="section-divider">
             <div id="media-content" class="scrollable-list">
-            <div id="new-series-container" style="display:block;"><br>加载中......</div>
-            <div id="anime-detail-content" style="display:none;"></div>
+                <div id="new-series-container" style="display:block;"><br>加载中......</div>
+                <div id="anime-detail-content" style="display:none;"></div>
+            </div>
         </div>
-        </div>
-        
+
         <!-- 观看记录内容区 -->
         <!-- 观看记录内容区 -->
         <div id="viewing-history-content" class="content-page" style="display:none;">

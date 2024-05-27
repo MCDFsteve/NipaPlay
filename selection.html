@@ -4,12 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <title>选择视频应该匹配的结果</title>
+    <link rel="stylesheet" href="close.css">
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
             background-color: #ffffff;
-            user-select: none; 
+            user-select: none;
         }
 
         /* 设置滚动条的宽度和轨道颜色 */
@@ -169,6 +170,8 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
 
 <body>
+    <div class="drag-area"></div>
+    <div id="close-button" ></div>
     <h1>选择匹配的弹幕库</h1>
     <input type="text" id="search-input" style="display:none;" placeholder="没有想要的？哼！勉为其难帮你找吧！！">
     <button id="search-button">搜索</button>
@@ -177,7 +180,9 @@
         什么？你不想要弹幕？好吧好吧点这里直接开始播放！
     </div>
     <div id="matchList">正在加载数据...</div>
-    <script src="selection.js">
+    <script src="close.js"></script>
+    <script src="selection.js"></script>
+    <script>
     </script>
 </body>
 

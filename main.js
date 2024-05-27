@@ -17,7 +17,8 @@ const { v4: uuidv4 } = require('uuid');
 const { JSDOM } = require('jsdom');
 const { exec } = require('child_process');
 const ffmpegmac = path.join(__dirname, 'ffmpeg', 'ffmpeg_mac');
-const ffmpeglinux = path.join(__dirname, 'ffmpeg','ffmpeg_linux');
+const ffmpeglinux64 = path.join(__dirname, 'ffmpeg', 'ffmpeg_linux64');
+const ffmpeglinuxarm = path.join(__dirname, 'ffmpeg', 'ffmpeg_linuxarm');
 const ffmpegwin = path.join(__dirname, 'ffmpeg', 'ffmpeg_win', 'bin', 'ffmpeg.exe')
 const logFilePath = path.join(downloadsPath, 'app.log');
 // 获取应用的用户数据目录
@@ -37,7 +38,8 @@ let videoWindow; // 假设这是创建视频播放窗口时的引用
 let loadingWindow;  // 确保这是全局变量
 let loadWindow;
 let selectionWindow;
-let browserView;
+let mainBrowserView;
+let topBrowserView;
 let subtitleSelectionWindow;
 // 监听应用程序退出事件
 app.on('window-all-closed', () => {
@@ -67,6 +69,9 @@ app.on('open-file', (event, filePath) => {
         app.once('ready', () => ffmpegif(filePath));
     }
 });
+app.on('before-quit', () => {
+    app.isQuitting = true;
+});
 // 监听应用程序准备就绪事件
 app.on('ready', () => {
     console.log('Chrome version:', process.versions.chrome);
@@ -83,16 +88,21 @@ app.on('ready', () => {
     session.defaultSession.on('will-download', async (event, item, webContents) => {
         const url = item.getURL();
         console.log('Download URL detected:', url);
-        urlWindow.webContents.close();
+        urlWindow.close();
         // 阻止默认的下载行为
         event.preventDefault();
         // 处理捕获到的下载 URL
         handleDownloadURL(url);
     });
     // 注册全局快捷键 Command + Q
-    const ret = globalShortcut.register('Command+Q', () => {
-        // 结束应用程序
-        app.quit();
+    const ret = globalShortcut.register('CommandOrControl+Q', () => {
+        const allWindows = BrowserWindow.getAllWindows();
+        const isAnyWindowFocused = allWindows.some(win => win.isFocused());
+
+        if (isAnyWindowFocused) {
+            // 结束应用程序
+            app.quit();
+        }
     });
     moveMessagesToNipa()
     // 检查注册快捷键的状态
@@ -193,8 +203,33 @@ ipcMain.on('load-config', async (event) => {
         event.reply('config-loaded', null);
     }
 });
-
-
+ipcMain.on('close-subtitle-window', () => {
+    if (subtitleSelectionWindow) {
+        subtitleSelectionWindow.destroy();
+    }
+});
+ipcMain.on('close-url-window', () => {
+    if (urlWindow) {
+        urlWindow.close();
+    }
+});
+ipcMain.on('close-selection-window', () => {
+    if (selectionWindow) {
+        console.log('nipa');
+        selectionWindow.close();
+    }
+});
+ipcMain.on('close-main-window', () => {
+    if (mainWindow) {
+        app.quit();
+    }
+});
+ipcMain.on('minimize-window', (event) => {
+    if (mainWindow) {
+        const window = BrowserWindow.fromWebContents(event.sender);
+        window.minimize();
+    }
+});
 ipcMain.on('get-downloads-path', (event) => {
     console.log('下载文件夹路径：', downloadsPath);
     event.reply('downloads-path', downloadsPath);
@@ -251,12 +286,13 @@ ipcMain.on('load-url', (event, url) => {
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
         url = 'http://' + url; // 默认添加http://协议
     }
-    createBrowserView();
-    urlWindow.setSize(800, 600);
-    urlWindow.center(); // 调整大小后重新居中
+    createBrowserView(url);
     console.log('URL loaded:', url);
-    browserView.webContents.loadURL(url);
-    browserView.webContents.on('did-finish-load', () => {
+    urlWindow.once('ready-to-show', () => {
+        urlWindow.setSize(800, 600);
+        urlWindow.center(); // 调整大小后重新居中
+    });
+    mainBrowserView.webContents.on('did-finish-load', () => {
         console.log('BrowserView loaded:', url);
         setTimeout(startCheckingForVideo, 2000); // 延迟2秒再启动检查视频的逻辑
     });
@@ -338,6 +374,11 @@ function createUrlWindow() {
         width: 300,
         height: 200,
         fullscreen: false,
+        show: false,
+        frame: false,
+        modal: true, // 设置为模态窗口
+        parent: mainWindow, // 设置父窗口
+        icon: path.join(__dirname, 'window_icon.png'),
         autoHideMenuBar: true,
         webPreferences: {
             nodeIntegration: true,
@@ -346,11 +387,13 @@ function createUrlWindow() {
             experimentalFeatures: true // 启用实验性功能
         }
     });
-
     urlWindow.webContents.loadFile('urlmenu.html'); // 加载外部的HTML文件
+    urlWindow.once('ready-to-show', () => {
+        urlWindow.show(); // 显示窗口
+    });
 }
-function createBrowserView() {
-    browserView = new BrowserView({
+function createBrowserView(url) {
+    topBrowserView = new BrowserView({
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
@@ -358,9 +401,33 @@ function createBrowserView() {
             experimentalFeatures: true
         }
     });
+    urlWindow.setBrowserView(topBrowserView);
+    let topBounds = calculateTopBounds();
+    topBrowserView.setBounds(topBounds);
+    topBrowserView.webContents.loadFile('close.html');
+    mainBrowserView = new BrowserView({
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            webSecurity: false,
+            experimentalFeatures: true
+        }
+    });
+    urlWindow.setBrowserView(mainBrowserView);
+    let mainBounds = calculateMainBounds();
+    mainBrowserView.setBounds(mainBounds);
+    mainBrowserView.webContents.loadURL(url);
+}
+function calculateMainBounds() {
+    const width = mainWindow.getBounds().width;
+    const height = mainWindow.getBounds().height - 30; // 留出顶部视图的高度
+    return { x: 0, y: 30, width: width, height: height };
+}
 
-    urlWindow.setBrowserView(browserView);
-    browserView.setBounds({ x: 0, y: 0, width: mainWindow.getBounds().width, height: mainWindow.getBounds().height });
+function calculateTopBounds() {
+    const width = mainWindow.getBounds().width;
+    const height = 50; // 顶部视图高度
+    return { x: 0, y: 0, width: width, height: height };
 }
 function calculateFileHash(filePath, algorithm = 'md5') {
     return new Promise((resolve, reject) => {
@@ -402,9 +469,9 @@ function startCheckingForVideo() {
     let elapsedTime = 0;
 
     const interval = setInterval(async () => {
-        if (browserView) {
+        if (mainBrowserView) {
             try {
-                const result = await browserView.webContents.executeJavaScript(`
+                const result = await mainBrowserView.webContents.executeJavaScript(`
                     (function() {
                         const videoElement = document.querySelector('video');
                         const title = document.title;
@@ -436,10 +503,10 @@ function startCheckingForVideo() {
                         const newTitle = `${response.animeTitle} ${response.episodeTitle}`;
                         const newepisodeId = response.episodeId;
                         console.log('id+title:', newTitle, newepisodeId);
-                        urlWindow.webContents.close();
+                        urlWindow.close();
                         danmakudownload(newTitle, result.videoUrl, newepisodeId);
                     } else {
-                        urlWindow.webContents.close();
+                        urlWindow.close();
                         createSelectionWindow(response.matches, result.videoUrl, response.episodeId);
                     }
                 } else {
@@ -546,6 +613,7 @@ async function getVideoFiles(dir) {
 }
 // 创建主窗口
 function createMainWindow() {
+    let isMac = process.platform === 'darwin';
     mainWindow = new BrowserWindow({
         width: 800,
         height: 600,
@@ -553,7 +621,7 @@ function createMainWindow() {
         //vibrancy: 'content-under', // 这里设置毛玻璃效果
         //visualEffectState: 'active',
         fullscreen: false,
-        titleBarStyle: 'hiddenInset',
+        show: false,
         //opacity:0.5,
         //vibrancy: 'medium-light',
         vibrancy: 'sidebar',
@@ -561,7 +629,9 @@ function createMainWindow() {
             nodeIntegration: true,
             contextIsolation: false
         },
-        autoHideMenuBar: process.platform !== 'darwin'
+        autoHideMenuBar: !isMac,
+        titleBarStyle: isMac ? 'hiddenInset' : undefined,
+        frame: isMac ? undefined : false
     });
     // 等待窗口加载完成后发送文件路径
     const menuTemplate = [
@@ -655,8 +725,10 @@ function createMainWindow() {
     mainWindow.on('closed', () => {
         app.quit(); // 结束应用程序
     });
-    let isMac = process.platform === 'darwin';
     mainWindow.loadFile('index.html');
+    mainWindow.once('ready-to-show', () => {
+        mainWindow.show(); // 显示窗口
+    });
     console.log('Window loaded URL:', 'index.html');
     mainWindow.webContents.on('did-finish-load', () => {
         mainWindow.webContents.send('platform-info', { isMac });
@@ -726,13 +798,19 @@ function CreateloadWindow() {
         height: 100,
         frame: false,
         autoHideMenuBar: true,
-        vibrancy: 'sidebar',
+        show: false,
+        modal: true, // 设置为模态窗口
+        icon: path.join(__dirname, 'window_icon.png'),
+        parent: mainWindow, // 设置父窗口
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false
         }
     });
     loadWindow.loadFile('./loading.html');
+    loadWindow.once('ready-to-show', () => {
+        loadWindow.show(); // 显示窗口
+    });
 }
 async function openVideoAndFetchDetails(videoPath, episodeId) {
     console.log("函数开始执行，视频路径：", videoPath);
@@ -745,6 +823,9 @@ async function openVideoAndFetchDetails(videoPath, episodeId) {
             height: 100,
             frame: false,
             show: false,
+            modal: true, // 设置为模态窗口
+            icon: path.join(__dirname, 'window_icon.png'),
+            parent: mainWindow, // 设置父窗口
             vibrancy: 'sidebar',
             webPreferences: {
                 nodeIntegration: true,
@@ -943,6 +1024,7 @@ async function recognizeVideo2(title) {
 // 创建视频窗口
 function createVideoWindow(videoPath, newTitle, episodeId) {
     console.log("创建视频窗口，使用的视频路径：", videoPath);
+    let isMac = process.platform === 'darwin';
     const danmakuFilePath = path.join(danmakuPath, `${episodeId}.js`);
     console.log("创建视频窗口，使用的弹幕路径：", danmakuFilePath);
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -956,16 +1038,18 @@ function createVideoWindow(videoPath, newTitle, episodeId) {
     const videoWindow = new BrowserWindow({
         width: width,
         height: height,
+        show: false,
         x: 0,
         y: 0,
         icon: path.join(__dirname, 'window_icon_play.png'),
-        autoHideMenuBar: true,
-        titleBarStyle: 'hiddenInset',
         vibrancy: 'sidebar',
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false
         },
+        autoHideMenuBar: !isMac,
+        titleBarStyle: isMac ? 'hiddenInset' : undefined,
+        frame: isMac ? undefined : false,
         resizable: process.platform === 'darwin' ? false : true // MacOS不允许调整窗口大小，Windows允许
     });
     if (fs.existsSync(danmakuFilePath)) {
@@ -981,6 +1065,20 @@ function createVideoWindow(videoPath, newTitle, episodeId) {
     const encodedTitle = encodeURIComponent(newTitle || '');
     const url = `file://${__dirname}/video-player.html?path=${encodeURIComponent(videoPath)}&path2=${encodeURIComponent(videoPath2)}&title=${encodeURIComponent(newTitle)}&episodeId=${episodeId}`;
     videoWindow.loadURL(url);
+    videoWindow.once('ready-to-show', () => {
+        videoWindow.show(); // 显示窗口
+    });
+    ipcMain.on('close-player-window', (event) => {
+        console.log('nipapa');
+        if (videoWindow && !videoWindow.isDestroyed()) {
+            const window = BrowserWindow.fromWebContents(event.sender);
+            window.close();
+        }
+    });
+    ipcMain.on('minimize-player-window', (event) => {
+            const window = BrowserWindow.fromWebContents(event.sender);
+            window.minimize();
+    });
     console.log(url);
     const recognitionResult = {
         newTitle: newTitle,
@@ -1048,7 +1146,12 @@ function createSelectionWindow(matches, videoPath, episodeId) {
     selectionWindow = new BrowserWindow({
         width: 500,
         height: 333,
+        alwaysOnTop: true,
         autoHideMenuBar: true,
+        icon: path.join(__dirname, 'window_icon.png'),
+        show: false,
+        modal: true, // 设置为模态窗口
+        parent: mainWindow, // 设置父窗口
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false
@@ -1056,7 +1159,9 @@ function createSelectionWindow(matches, videoPath, episodeId) {
     });
 
     selectionWindow.loadURL(`file://${__dirname}/selection.html`);
-
+    selectionWindow.once('ready-to-show', () => {
+        selectionWindow.show(); // 显示窗口
+    });
     selectionWindow.webContents.once('did-finish-load', () => {
         console.log("Sending matches to the selection window:", matches);
         selectionWindow.webContents.send('update-selection', matches);
@@ -1076,6 +1181,7 @@ function createSelectionWindow(matches, videoPath, episodeId) {
         const jsonFilePath = path.join(video_commentPath, `${episodeId}.json`);
         const outputDir = path.join(danmakuPath);
         CreateloadWindow();
+        selectionWindow.hide();
         if (selectedMatch.episodeId) {
             const url = `https://api.dandanplay.net/api/v2/comment/${selectedMatch.episodeId}?withRelated=true&chConvert=1`;
 
@@ -1166,7 +1272,14 @@ function fetchSubtitleTracks(videoPath) {
             case 'win32': // Windows
                 return ffmpegwin;
             case 'linux': // Linux
-                return ffmpeglinux;
+                const arch = os.arch();
+                if (arch === 'x64') {
+                    return ffmpeglinux64; // AMD64 (x86_64)
+                } else if (arch === 'arm64') {
+                    return ffmpeglinuxarm; // ARM64
+                } else {
+                    throw new Error('Unsupported Linux architecture: ' + arch);
+                }
             default:
                 throw new Error('Unsupported platform');
         }
@@ -1205,7 +1318,7 @@ function parseSubtitleTracks(stderrData) {
     console.log('Normalized stderrData:', JSON.stringify(normalizedData));
 
     const streamPattern = /Stream #(\d+:\d+)(?:.*?): Subtitle: ([^\n]+)\n.*?Metadata:\n(?:.*?handler_name\s*:\s*([^\n]+))?[\s\S]*?(?:.*?title\s*:\s*([^\n]+))?/g;
-    
+
     let match;
     while ((match = streamPattern.exec(normalizedData)) !== null) {
         const [_, id, format, handlerName, title] = match;
@@ -1232,10 +1345,15 @@ function parseSubtitleTracks(stderrData) {
 function showSubtitleSelection(tracks) {
     return new Promise((resolve, reject) => {
         subtitleSelectionWindow = new BrowserWindow({
-            width: 300,
-            height: 200,
+            width: 500,
+            height: 300,
             alwaysOnTop: true,
+            frame: false,
+            show: false,
             autoHideMenuBar: true,
+            modal: true, // 设置为模态窗口
+            parent: mainWindow, // 设置父窗口
+            icon: path.join(__dirname, 'window_icon.png'),
             webPreferences: {
                 nodeIntegration: true,
                 contextIsolation: false
@@ -1243,12 +1361,15 @@ function showSubtitleSelection(tracks) {
         });
         loadingWindow.webContents.close();
         subtitleSelectionWindow.loadFile('subtitle_selection.html');
-
+        subtitleSelectionWindow.once('ready-to-show', () => {
+            setTimeout(() => {
+                subtitleSelectionWindow.show(); // 显示窗口
+            }, 200);
+        });
         // 当窗口加载完成后，发送字幕轨道信息
         subtitleSelectionWindow.webContents.on('did-finish-load', () => {
             subtitleSelectionWindow.webContents.send('subtitle-tracks', tracks);
         });
-
         // 接收从渲染进程发来的选中字幕信息
         ipcMain.once('subtitle-selected', (event, selectedIndex) => {
             subtitleSelectionWindow.close();
@@ -1278,7 +1399,14 @@ function extractSubtitles(videoPath, trackId, outputDir) {
             case 'win32': // Windows
                 return ffmpegwin;
             case 'linux': // Linux
-                return ffmpeglinux;
+                const arch = os.arch();
+                if (arch === 'x64') {
+                    return ffmpeglinux64; // AMD64 (x86_64)
+                } else if (arch === 'arm64') {
+                    return ffmpeglinuxarm; // ARM64
+                } else {
+                    throw new Error('Unsupported Linux architecture: ' + arch);
+                }
             default:
                 throw new Error('Unsupported platform');
         }

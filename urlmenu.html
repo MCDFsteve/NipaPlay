@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>加载url链接</title>
+    <link rel="stylesheet" href="close.css">
     <style>
         input {
             flex: 1;
@@ -17,8 +19,8 @@
             box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.4);
             font-size: 16px;
             top: 5px;
-            left:10px;
-            margin-bottom:15px;
+            left: 10px;
+            margin-bottom: 15px;
             /* 距离父元素顶部的距离 */
             /* 距离父元素左侧的距离 */
             text-indent: 7px !important;
@@ -31,6 +33,7 @@
             z-index: 2;
             /* 确保输入框在进度条之上 */
         }
+
         @media (prefers-color-scheme: dark) {
             input {
                 background-color: rgba(54, 54, 54, 0.8);
@@ -38,17 +41,20 @@
                 color: #dfdfdf;
             }
         }
+
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
             background-color: #ffffff;
-            user-select: none; 
+            user-select: none;
         }
+
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: #202020;
             }
         }
+
         button {
             padding: 10px 20px;
             border: none;
@@ -82,6 +88,7 @@
                 color: #fff;
             }
         }
+
         /* 设置滚动条的宽度和轨道颜色 */
         ::-webkit-scrollbar {
             width: 8px;
@@ -119,11 +126,18 @@
 </head>
 
 <body>
-    <h2></h2>
+    <div id="close-button"></div>
+    <div class="drag-area"></div>
+    <br>
     <input type="text" id="url-input" placeholder="在这里！放入神秘的蓝色链接！！" style="width: 100%;">
     <button id="submit-url">加载url</button>
+    <script src="close.js"></script>
     <script>
         const { ipcRenderer } = require('electron');
+        // 关闭按钮点击事件
+        closeButton.addEventListener('click', () => {
+            ipcRenderer.send('close-url-window');
+        });
         document.getElementById('submit-url').addEventListener('click', () => {
             const urlinput = document.getElementById('url-input');
             const submiturl = document.getElementById('submit-url');

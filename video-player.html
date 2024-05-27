@@ -10,6 +10,10 @@
 </head>
 
 <body>
+    <div class="windowbutton">
+        <div id="close-button" style="display: none;"></div>
+        <div id="minimize-button" style="display: none;"></div>
+    </div>
     <div id="player-container">
         <video id="video-player" autoplay></video>
         <div id="danmaku-container"></div>
@@ -131,7 +135,7 @@
     <script src="node_modules/danmaku/dist/danmaku.min.js"></script>
     <script id="dynamic-script"></script>
     <script src="node_modules/video.js/dist/video.js"></script>
-  <script src="node_modules/videojs-contrib-hls/dist/videojs-contrib-hls.js"></script>
+    <script src="node_modules/videojs-contrib-hls/dist/videojs-contrib-hls.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             ipcRenderer.on('file-content', (event, content) => {
@@ -140,6 +144,29 @@
                 document.body.appendChild(dynamicScript);
             });
         });
+        function isMacOS() {
+            return navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        }
+        if (isMacOS()) {
+            console.log('mac');
+        } else {
+            const closeButton = document.getElementById('close-button');
+            const miniButton = document.getElementById('minimize-button');
+            closeButton.classList.add('close-button-other');
+            closeButton.classList.add('playclose');
+            closeButton.style.display = 'block';
+            closeButton.addEventListener('click', () => {
+                console.log('nipa');
+                ipcRenderer.send('close-player-window');
+            });
+            miniButton.classList.add('minimize-button-other');
+            miniButton.style.display = 'block';
+            miniButton.classList.add('playclose');
+            miniButton.addEventListener('click', () => {
+                console.log('nipa');
+                ipcRenderer.send('minimize-player-window');
+            });
+        }
         //var myVideoPlayer = videojs('video-player');
     </script>
 

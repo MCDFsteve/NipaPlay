@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="close.css">
+</head>
+
+<body>
+    <div id="close-button" ></div>
+    <div class="drag-area"></div>
+    <script src="close.js"></script>
+    <script>
+        const { ipcRenderer } = require('electron');
+        // 关闭按钮点击事件
+        closeButton.addEventListener('click', () => {
+            ipcRenderer.send('close-url-window');
+        });
+    </script>
+</body>
+
+</html>
