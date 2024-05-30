@@ -333,11 +333,28 @@ if (isMacOS()) {
 } else {
     const closeButton = document.getElementById('close-button');
     const miniButton = document.getElementById('minimize-button');
+    const fullscreenButton = document.getElementById('fullscreen-button');
+    const restoreButton = document.getElementById('restore-button');
     closeButton.classList.add('close-button-other');
     closeButton.style.display = 'block';
     closeButton.addEventListener('click', () => {
         console.log('nipa');
         ipcRenderer.send('close-main-window');
+    });
+    fullscreenButton.classList.add('fullscreen-button-other');
+    fullscreenButton.style.display = 'block';
+    fullscreenButton.addEventListener('click', () => {
+        console.log('nipa');
+        fullscreenButton.style.display = 'none';
+        restoreButton.style.display = 'block';
+        ipcRenderer.send('fullscreen-window');
+    });
+    restoreButton.classList.add('restore-button-other');
+    restoreButton.addEventListener('click', () => {
+        console.log('nipa');
+        fullscreenButton.style.display = 'block';
+        restoreButton.style.display = 'none';
+        ipcRenderer.send('restore-window');
     });
     miniButton.classList.add('minimize-button-other');
     miniButton.style.display = 'block';

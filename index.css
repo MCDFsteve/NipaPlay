@@ -32,13 +32,26 @@
         --button-bg-color: transparent;
     }
 }
-a.normal-link {
-    color: inherit; /* 继承父元素的文字颜色 */
+body{
+    transition: width 0.5s, height 0.5s;
+    text-shadow: 1px 1px 0 white, -1px -1px 0 white, -1px 1px 0 white, 1px -1px 0 white, 1px 0 0 white, 0 1px 0 white, -1px 0 0 white, 0 -1px 0 white;
 }
+@media (prefers-color-scheme: dark) {
+    body{
+        text-shadow: 1px 1px 0 black, -1px -1px 0 black, -1px 1px 0 black, 1px -1px 0 black, 1px 0 0 black, 0 1px 0 black, -1px 0 0 black, 0 -1px 0 black;
+    }
+}
+a.normal-link {
+    color: inherit;
+    /* 继承父元素的文字颜色 */
+}
+
 a.normal-link:hover,
 a.normal-link:focus {
-    text-decoration: underline; /* 鼠标悬停或聚焦时添加下划线 */
-    color: inherit; /* 继承父元素的颜色，可调整为其他颜色 */
+    text-decoration: underline;
+    /* 鼠标悬停或聚焦时添加下划线 */
+    color: inherit;
+    /* 继承父元素的颜色，可调整为其他颜色 */
 }
 
 .viewing-history-content {
@@ -100,16 +113,15 @@ body {
     height: 100vh;
     color: var(--text-color);
     transition: background-color 0.3s, color 0.3s;
-    user-select: none; 
+    user-select: none;
 }
-
 .sidebar {
+    border-right: 1px solid rgb(172, 172, 172);
     width: 20%;
-    background-color: rgba(233, 233, 233, 1.0);
+    z-index:0;
+    background-color: rgb(224, 224, 224);
     padding: 10px;
     /* 边距调整为更窄 */
-    box-shadow: 1px 0 1px rgba(0, 0, 0, 0.3);
-    /* 调整阴影效果 */
     transition: background-color 0.2s;
     /* 毛玻璃效果 */
     backdrop-filter: blur(20px);
@@ -129,29 +141,30 @@ body {
     margin-top: 20px;
     border: none;
     padding: 5px 30px;
-    background-color: rgba(233, 233, 233, 1.0);
+    background-color: rgba(233, 233, 233, 0.3);
     font-size: 16px;
     box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
     color: #000000;
     cursor: pointer;
+    backdrop-filter: blur(20px);
     border-radius: 5px;
 }
 
 .folder-item:hover {
-    background-color: #000000;
+    background-color: rgba(0, 0, 0, 0.3);
     color: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
     .folder-item {
-        background-color: #373737;
+        background-color: #3737373f;
         color: #ffffff;
     }
 }
 
 @media (prefers-color-scheme: dark) {
     .folder-item:hover {
-        background-color: #545454;
+        background-color: #54545442;
     }
 }
 
@@ -216,7 +229,8 @@ body {
 
 /* 适用于侧边栏按钮和观看记录项 */
 li.sidebar-button:hover {
-    background-color: var(--button-hover-bg-color);
+    background-color: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(20px);
     color: #fff;
     text-decoration: none;
     border-radius: 5px;
@@ -225,12 +239,17 @@ li.sidebar-button:hover {
     padding-left: 25px;
     cursor: pointer;
     /* 设置鼠标指针样式为手型 */
+    text-shadow:none;
 }
-
+@media (prefers-color-scheme: dark) {
+    li.sidebar-button:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+}
 li.sidebar-button {
     position: relative;
     /* 设置为相对定位，以便为::before伪元素定位 */
-    background-color: var(--background-color);
+    background-color: none;
     color: var(--text-color);
     text-decoration: none;
     /* 确保溢出的文本不可见 */
@@ -265,28 +284,34 @@ span.text-container {
         transform: translateX(-100%);
     }
 }
+
 #return-media-library {
-    opacity: 0.5; /* 设置透明度为50% */
-    pointer-events: none; /* 禁用鼠标事件，使按钮无法被点击 */
-    cursor: default; /* 设置鼠标样式为默认样式，不是指针 */
+    opacity: 0.5;
+    /* 设置透明度为50% */
+    pointer-events: none;
+    /* 禁用鼠标事件，使按钮无法被点击 */
+    cursor: default;
+    /* 设置鼠标样式为默认样式，不是指针 */
 }
 
 #video-list li.sidebar-button {
-    margin-left: -40px;
+    margin-left: calc(1.5% - 45px);
     /* 整体向左移动 */
 }
 
 #folder-list li.sidebar-button {
-    margin-left: -40px;
+    margin-left: calc(1.5% - 45px);
     /* 整体向左移动 */
 }
+
 #anime-lib {
-    margin-top:-20px;
+    margin-top: -20px;
     margin-left: -20px;
     /* 整体向左移动 */
 }
+
 #video-history li.sidebar-button {
-    margin-left: -40px;
+    margin-left: calc(1.5% - 45px);
     /* 整体向左移动 */
 }
 
@@ -307,12 +332,14 @@ li.sidebar-button::before {
     /* 白色背景 */
     transform: translateY(-50%);
 }
+
 .delete-icon {
     position: absolute;
     right: 10px;
     top: 50%;
     transform: translateY(-50%);
 }
+
 .content {
     flex-grow: 1;
     display: flex;
@@ -326,31 +353,61 @@ li.sidebar-button::before {
     /* 将内容偏移侧边栏宽度 */
     width: 80%;
     height: 100%;
-    background-color: #fff;
     overflow-y: hidden;
     /* 启用垂直滚动 */
     margin: 0;
     /* 移除外边距 */
     padding-left: 20px;
+    z-index:0;
 }
-
+.content-area0 {
+    position: fixed;
+    margin-left: var(--sidebar-width);
+    /* 将内容偏移侧边栏宽度 */
+    width: 80%;
+    height: 100%; 
+    margin: 0;
+    right:0;
+    left:22%;
+    padding-left: 20px;
+    background-color: #fff;
+    z-index:-2;
+}
+.content-area2 {
+    position: fixed;
+    overflow:hidden;
+    /* 将内容偏移侧边栏宽度 */
+    width: 80%;
+    height: 100%;
+    background-image: url('./others/back.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0.5;
+    z-index:-1;
+    pointer-events: none;
+}
 @media (prefers-color-scheme: dark) {
-    .content-area {
+    .content-area0 {
         background-color: #222;
     }
 }
+
 .scrollable-list {
-    height: 490px;
+    height: calc(100vh - 100px);
+    margin-left: calc(1.5% - 5px);
     /* 根据您的页面设计调整高度 */
-    overflow-y: auto;
+    overflow-y:auto;
+    overflow-x: hidden;
 }
+
 .upload-button {
     cursor: pointer;
     transition: background-color 0.3s, color 0.3s;
     width: 200px;
     height: 200px;
     color: var(--text-color);
-    background-color: var(--sidebar-bg-color);
+    background-color: rgba(200, 200, 200, 0.4);
     border-radius: 20px;
     box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
     display: flex;
@@ -360,25 +417,30 @@ li.sidebar-button::before {
     backdrop-filter: blur(20px);
     border: none;
     position: absolute;
-    left: calc(50% + var(--sidebar-width) / 2);
+    left: calc(50% + 22vw / 2);
     top: 50%;
     /* 新增：设置距顶部的比例 */
     transform: translate(-50%, -50%);
     /* 修改：同时在X和Y方向居中 */
     -webkit-app-region: no-drag;
 }
-
-
-
-
 .upload-button:hover {
-    background-color: var(--button-hover-bg-color);
+    background-color: rgba(0, 0, 0, 0.3);
     color: #fff;
     text-decoration: none;
     border-radius: 20px;
     /* 修复悬停时的弧度 */
 }
-
+@media (prefers-color-scheme: dark) {
+    .upload-button {
+        background-color: rgba(51, 51, 51, 0.75);
+    }
+}
+@media (prefers-color-scheme: dark) {
+    .upload-button:hover {
+        background-color: rgba(91, 91, 91, 0.3);
+    }
+}
 /* 新增的激活状态样式 */
 .active {
     background-color: var(--button-hover-bg-color);
@@ -423,7 +485,9 @@ li.sidebar-button::before {
     /* 文本颜色 */
     font-size: 12px;
     /* 字体大小 */
+    text-shadow: none;
 }
+
 hr.section-divider {
     margin-bottom: 0;
     /* 可选：如果您希望水平线与滚动区域之间没有空间，也可以移除下方边距 */
@@ -431,14 +495,17 @@ hr.section-divider {
 
 h2 {
     margin-top: 43.8px;
+    margin-left: calc(1.5% - 10px);
     color: #000000;
     /* 向下移动标题 */
 }
+
 @media (prefers-color-scheme: dark) {
     h2 {
-        color:#ffffff;
+        color: #ffffff;
     }
 }
+
 #title-text {
     position: fixed;
     left: 20px;
@@ -449,24 +516,30 @@ h2 {
     /* 字体大小 */
     margin-top: 30px;
 }
+
 @media (prefers-color-scheme: dark) {
     #title-text {
-        color:#ffffff;
+        color: #ffffff;
     }
 }
+
 #import-video {
     margin-top: 100px;
 }
 
 .section-divider {
     border: none;
-    border-top: 1px solid #e5e5e5;
+    border-top: 1px solid rgb(0, 0, 0);
+    margin-left: calc(1.5% - 10px);
     /* 设置顶部边框为1px高的灰色 */
-    margin: 20px 0;
     /* 在横线上下添加空间 */
     width: 95%;
 }
-
+@media (prefers-color-scheme: dark) {
+    .section-divider {
+        border-top: 1px solid rgb(255, 255, 255);
+    }
+}
 .upload-icon {
     width: 150px;
     height: 150px;
@@ -474,6 +547,7 @@ h2 {
     background-size: contain;
 
 }
+
 .anime-list {
     display: flex;
     flex-wrap: wrap;
@@ -483,58 +557,74 @@ h2 {
 .anime-item {
     display: flex;
     flex-direction: column;
-    width: 20%;
-    margin-top:20px;
-    margin-right:25px;
-    margin-bottom:-15px;
-    text-align: center;
+    width: calc(10%+5vw);
+    margin-top: 20px;
+    margin-right: 25px;
+    margin-bottom: -15px;
+    text-align:left;
     box-sizing: border-box;
 }
 
 .anime-image {
-    width: 100%;
-    height: 100%;
-    max-height: 200px; /* 根据需要调整图片的最大高度 */
-    border-radius: 2px; /* 添加圆角 */
+    width: 133.33px;
+    height: 200px;
+    max-height: 200px;
+    /* 根据需要调整图片的最大高度 */
+    border-radius: 2px;
     box-shadow: 7px 10px 10px rgba(0, 0, 0, 0.3);
+    /* 添加圆角 */
 }
+
 .anime-image img {
-    border-radius: 2px; /* 添加圆角 */
-    width: 100%;
-    height: 100%;
-    max-height: 200px; /* 根据需要调整图片的最大高度 */
+    border-radius: 2px;
+    /* 添加圆角 */
+    width: 133.33px;
+    height: 200px;
+    max-height: 200px;
+    /* 根据需要调整图片的最大高度 */
     cursor: pointer;
 }
+
 .anime-title {
     flex: 0 0 auto;
     font-size: 13px;
-    margin-top: 15px; /* 增加与图片的距离 */
-    height: 3em; /* 固定高度以显示两行文本 */
+    margin-top: 15px;
+    /* 增加与图片的距离 */
+    width:133.33px;
+    height: 3em;
+    /* 固定高度以显示两行文本 */
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
-    -webkit-line-clamp: 2; /* 显示两行 */
+    -webkit-line-clamp: 2;
+    /* 显示两行 */
     -webkit-box-orient: vertical;
     white-space: normal;
-    color:#595959;
+    color: #000000;
 }
+
 .day-section h2 {
-    margin-top: 20px; /* 减少顶部的空白 */
-    margin-bottom: 5px; /* 减少标题和分割线之间的空白 */
+    margin-top: 20px;
+    /* 减少顶部的空白 */
+    margin-bottom: 5px;
+    /* 减少标题和分割线之间的空白 */
     font-size: 20px;
-    color:#373737;
+    color: #373737;
 }
-.anime-deta h2{
+
+.anime-deta h2 {
     margin-top: 10px;
 }
+
 @media (prefers-color-scheme: dark) {
     .anime-title {
-        color:#fdfdfd;
+        color: #fdfdfd;
     }
 }
+
 @media (prefers-color-scheme: dark) {
     .day-section h2 {
-        color:#ffffff;
+        color: #ffffff;
     }
 }
 
@@ -547,7 +637,8 @@ h2 {
     margin-bottom: 10px;
 }
 
-#anime-detail-content p, #anime-detail-content ul {
+#anime-detail-content p,
+#anime-detail-content ul {
     margin: 10px 0;
 }
 
@@ -564,35 +655,42 @@ h2 {
 
 .anime-detail-image {
     flex: 0 0 30%;
-    max-width: 30%;
-    height: auto;
+    width: 200px;
+    height: 300px;
     max-height: auto;
     border-radius: 2px;
 }
 
 .anime-detail-image img {
-    width: 100%;
-    height: auto;
+    width: 200px;
+    height: 300px;
     max-height: auto;
     border-radius: 2px;
     box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.3);
 }
+
 .anime-detail-text {
     flex: 1;
-    max-height: 250px; /* 让其默认高度适应图像 */
-    overflow-y: auto; /* 当内容超过高度时，出现垂直滚动条 */
+    max-height: 250px;
+    /* 让其默认高度适应图像 */
+    overflow-y: auto;
+    /* 当内容超过高度时，出现垂直滚动条 */
 }
+
 .related-anime-item {
-    color:#7e7e7e;
+    color: #7e7e7e;
     cursor: pointer;
 }
+
 .related-anime-item:hover {
-    color:#00d5ff;
+    color: #00d5ff;
     cursor: pointer;
 }
+
 .anime-summary {
     font-size: 14px;
 }
+
 .anime-summary2 {
     display: flex;
     flex-wrap: wrap;
@@ -603,7 +701,7 @@ h2 {
 
 .anime-summary2 li {
     background-color: var(--sidebar-bg-color);
-    color:var(--text-color);
+    color: var(--text-color);
     border-radius: 5px;
     padding: 5px 10px;
     margin: 2px;
@@ -614,11 +712,13 @@ h2 {
     cursor: pointer;
     box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
 }
+
 .anime-summary2 li:hover {
-    background-color:var(--button-hover-bg-color);
-    color:#ffffff;
+    background-color: var(--button-hover-bg-color);
+    color: #ffffff;
     cursor: pointer;
 }
+
 .anime-detail-info {
     margin-top: 20px;
 }

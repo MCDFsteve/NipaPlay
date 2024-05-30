@@ -34,7 +34,6 @@ function formatComment(comment) {
     const textShadow = comment.style.textShadow;
     return `{ time: ${time}, text: '${text}', mode: '${mode}', style: { fontSize: '${fontSize}', color: '${color}', textShadow: '${textShadow}' } }`;
 }
-
 function processComments(jsonFilePath, outputDir, callback) {
     fs.readFile(jsonFilePath, 'utf8', (err, data) => {
         if (err) {
@@ -45,14 +44,18 @@ function processComments(jsonFilePath, outputDir, callback) {
         const jsonData = JSON.parse(data);
         const comments = jsonData.comments.map(comment => {
             const [time, mode, color] = comment.p.split(',');
+            const colorCSS = convertHexColorToCSS(parseInt(color));
+            const textShadow = colorCSS === '#000000'
+                ? '-1px -1px #fff, -1px 1px #fff, 1px -1px #fff, 1px 1px #fff'
+                : '-1px -1px #000, -1px 1px #000, 1px -1px #000, 1px 1px #000';
             return {
                 time: parseFloat(time),
                 text: escapeStringForJS(comment.m),
                 mode: modeFromNumber(parseInt(mode)),
                 style: {
                     fontSize: '30px',
-                    color: convertHexColorToCSS(parseInt(color)),
-                    textShadow: '-1px -1px #000, -1px 1px #000, 1px -1px #000, 1px 1px #000'
+                    color: colorCSS,
+                    textShadow: textShadow
                 }
             };
         });

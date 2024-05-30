@@ -74,6 +74,7 @@ app.on('before-quit', () => {
 });
 // 监听应用程序准备就绪事件
 app.on('ready', () => {
+    app.commandLine.appendSwitch('disable-features', 'MediaRouter');
     console.log('Chrome version:', process.versions.chrome);
     console.log('Electron version:', process.versions.electron);
     // 清空指定文件夹
@@ -224,6 +225,17 @@ ipcMain.on('close-main-window', () => {
         app.quit();
     }
 });
+ipcMain.on('fullscreen-window', () => {
+    if (mainWindow) {
+        const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+        animateWindowResize(mainWindow, width, height,200);
+    }
+});
+ipcMain.on('restore-window', () => {
+    if (mainWindow) {
+        animateWindowResize(mainWindow, 800, 600,200);
+    }
+});
 ipcMain.on('minimize-window', (event) => {
     if (mainWindow) {
         const window = BrowserWindow.fromWebContents(event.sender);
@@ -369,6 +381,54 @@ ipcMain.handle('search-anime', async (event, searchTerm) => {
         });
     });
 });
+function animateWindowResize(window, targetWidth, targetHeight, duration) {
+    const currentBounds = window.getBounds();
+    const startTime = Date.now();
+    const initialX = currentBounds.x;
+    const initialY = currentBounds.y;
+    const initialWidth = currentBounds.width;
+    const initialHeight = currentBounds.height;
+    const steps = Math.round(duration / 16.67); // 大约每秒 60 帧
+    const stepWidth = (targetWidth - initialWidth) / steps;
+    const stepHeight = (targetHeight - initialHeight) / steps;
+    const stepX = (targetWidth - initialWidth) / (2 * steps);
+    const stepY = (targetHeight - initialHeight) / (2 * steps);
+
+    function step() {
+        const elapsedTime = Date.now() - startTime;
+        const progress = Math.min(elapsedTime / duration, 1);
+        const easeProgress = easeInOutQuad(progress);
+
+        const newWidth = initialWidth + (targetWidth - initialWidth) * easeProgress;
+        const newHeight = initialHeight + (targetHeight - initialHeight) * easeProgress;
+        const newX = initialX - (newWidth - initialWidth) / 2;
+        const newY = initialY - (newHeight - initialHeight) / 2;
+
+        window.setBounds({
+            x: Math.round(newX),
+            y: Math.round(newY),
+            width: Math.round(newWidth),
+            height: Math.round(newHeight)
+        });
+
+        if (progress < 1) {
+            setTimeout(step, 16.67); // 使用 setTimeout 来模拟 requestAnimationFrame 的效果
+        } else {
+            window.setBounds({
+                width: targetWidth,
+                height: targetHeight,
+                x: Math.round((screen.getPrimaryDisplay().workAreaSize.width - targetWidth) / 2),
+                y: Math.round((screen.getPrimaryDisplay().workAreaSize.height - targetHeight) / 2)
+            });
+        }
+    }
+
+    setTimeout(step, 16.67); // 初始调用
+}
+
+function easeInOutQuad(t) {
+    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+}
 function createUrlWindow() {
     urlWindow = new BrowserWindow({
         width: 300,
@@ -617,6 +677,8 @@ function createMainWindow() {
     mainWindow = new BrowserWindow({
         width: 800,
         height: 600,
+        minWidth: 700,  // 设置最小宽度
+        minHeight: 400, // 设置最小高度
         icon: path.join(__dirname, 'window_icon.png'),
         //vibrancy: 'content-under', // 这里设置毛玻璃效果
         //visualEffectState: 'active',
@@ -733,7 +795,7 @@ function createMainWindow() {
     mainWindow.webContents.on('did-finish-load', () => {
         mainWindow.webContents.send('platform-info', { isMac });
     });
-    mainWindow.resizable = false;
+    //mainWindow.resizable = false;
 }
 function clearDirectory(directory) {
     // 读取目录中的文件
@@ -1076,8 +1138,8 @@ function createVideoWindow(videoPath, newTitle, episodeId) {
         }
     });
     ipcMain.on('minimize-player-window', (event) => {
-            const window = BrowserWindow.fromWebContents(event.sender);
-            window.minimize();
+        const window = BrowserWindow.fromWebContents(event.sender);
+        window.minimize();
     });
     console.log(url);
     const recognitionResult = {

@@ -11,7 +11,9 @@ html {
     align-items: center;
     user-select: none; 
 }
-
+video::-internal-media-controls-overlay-cast-button {
+    display: none;
+}
 
 #player-container {
     position: relative;
@@ -42,6 +44,7 @@ html {
     box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
     color: #fff;
     /* 添加阴影 */
+    z-index:10;
 }
 
 #seek-bar {
