@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>正在加载...</title>
     <link rel="stylesheet" href="other.css">
@@ -7,7 +8,24 @@
         /* 在这里添加进度条的样式 */
     </style>
 </head>
+
 <body>
     <div id="progress-bar" style="user-select: none; ">嘟嘟噜......还在加载中呢，请等一下......</div>
+    <script>
+        function isMacOS() {
+            return navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        }
+        if (isMacOS()) {
+            console.log('mac');
+            const styleSheet = document.createElement('style');
+            styleSheet.textContent = `
+        body {
+            background-color: initial !important;
+}
+`;
+            document.head.appendChild(styleSheet);
+        }
+    </script>
 </body>
+
 </html>

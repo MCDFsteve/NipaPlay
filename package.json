@@ -1,7 +1,7 @@
 {
   "name": "nipaplay",
   "productName": "NipaPlay",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "咪啪～☆",
   "main": "main.js",
   "author": "DFsteve",
@@ -40,8 +40,25 @@
     "macx64": "npm run prebuild:mac && electron-builder --mac --x64",
     "linux": "npm run prebuild:linux && electron-builder --linux --x64",
     "linuxarm": "npm run prebuild:linux && electron-builder --linux",
-    "build": "npm run win && npm run mac && npm run macx64 && npm run linux && npm run linuxarm && npm run woa"
+    "build": "npm run win && npm run mac && npm run macx64 && npm run linux && npm run linuxarm && npm run woa",
+    "test": "npm run win && npm run mac && npm run macx64"
   },
+  "fileAssociations": [
+    {
+      "ext": [
+        "mp4",
+        "avi",
+        "mov",
+        "mkv",
+        "wmv",
+        "flv",
+        "m4v",
+        "webm"
+      ],
+      "name": "Video Files",
+      "role": "Viewer"
+    }
+  ],
   "build": {
     "appId": "com.dfsteve.nipaplay",
     "asar": false,
@@ -59,7 +76,7 @@
       "!**/electron-builder.yml",
       "!**/.DS_Store",
       "!**/*.bak",
-      "!**/ffmpeg/ffmpeg_mac",
+      "!**/ffmpeg/ffmpeg_win",
       "!**/ffmpeg/ffmpeg_linux64",
       "!**/ffmpeg/ffmpeg_linuxarm"
     ],

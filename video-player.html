@@ -22,20 +22,26 @@
     <div id="uihide">
         <div id="controls-container">
             <div id="left-controls">
+                <button id="up-button" class="control-button"
+                    style="background-image: url('icons/up.png'); display: block;"></button>
                 <button id="play-button" class="control-button"
                     style="background-image: url('icons/play.png')"></button>
                 <button id="pause-button" class="control-button"
                     style="background-image: url('icons/pause.png'); display: none;"></button>
+                <button id="down-button" class="control-button"
+                    style="background-image: url('icons/down.png'); display: block;"></button>
                 <div id="pop-play" popover="auto" class="pop">播放</div>
                 <div id="pop-pause" popover="auto" class="pop">暂停</div>
+                <div id="pop-up" popover="auto" class="pop">前一个</div>
+                <div id="pop-down" popover="auto" class="pop">后一个</div>
             </div>
             <div id="center-controls">
                 <input id="seek-bar" type="range" min="0" max="100" value="0">
-                <div id="time-display">00:00 / 00:00</div>
             </div>
             <div id="pop-bar" popover="auto" class="pop">进度条</div>
             <div id="pop-alphabar" popover="auto" class="pop">不透明度</div>
             <div id="right-controls">
+                <div id="time-display">00:00 / 00:00</div>
                 <button id="fullscreen-button" style="background-image: url('icons/fullscreen.png')">全屏</button>
                 <button id="windowed-button"
                     style="background-image: url('icons/windowscreen.png'); display: none;">窗口化</button>
@@ -67,6 +73,7 @@
     <div id="volume-display">音量: 50%</div>
     <div id="subtitle-alert" class="hide">字幕加载成功</div>
     <button id="video-title"></button>
+    <button id="files-title"></button>
     <script src="node_modules/assjs/dist/ass.min.js"></script>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
@@ -93,6 +100,7 @@
         // 根据是否提供了新标题来设置页面标题
         const title = path2;
         const videoTitle = document.getElementById('video-title');
+        const filesTitle = document.getElementById('files-title');
         let watchedVideos = JSON.parse(localStorage.getItem('watchedVideos')) || [];
         const videoRecord = { name: newTitle ? decodeURIComponent(newTitle) : title, path: path };
         // 查找数组中是否已存在该记录
@@ -115,6 +123,28 @@
         ipcRenderer.send('get-downloads-path');
         ipcRenderer.send('get-downloads-path2');
         ipcRenderer.send('get-downloads-path3');
+        ipcRenderer.send('get-files-path');
+        ipcRenderer.on('files-path', (event, videoFiles) => {
+            if (videoFiles.length === 1) {
+                console.log('Only one video file in the directory. No action needed.');
+            } else {
+                videoElement.addEventListener('ended', () => {
+                    let countdown = 5;
+                    const countdownInterval = setInterval(() => {
+                        countdown--;
+                        filesTitle.style.display = 'block';
+                        filesTitle.textContent = `${countdown}秒后播放下一话......`;
+                        if (countdown === 0) {
+                            clearInterval(countdownInterval);
+                        }
+                    }, 1000);
+                    setTimeout(() => {
+                        ipcRenderer.send('down-player-window', videoElement.src);
+                        filesTitle.style.display = 'none';
+                    }, 5000);
+                });
+            }
+        });
         // 接收下载路径
         ipcRenderer.on('downloads-path', (event, vttPath) => {
             console.log('vttPath path:', vttPath);

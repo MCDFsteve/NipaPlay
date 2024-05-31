@@ -5,6 +5,8 @@ const popPlay = document.getElementById('pop-play');
 const popPause = document.getElementById('pop-pause');
 const popFull = document.getElementById('pop-full');
 const popWin = document.getElementById('pop-win');
+const popUp = document.getElementById('pop-up');
+const popDown = document.getElementById('pop-down');
 const seekBar = document.getElementById('seek-bar');
 const fullscreenButton = document.getElementById('fullscreen-button');
 const winscreenButton = document.getElementById('windowed-button');
@@ -15,6 +17,8 @@ const popCom = document.getElementById('pop-comment');
 const popSet = document.getElementById('pop-settings');
 const subButton = document.getElementById('subtitle-button');
 const comButton = document.getElementById('comment-button');
+const upButton = document.getElementById('up-button');
+const downButton = document.getElementById('down-button');
 const setButton = document.getElementById('settings-button');
 const hideui = document.getElementById('uihide');
 const popAlpha = document.getElementById('pop-alpha');
@@ -63,7 +67,14 @@ function updateSliderBackground(slider, value) {
     popAlphabar.style.left = `calc(${percentage}% / 8)`;
     popAlphabar.textContent = `${percentage}%`;
 }
-
+downButton.addEventListener('click', () => {
+    console.log("啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊");
+    ipcRenderer.send('down-player-window');
+});
+upButton.addEventListener('click', () => {
+    console.log("喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔");
+    ipcRenderer.send('up-player-window');
+});
 // 弹幕按钮点击事件，显示透明度控制面板
 commentButton.addEventListener('click', () => {
     danmakuOpacityControl.style.display = 'block';
@@ -143,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function () {
         seekBar.value = videoPlayer.currentTime; // 确保滑块位置正确反映当前播放时间
         seekBar.style.background = `linear-gradient(to right, rgba(255, 255, 255, 0.5) ${percentage}%, rgba(216, 216, 216, 0.3) ${percentage}%)`;
         const progressBarWidth = seekBar.offsetWidth; // 获取进度条的总宽度
-        const popBarLeft = (percentage / 50.1) * progressBarWidth; // 根据百分比计算#pop-bar的左偏移量
+        const popBarLeft = (percentage / 51) * progressBarWidth; // 根据百分比计算#pop-bar的左偏移量
 
         // 设置#pop-bar的位置。这里我们假设pop-bar的CSS定位已经设置为absolute
         // 注意：您可能需要根据#pop-bar的尺寸做一些调整，以确保它正确对齐滑块
@@ -289,6 +300,20 @@ pauseButton.addEventListener('mouseenter', () => {
 });
 pauseButton.addEventListener('mouseleave', () => {
     popPause.hidePopover()
+});
+//////
+upButton.addEventListener('mouseenter', () => {
+    popUp.showPopover()
+});
+upButton.addEventListener('mouseleave', () => {
+    popUp.hidePopover()
+});
+//////
+downButton.addEventListener('mouseenter', () => {
+    popDown.showPopover()
+});
+downButton.addEventListener('mouseleave', () => {
+    popDown.hidePopover()
 });
 //////
 fullscreenButton.addEventListener('mouseenter', () => {
