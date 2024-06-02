@@ -128,20 +128,46 @@
             if (videoFiles.length === 1) {
                 console.log('Only one video file in the directory. No action needed.');
             } else {
+                let countdownInterval;
+                let countdownTimeout;
+
+                function clearCountdown() {
+                    if (countdownInterval) {
+                        clearInterval(countdownInterval);
+                        countdownInterval = null;
+                    }
+                    if (countdownTimeout) {
+                        clearTimeout(countdownTimeout);
+                        countdownTimeout = null;
+                    }
+                    filesTitle.style.display = 'none';
+                }
+
                 videoElement.addEventListener('ended', () => {
-                    let countdown = 5;
-                    const countdownInterval = setInterval(() => {
+                    let countdown = 10;
+                    filesTitle.style.display = 'block';
+                    filesTitle.textContent = `${countdown}秒后播放下一话......`;
+
+                    countdownInterval = setInterval(() => {
                         countdown--;
-                        filesTitle.style.display = 'block';
                         filesTitle.textContent = `${countdown}秒后播放下一话......`;
                         if (countdown === 0) {
                             clearInterval(countdownInterval);
                         }
                     }, 1000);
-                    setTimeout(() => {
+
+                    countdownTimeout = setTimeout(() => {
                         ipcRenderer.send('down-player-window', videoElement.src);
                         filesTitle.style.display = 'none';
-                    }, 5000);
+                    }, 10000);
+                });
+
+                videoElement.addEventListener('timeupdate', () => {
+                    if (!videoElement.ended && (countdownInterval || countdownTimeout)) {
+                        clearCountdown();
+                        countdown = 0;
+                        filesTitle.style.display = 'none';
+                    }
                 });
             }
         });

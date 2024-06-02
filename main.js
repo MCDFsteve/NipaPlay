@@ -1,4 +1,5 @@
 const { app, BrowserWindow, BrowserView, ipcMain, dialog, session, screen, nativeTheme, Menu, globalShortcut, isMac } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const fs = require('fs');
 const fs2 = require('fs').promises;
 const path = require('path');
@@ -58,6 +59,7 @@ app.on('ready', () => {
         }
     }
 });
+app.setAsDefaultProtocolClient('Nipaplay', process.execPath, ['--open-file']);
 // macOS: handle file opening
 app.on('open-file', (event, filePath) => {
     event.preventDefault();
@@ -126,29 +128,74 @@ app.on('ready', () => {
     session.defaultSession.on('will-download', async (event, item, webContents) => {
         const url = item.getURL();
         console.log('Download URL detected:', url);
-        urlWindow.close();
+        if (urlWindow && !urlWindow.isDestroyed()) {
+            urlWindow.close();
+        }
         // 阻止默认的下载行为
         event.preventDefault();
         // 处理捕获到的下载 URL
         handleDownloadURL(url);
     });
-    // 注册全局快捷键 Command + Q
-    const ret = globalShortcut.register('CommandOrControl+Q', () => {
-        const allWindows = BrowserWindow.getAllWindows();
-        const isAnyWindowFocused = allWindows.some(win => win.isFocused());
-
-        if (isAnyWindowFocused) {
-            // 结束应用程序
-            app.quit();
-        }
+    // 当应用程序获得焦点时注册快捷键
+    app.on('browser-window-focus', () => {
+        registerShortcuts();
     });
-    moveMessagesToNipa()
-    // 检查注册快捷键的状态
-    if (!ret) {
-        console.error('Registration failed');
-    }
+
+    // 当应用程序失去焦点时注销快捷键
+    app.on('browser-window-blur', () => {
+        unregisterShortcuts();
+    });
     // 创建主窗口
     createMainWindow();
+    autoUpdater.checkForUpdatesAndNotify();
+
+    autoUpdater.on('checking-for-update', () => {
+        console.log('Checking for update...');
+    });
+
+    autoUpdater.on('update-available', (info) => {
+        console.log('Update available.');
+    });
+
+    autoUpdater.on('update-not-available', (info) => {
+        console.log('Update not available.');
+    });
+
+    autoUpdater.on('error', (err) => {
+        console.error('Error in auto-updater:', err);
+    });
+
+    autoUpdater.on('download-progress', (progressObj) => {
+        let log_message = "Download speed: " + progressObj.bytesPerSecond;
+        log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+        log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+        console.log(log_message);
+    });
+
+    autoUpdater.on('update-downloaded', (info) => {
+        console.log('Update downloaded');
+
+        // 获取发布说明
+        let releaseNotes = info.releaseNotes;
+        if (typeof releaseNotes === 'string') {
+            releaseNotes = releaseNotes.replace(/(<([^>]+)>)/gi, ""); // 去除HTML标签
+        } else if (Array.isArray(releaseNotes)) {
+            releaseNotes = releaseNotes.map(note => note.body).join('\n');
+        }
+
+        // 提示更新的对话框
+        dialog.showMessageBox({
+            type: 'info',
+            title: '版本更新',
+            message: '有一个新的版本可以更新，要现在更新到最新版吗?',
+            detail: releaseNotes, // 在对话框中显示发布说明
+            buttons: ['更新', '稍后']
+        }).then((result) => {
+            if (result.response === 0) {
+                autoUpdater.quitAndInstall();
+            }
+        });
+    });
 });
 ipcMain.on('log-message', (event, message) => {
     console.log(message);
@@ -241,14 +288,11 @@ ipcMain.on('load-config', async (event) => {
         event.reply('config-loaded', null);
     }
 });
-ipcMain.on('close-subtitle-window', () => {
-    if (subtitleSelectionWindow) {
-        subtitleSelectionWindow.destroy();
-    }
-});
 ipcMain.on('close-url-window', () => {
     if (urlWindow) {
-        urlWindow.close();
+        if (urlWindow && !urlWindow.isDestroyed()) {
+            urlWindow.close();
+        }
     }
 });
 ipcMain.on('close-selection-window', () => {
@@ -262,17 +306,8 @@ ipcMain.on('close-main-window', () => {
         app.quit();
     }
 });
-ipcMain.on('fullscreen-window', () => {
-    if (mainWindow) {
-        const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-        animateWindowResize(mainWindow, width, height, 200);
-    }
-});
-ipcMain.on('restore-window', () => {
-    if (mainWindow) {
-        animateWindowResize(mainWindow, 800, 600, 200);
-    }
-});
+ipcMain.on('fullscreen-window', handleFullscreen);
+ipcMain.on('restore-window', handleRestore);
 ipcMain.on('minimize-window', (event) => {
     if (mainWindow) {
         const window = BrowserWindow.fromWebContents(event.sender);
@@ -418,54 +453,56 @@ ipcMain.handle('search-anime', async (event, searchTerm) => {
         });
     });
 });
+///全屏按钮按下以后的动画
 function animateWindowResize(window, targetWidth, targetHeight, duration) {
-    const currentBounds = window.getBounds();
+    const { width: startWidth, height: startHeight, x: startX, y: startY } = window.getBounds();
+    const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
     const startTime = Date.now();
-    const initialX = currentBounds.x;
-    const initialY = currentBounds.y;
-    const initialWidth = currentBounds.width;
-    const initialHeight = currentBounds.height;
-    const steps = Math.round(duration / 16.67); // 大约每秒 60 帧
-    const stepWidth = (targetWidth - initialWidth) / steps;
-    const stepHeight = (targetHeight - initialHeight) / steps;
-    const stepX = (targetWidth - initialWidth) / (2 * steps);
-    const stepY = (targetHeight - initialHeight) / (2 * steps);
 
-    function step() {
-        const elapsedTime = Date.now() - startTime;
-        const progress = Math.min(elapsedTime / duration, 1);
-        const easeProgress = easeInOutQuad(progress);
-
-        const newWidth = initialWidth + (targetWidth - initialWidth) * easeProgress;
-        const newHeight = initialHeight + (targetHeight - initialHeight) * easeProgress;
-        const newX = initialX - (newWidth - initialWidth) / 2;
-        const newY = initialY - (newHeight - initialHeight) / 2;
+    const interval = setInterval(() => {
+        const now = Date.now();
+        const progress = Math.min((now - startTime) / duration, 1);
+        const currentWidth = startWidth + (targetWidth - startWidth) * progress;
+        const currentHeight = startHeight + (targetHeight - startHeight) * progress;
+        const currentX = Math.round(screenWidth / 2 - currentWidth / 2);
+        const currentY = Math.round(screenHeight / 2 - currentHeight / 2);
 
         window.setBounds({
-            x: Math.round(newX),
-            y: Math.round(newY),
-            width: Math.round(newWidth),
-            height: Math.round(newHeight)
+            width: Math.round(currentWidth),
+            height: Math.round(currentHeight),
+            x: currentX,
+            y: currentY
         });
 
-        if (progress < 1) {
-            setTimeout(step, 16.67); // 使用 setTimeout 来模拟 requestAnimationFrame 的效果
-        } else {
-            window.setBounds({
-                width: targetWidth,
-                height: targetHeight,
-                x: Math.round((screen.getPrimaryDisplay().workAreaSize.width - targetWidth) / 2),
-                y: Math.round((screen.getPrimaryDisplay().workAreaSize.height - targetHeight) / 2)
-            });
+        if (progress >= 1) {
+            clearInterval(interval);
+            window.unfreezeFrame();
         }
+    }, 16); // 每帧约16ms, 对应60fps
+
+    window.freezeFrame();
+}
+
+function handleFullscreen() {
+    if (mainWindow) {
+        const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+        animateWindowResize(mainWindow, width, height, 100); // 500ms 动画时间
     }
-
-    setTimeout(step, 16.67); // 初始调用
 }
 
-function easeInOutQuad(t) {
-    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+function handleRestore() {
+    if (mainWindow) {
+        animateWindowResize(mainWindow, 800, 600, 100); // 500ms 动画时间
+    }
 }
+
+BrowserWindow.prototype.freezeFrame = function () {
+    this.webContents.executeJavaScript('document.body.style.visibility = "hidden";');
+};
+
+BrowserWindow.prototype.unfreezeFrame = function () {
+    this.webContents.executeJavaScript('document.body.style.visibility = "";');
+};
 function createUrlWindow() {
     urlWindow = new BrowserWindow({
         width: 300,
@@ -488,6 +525,26 @@ function createUrlWindow() {
     urlWindow.once('ready-to-show', () => {
         urlWindow.show(); // 显示窗口
     });
+}
+function registerShortcuts() {
+    const ret = globalShortcut.register('CommandOrControl+Q', () => {
+        const allWindows = BrowserWindow.getAllWindows();
+        const isAnyWindowFocused = allWindows.some(win => win.isFocused());
+
+        if (isAnyWindowFocused) {
+            // 结束应用程序
+            app.quit();
+        }
+    });
+
+    // 检查注册快捷键的状态
+    if (!ret) {
+        console.error('Registration failed');
+    }
+}
+
+function unregisterShortcuts() {
+    globalShortcut.unregister('CommandOrControl+Q');
 }
 function createBrowserView(url) {
     topBrowserView = new BrowserView({
@@ -562,11 +619,9 @@ function calculateFileHash(filePath, algorithm = 'md5') {
 }
 function startCheckingForVideo() {
     const checkInterval = 1000; // 每秒检查一次
-    const timeoutDuration = 300000; // 超时时间设为300秒
-    let elapsedTime = 0;
 
     const interval = setInterval(async () => {
-        if (mainBrowserView) {
+        if (mainBrowserView && mainBrowserView.webContents) {
             try {
                 const result = await mainBrowserView.webContents.executeJavaScript(`
                     (function() {
@@ -581,6 +636,8 @@ function startCheckingForVideo() {
                 `);
                 if (result && result.videoUrl) {
                     console.log("Video found:", result.videoUrl);
+                    const response = await recognizeVideo2(result.title);
+                    console.log('response videopath！！！！！！！！！！！！！！！！！！！:', response.videoPath);
                     // Step 1: Fetch subtitle tracks from the video file
                     const subtitleTracks = await fetchSubtitleTracks(result.videoUrl);
                     if (subtitleTracks.length > 0) {
@@ -593,23 +650,20 @@ function startCheckingForVideo() {
                         console.log("No subtitle tracks found.");
                     }
                     clearInterval(interval);
-                    const response = await recognizeVideo2(result.title);
-                    console.log('response:', response);
                     console.log("post结果:", response.isMatched, response.animeTitle, response.episodeId, response.animeId);
                     if (response.isMatched) {
                         const newTitle = `${response.animeTitle} ${response.episodeTitle}`;
                         const newepisodeId = response.episodeId;
                         console.log('id+title:', newTitle, newepisodeId);
-                        urlWindow.close();
+                        if (urlWindow && !urlWindow.isDestroyed()) {
+                            urlWindow.close();
+                        }
                         danmakudownload(newTitle, result.videoUrl, newepisodeId);
                     } else {
-                        urlWindow.close();
+                        if (urlWindow && !urlWindow.isDestroyed()) {
+                            urlWindow.close();
+                        }
                         createSelectionWindow(response.matches, result.videoUrl, response.episodeId);
-                    }
-                } else {
-                    elapsedTime += checkInterval;
-                    if (elapsedTime >= timeoutDuration) {
-                        clearInterval(interval);
                     }
                 }
             } catch (err) {
@@ -618,14 +672,17 @@ function startCheckingForVideo() {
             }
         } else {
             clearInterval(interval);
-            console.error('urlWindow is undefined or has been destroyed');
+            console.error('mainBrowserView is undefined or has been destroyed');
         }
     }, checkInterval);
 }
+
 async function handleDownloadURL(url) {
     console.log('Handling download URL:', url);
     CreateloadWindow();
     console.log("Video found:", url);
+    const response = await recognizeVideo2(url);
+    console.log('response:', response);
     // Step 1: Fetch subtitle tracks from the video file
     const subtitleTracks = await fetchSubtitleTracks(url);
     if (subtitleTracks.length > 0) {
@@ -638,8 +695,6 @@ async function handleDownloadURL(url) {
         console.log("No subtitle tracks found.");
     }
     // 调用 recognizeVideo2 识别视频
-    const response = await recognizeVideo2(url);
-    console.log('response:', response);
     console.log("post结果:", response.isMatched, response.animeTitle, response.episodeId, response.animeId);
     if (response.isMatched) {
         const newTitle = `${response.animeTitle} ${response.episodeTitle}`;
@@ -895,7 +950,8 @@ async function recognizeVideo2(title) {
                         episodeId: responseData.matches[0]?.episodeId,
                         animeId: responseData.matches[0]?.animeId,
                         animeTitle: responseData.matches[0]?.animeTitle,
-                        episodeTitle: responseData.matches[0]?.episodeTitle
+                        episodeTitle: responseData.matches[0]?.episodeTitle,
+                        videoPath: videoPath
                     });
                 } catch (parseError) {
                     console.error('解析 HTTPS 请求响应时发生错误:', parseError);
@@ -1072,7 +1128,7 @@ function extractSubtitles(videoPath, trackId, outputDir) {
     const outputPath = path.join(subPath, `${videoName}.${subtitleFormat}`);
     console.log('ffmpeg sub:', outputPath);
     console.log('trackId:', trackId);
-    const ffmpegArgs = ['-i', `"${videoPath}"`, '-map', trackIDID, '-c:s', subtitleFormat, '-y', `"${outputPath}"`];
+    const ffmpegArgs = ['-ss','0','-i', `"${videoPath}"`, '-map', trackIDID, '-c:s', subtitleFormat, '-y', `"${outputPath}"`];
     const ffmpegPath = (() => {
         switch (os.platform()) {
             case 'darwin': // macOS
@@ -1099,6 +1155,7 @@ function extractSubtitles(videoPath, trackId, outputDir) {
                 reject('Failed to extract subtitles: ' + stderr);
             } else {
                 console.log('Subtitle extracted to:', outputPath);
+                console.log('Subtitle command to:', command);
                 resolve(outputPath);
             }
         });
@@ -1125,6 +1182,9 @@ function showSubtitleSelection(tracks, center) {
         if (loadingWindow && !loadingWindow.isDestroyed()) {
             loadingWindow.webContents.close();
         }
+        if (loadWindow && !loadWindow.isDestroyed()) {
+            loadWindow.webContents.close();
+        }
         subtitleSelectionWindow.loadFile('subtitle_selection.html');
         subtitleSelectionWindow.once('ready-to-show', () => {
             setTimeout(() => {
@@ -1145,11 +1205,17 @@ function showSubtitleSelection(tracks, center) {
         }, 5000);
         // 接收从渲染进程发来的选中字幕信息
         ipcMain.once('subtitle-selected', (event, selectedIndex) => {
+            clearTimeout(timer);
             subtitleSelectionWindow.close();
             CreateloadWindow(center);
             resolve(tracks[selectedIndex]);
         });
-
+        ipcMain.on('close-subtitle-window', () => {
+            if (subtitleSelectionWindow) {
+                clearTimeout(timer);
+                subtitleSelectionWindow.destroy();
+            }
+        });
         subtitleSelectionWindow.on('closed', () => {
             subtitleSelectionWindow = null;
         });
@@ -1317,63 +1383,71 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
         }
     });
     ipcMain.on('get-files-path', (event) => {
-        const videoDir = path.dirname(videoPath);
-        const videoFiles = fs.readdirSync(videoDir)
-            .filter(file => file.match(/\.(mp4|avi|mov|mkv|wmv|flv|m4v|webm)$/))
-            .sort();
-        event.reply('files-path', videoFiles);
+        if (isLocalPath(videoPath)) {
+            const videoDir = path.dirname(videoPath);
+            const videoFiles = fs.readdirSync(videoDir)
+                .filter(file => file.match(/\.(mp4|avi|mov|mkv|wmv|flv|m4v|webm)$/))
+                .sort();
+            event.reply('files-path', videoFiles);
+        }
     });
+    
     ipcMain.on('down-player-window', (event) => {
-        console.log('down!');
-        window = BrowserWindow.fromWebContents(event.sender);
-        if (!window || window.isDestroyed()) {
-            console.error('Window has been destroyed or is not available.');
-            return;
+        if (isLocalPath(videoPath)) {
+            console.log('down!');
+            let window = BrowserWindow.fromWebContents(event.sender);
+            if (!window || window.isDestroyed()) {
+                console.error('Window has been destroyed or is not available.');
+                return;
+            }
+            const videoDir = path.dirname(videoPath);
+            const videoFiles = fs.readdirSync(videoDir)
+                .filter(file => file.match(/\.(mp4|avi|mov|mkv|wmv|flv|m4v|webm)$/))
+                .sort();
+            if (videoFiles.length === 1) {
+                console.log('Only one video file in the directory. No action needed.');
+                return;
+            }
+            const currentIndex = videoFiles.indexOf(path.basename(videoPath));
+            if (currentIndex === -1) {
+                console.error('Current video not found in directory');
+                return;
+            }
+            console.log('videoFiles:', videoFiles);
+            let nextIndex = (currentIndex + 1) % videoFiles.length; // 循环播放列表
+            const nextVideoPath = path.join(videoDir, videoFiles[nextIndex]);
+            console.log("路径：", nextVideoPath);
+            openVideoAndFetchDetails(nextVideoPath, 'lain', 'amadeus');
         }
-        const videoDir = path.dirname(videoPath);
-        const videoFiles = fs.readdirSync(videoDir)
-            .filter(file => file.match(/\.(mp4|avi|mov|mkv|wmv|flv|m4v|webm)$/))
-            .sort();
-        if (videoFiles.length === 1) {
-            console.log('Only one video file in the directory. No action needed.');
-            return;
-        }
-        const currentIndex = videoFiles.indexOf(path.basename(videoPath));
-        if (currentIndex === -1) {
-            console.error('Current video not found in directory');
-            return;
-        }
-        console.log('videoFiles:', videoFiles);
-        let nextIndex = (currentIndex + 1) % videoFiles.length; // 循环播放列表
-        const nextVideoPath = path.join(videoDir, videoFiles[nextIndex]);
-        console.log("路径：", nextVideoPath);
-        openVideoAndFetchDetails(nextVideoPath, 'lain', 'amadeus');
     });
+    
     ipcMain.on('up-player-window', (event) => {
-        console.log('down!');
-        window = BrowserWindow.fromWebContents(event.sender);
-        if (!window || window.isDestroyed()) {
-            console.error('Window has been destroyed or is not available.');
-            return;
+        if (isLocalPath(videoPath)) {
+            console.log('up!');
+            let window = BrowserWindow.fromWebContents(event.sender);
+            if (!window || window.isDestroyed()) {
+                console.error('Window has been destroyed or is not available.');
+                return;
+            }
+            const videoDir = path.dirname(videoPath);
+            const videoFiles = fs.readdirSync(videoDir)
+                .filter(file => file.match(/\.(mp4|avi|mov|mkv|wmv|flv|m4v|webm)$/))
+                .sort();
+            if (videoFiles.length === 1) {
+                console.log('Only one video file in the directory. No action needed.');
+                return;
+            }
+            const currentIndex = videoFiles.indexOf(path.basename(videoPath));
+            if (currentIndex === -1) {
+                console.error('Current video not found in directory');
+                return;
+            }
+            console.log('videoFiles:', videoFiles);
+            let nextIndex = (currentIndex - 1 + videoFiles.length) % videoFiles.length; // 循环播放列表
+            const nextVideoPath = path.join(videoDir, videoFiles[nextIndex]);
+            console.log("路径：", nextVideoPath);
+            openVideoAndFetchDetails(nextVideoPath, 'lain', 'amadeus');
         }
-        const videoDir = path.dirname(videoPath);
-        const videoFiles = fs.readdirSync(videoDir)
-            .filter(file => file.match(/\.(mp4|avi|mov|mkv|wmv|flv|m4v|webm)$/))
-            .sort();
-        if (videoFiles.length === 1) {
-            console.log('Only one video file in the directory. No action needed.');
-            return;
-        }
-        const currentIndex = videoFiles.indexOf(path.basename(videoPath));
-        if (currentIndex === -1) {
-            console.error('Current video not found in directory');
-            return;
-        }
-        console.log('videoFiles:', videoFiles);
-        let nextIndex = (currentIndex - 1) % videoFiles.length; // 循环播放列表
-        const nextVideoPath = path.join(videoDir, videoFiles[nextIndex]);
-        console.log("路径：", nextVideoPath);
-        openVideoAndFetchDetails(nextVideoPath, 'lain', 'amadeus');
     });
     ipcMain.on('minimize-player-window', (event) => {
         const window = BrowserWindow.fromWebContents(event.sender);
@@ -1395,6 +1469,9 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
     console.log("Video window created for path:", videoPath, "with title:", newTitle);
 
 
+}
+function isLocalPath(filePath) {
+    return !filePath.startsWith('http://') && !filePath.startsWith('https://');
 }
 async function openVideoAndFetchDetails(videoPath, episodeId, center) {
     console.log("函数开始执行，视频路径：", videoPath);

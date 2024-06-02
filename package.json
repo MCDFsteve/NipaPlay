@@ -1,7 +1,7 @@
 {
   "name": "nipaplay",
   "productName": "NipaPlay",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "咪啪～☆",
   "main": "main.js",
   "author": "DFsteve",
@@ -12,6 +12,7 @@
     "axios": "^1.6.8",
     "danmaku": "^2.0.6",
     "electron-store": "^8.2.0",
+    "electron-updater": "^6.1.8",
     "express": "^4.19.2",
     "got": "^14.3.0",
     "jsdom": "^24.0.0",
@@ -76,10 +77,15 @@
       "!**/electron-builder.yml",
       "!**/.DS_Store",
       "!**/*.bak",
-      "!**/ffmpeg/ffmpeg_win",
+      "!**/ffmpeg/ffmpeg_mac",
       "!**/ffmpeg/ffmpeg_linux64",
       "!**/ffmpeg/ffmpeg_linuxarm"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "mcdfsteve",
+      "repo": "nipaplay"
+    },
     "mac": {
       "target": [
         "dmg",
