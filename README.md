@@ -1,3 +1,5 @@
+![logo](https://github.com/MCDFsteve/NipaPlay/assets/71605531/9bf3f76f-4f06-45f0-b812-e397ddec310c)
+
 # NipaPlay 一款本地弹幕播放器。看番专用。弹弹play的macOS代餐。
 ## 特色
 ### 似乎没有（大嘘）
@@ -13,7 +15,8 @@
 - 直接运行程序会提示已损坏，请在终端输入sudo xattr -dr com.apple.quarantine 程序.app的运行路径（可以从访达拖放），输入密码以后就能正常打开了
 ### 软件截图
 #### 主界面截图
-![7bfeeadb52c4bc9cad1f97936bcd9c3c](https://github.com/MCDFsteve/NipaPlay/assets/71605531/71c9086a-394f-47e7-b0e1-e7b1255d8fc1)
+<img width="800" alt="image" src="https://github.com/MCDFsteve/NipaPlay/assets/71605531/4715a1a2-1e1d-4660-a48a-f42a2f8cb866">
+
 
 
 #### 播放器界面截图
