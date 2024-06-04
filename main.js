@@ -35,14 +35,14 @@ function log(message) {
 let mainWindow;
 let urlWindow;
 let window;
-// 创建关于窗口实例 s
+// 创建关于窗口实例
 let videoWindow; // 假设这是创建视频播放窗口时的引用
-let loadingWindow;  // 确保这是全局变量
 let loadWindow;
 let selectionWindow;
 let mainBrowserView;
 let topBrowserView;
 let subtitleSelectionWindow;
+let isFullScreen;
 // 监听应用程序退出事件
 app.on('window-all-closed', () => {
     // 在 macOS 上，关闭所有窗口后退出应用程序
@@ -98,15 +98,6 @@ app.whenReady().then(() => {
     app.setAppUserModelId('com.dfsteve.nipaplay'); // 设置应用程序的 User Model ID
     app.setBadgeCount(0); // 设置任务栏图标上的计数
     app.dock.setIcon(path.join(__dirname, 'window_icon.png'));
-});
-app.on('open-file', (event, filePath) => {
-    // 该事件可能在应用程序启动前触发，所以你需要确保主窗口已经创建
-    if (mainWindow) {
-        ffmpegif(filePath);
-    } else {
-        // 如果窗口尚未创建，你可以存储这个路径，并在窗口准备好后再打开视频
-        app.once('ready', () => ffmpegif(filePath));
-    }
 });
 app.on('before-quit', () => {
     app.isQuitting = true;
@@ -336,6 +327,7 @@ ipcMain.on('update-watched-video', (event, videoRecord) => {
 ipcMain.on('toggle-fullscreen', (event) => {
     const window = BrowserWindow.getFocusedWindow();
     if (window) {
+        isFullScreen = 'lain';
         window.setFullScreen(!window.isFullScreen());
     }
 });
@@ -507,6 +499,8 @@ function createUrlWindow() {
     urlWindow = new BrowserWindow({
         width: 300,
         height: 200,
+        maxWidth:800,
+        maxHeight:600,
         fullscreen: false,
         show: false,
         frame: false,
@@ -1168,6 +1162,7 @@ function showSubtitleSelection(tracks, center) {
             width: 500,
             height: 300,
             alwaysOnTop: true,
+            fullscreen: false,
             frame: false,
             show: false,
             autoHideMenuBar: true,
@@ -1179,9 +1174,6 @@ function showSubtitleSelection(tracks, center) {
                 contextIsolation: false
             }
         });
-        if (loadingWindow && !loadingWindow.isDestroyed()) {
-            loadingWindow.webContents.close();
-        }
         if (loadWindow && !loadWindow.isDestroyed()) {
             loadWindow.webContents.close();
         }
@@ -1224,8 +1216,8 @@ function showSubtitleSelection(tracks, center) {
 // 在 createSelectionWindow 中检查并移除旧的处理器
 function createSelectionWindow(matches, videoPath, episodeId, center) {
     console.log("匹配成功，即将播放的视频路径：", videoPath);
-    if (loadingWindow && !loadingWindow.isDestroyed()) {
-        loadingWindow.close();
+    if (loadWindow && !loadWindow.isDestroyed()) {
+        loadWindow.close();
     }
     if (selectionWindow) {
         selectionWindow.close();  // 确保关闭旧的选择窗口
@@ -1234,6 +1226,7 @@ function createSelectionWindow(matches, videoPath, episodeId, center) {
         width: 500,
         height: 333,
         alwaysOnTop: true,
+        fullscreen: false,
         autoHideMenuBar: true,
         icon: path.join(__dirname, 'window_icon.png'),
         show: false,
@@ -1359,10 +1352,22 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
     const url = `file://${__dirname}/video-player.html?path=${encodeURIComponent(videoPath)}&path2=${encodeURIComponent(videoPath2)}&title=${encodeURIComponent(newTitle)}&episodeId=${episodeId}`;
     if (center == 'amadeus') {
         window.loadURL(url);
-        console.log("看我看我！！！！！这是播放路径：", url);
-        center = null;
-        console.log('yabai:center:', center);
-    } else {
+        
+        // 等待页面加载完成后再检查窗口是否全屏
+        window.webContents.on('did-finish-load', () => {
+            if (window) {
+                // 检查窗口是否全屏
+                if (isFullScreen='lain') {
+                    // 确保传递布尔值参数
+                    window.setFullScreen(true);
+                }
+            }
+            console.log("看我看我！！！！！这是播放路径：", url);
+            center = null;
+            console.log('yabai:center:', center);
+        });
+    }
+     else {
         console.log('yes');
         videoWindow.loadURL(url);
         videoWindow.once('ready-to-show', () => {
@@ -1395,7 +1400,7 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
     ipcMain.on('down-player-window', (event) => {
         if (isLocalPath(videoPath)) {
             console.log('down!');
-            let window = BrowserWindow.fromWebContents(event.sender);
+            window = BrowserWindow.fromWebContents(event.sender);
             if (!window || window.isDestroyed()) {
                 console.error('Window has been destroyed or is not available.');
                 return;
@@ -1478,24 +1483,7 @@ async function openVideoAndFetchDetails(videoPath, episodeId, center) {
     const outputDir = path.join(danmakuPath);
 
     // 显示加载中窗口
-    if (!loadingWindow || loadingWindow.isDestroyed()) {
-        loadingWindow = new BrowserWindow({
-            width: 200,
-            height: 100,
-            frame: false,
-            show: false,
-            modal: true, // 设置为模态窗口
-            icon: path.join(__dirname, 'window_icon.png'),
-            parent: center === 'amadeus' ? videoWindow : mainWindow,
-            vibrancy: 'popover',
-            webPreferences: {
-                nodeIntegration: true,
-                contextIsolation: false
-            }
-        });
-        loadingWindow.once('ready-to-show', () => loadingWindow.show());
-        loadingWindow.loadURL(`file://${__dirname}/loading.html`);
-    }
+    CreateloadWindow(center);
 
     try {
         // Step 1: Fetch subtitle tracks from the video file
@@ -1529,8 +1517,8 @@ async function openVideoAndFetchDetails(videoPath, episodeId, center) {
         dialog.showErrorBox('视频链接无效', error.message || error.toString());
     } finally {
         // 无论如何关闭加载中窗口
-        if (loadingWindow && !loadingWindow.isDestroyed()) {
-            loadingWindow.close();
+        if (loadWindow && !loadWindow.isDestroyed()) {
+            loadWindow.close();
         }
     }
 }
@@ -1664,8 +1652,10 @@ function CreateloadWindow(center) {
     loadWindow = new BrowserWindow({
         width: 200,
         height: 100,
+        alwaysOnTop: true,
         frame: false,
         autoHideMenuBar: true,
+        fullscreen: false,
         vibrancy: 'popover',
         show: false,
         modal: true, // 设置为模态窗口

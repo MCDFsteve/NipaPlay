@@ -30,15 +30,25 @@
                     style="background-image: url('icons/pause.png'); display: none;"></button>
                 <button id="down-button" class="control-button"
                     style="background-image: url('icons/down.png'); display: block;"></button>
+                <button id="audio-button-full" class="control-button"
+                    style="background-image: url('icons/audio_full.png'); display: block;"></button>
+                <button id="audio-button-50" class="control-button"
+                    style="background-image: url('icons/audio_50.png'); display: none;"></button>
+                <button id="audio-button-0" class="control-button"
+                    style="background-image: url('icons/audio_0.png'); display: none;"></button>
+                <button id="audio-button-null" class="control-button"
+                    style="background-image: url('icons/audio_null.png'); display: none;"></button>
                 <div id="pop-play" popover="auto" class="pop">播放</div>
                 <div id="pop-pause" popover="auto" class="pop">暂停</div>
-                <div id="pop-up" popover="auto" class="pop">前一个</div>
-                <div id="pop-down" popover="auto" class="pop">后一个</div>
+                <div id="pop-up" popover="auto" class="pop">上一话</div>
+                <div id="pop-down" popover="auto" class="pop">下一话</div>
+                <div id="pop-audio" popover="auto" class="pop">音量</div>
             </div>
             <div id="center-controls">
                 <input id="seek-bar" type="range" min="0" max="100" value="0">
             </div>
             <div id="pop-bar" popover="auto" class="pop">进度条</div>
+            <div id="pop-bar2" popover="auto" class="pop">进度条2</div>
             <div id="pop-alphabar" popover="auto" class="pop">不透明度</div>
             <div id="right-controls">
                 <div id="time-display">00:00 / 00:00</div>
@@ -68,9 +78,12 @@
             <div id="pop-alpha" popover="auto" class="pop">弹幕透明度</div>
             <input type="range" id="opacity-slider" min="0" max="100" value="100">
         </div>
-
     </div>
-    <div id="volume-display">音量: 50%</div>
+    <!-- 音量调节控制面板 -->
+    <div id="audio-opacity-control" style="display: none;">
+            <input type="range" id="audio-slider" min="0" max="100" value="100">
+    </div>
+    <div id="volume-display" style="display: none;">音量: 50%</div>
     <div id="subtitle-alert" class="hide">字幕加载成功</div>
     <button id="video-title"></button>
     <button id="files-title"></button>
@@ -120,6 +133,8 @@
         console.log("Updated watched video list with:", title);
         ipcRenderer.send('update-watched-video', videoRecord);
         let vttPath;
+        let countdownInterval;
+        let countdownTimeout;
         ipcRenderer.send('get-downloads-path');
         ipcRenderer.send('get-downloads-path2');
         ipcRenderer.send('get-downloads-path3');
@@ -128,26 +143,10 @@
             if (videoFiles.length === 1) {
                 console.log('Only one video file in the directory. No action needed.');
             } else {
-                let countdownInterval;
-                let countdownTimeout;
-
-                function clearCountdown() {
-                    if (countdownInterval) {
-                        clearInterval(countdownInterval);
-                        countdownInterval = null;
-                    }
-                    if (countdownTimeout) {
-                        clearTimeout(countdownTimeout);
-                        countdownTimeout = null;
-                    }
-                    filesTitle.style.display = 'none';
-                }
-
                 videoElement.addEventListener('ended', () => {
                     let countdown = 10;
                     filesTitle.style.display = 'block';
                     filesTitle.textContent = `${countdown}秒后播放下一话......`;
-
                     countdownInterval = setInterval(() => {
                         countdown--;
                         filesTitle.textContent = `${countdown}秒后播放下一话......`;

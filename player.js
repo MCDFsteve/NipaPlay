@@ -10,8 +10,14 @@ const popDown = document.getElementById('pop-down');
 const seekBar = document.getElementById('seek-bar');
 const fullscreenButton = document.getElementById('fullscreen-button');
 const winscreenButton = document.getElementById('windowed-button');
-const progressBar = document.getElementById('seek-bar');
+const audioFull = document.getElementById('audio-button-full');
+const audio50 = document.getElementById('audio-button-50');
+const audio0 = document.getElementById('audio-button-0');
+const audionull = document.getElementById('audio-button-null');
+const progressBar = document.getElementById('controls-container');
 const followDiv = document.getElementById('pop-bar');
+const popBar2 = document.getElementById('pop-bar2');
+const popAudio = document.getElementById('pop-audio');
 const popSub = document.getElementById('pop-subtitle');
 const popCom = document.getElementById('pop-comment');
 const popSet = document.getElementById('pop-settings');
@@ -27,8 +33,10 @@ const Alphaimage = document.getElementById('alpha-image');
 // 获取弹幕按钮和新的弹幕透明度控制面板元素
 const commentButton = document.getElementById('comment-button');
 const danmakuOpacityControl = document.getElementById('danmaku-opacity-control');
+const audioControl = document.getElementById('audio-opacity-control');
 const closeOpacityControl = document.getElementById('close-opacity-control');
 const opacitySlider = document.getElementById('opacity-slider');
+const audioSlider = document.getElementById('audio-slider');
 const danmakuContainer = document.getElementById('danmaku-container');
 const originalLog = console.log; // 保存原始的console.log函数，以便还可以在渲染器中本地打印日志
 
@@ -44,12 +52,17 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
     const savedOpacity = localStorage.getItem('danmaku-opacity');
+    const savedaudioOpacity = localStorage.getItem('videoVolume');
     if (savedOpacity) {
         opacitySlider.value = savedOpacity;
         danmakuContainer.style.opacity = savedOpacity / 100;
     }
+    if (savedaudioOpacity) {
+        audioSlider.value = savedaudioOpacity * 100;
+    }
     // 初始化滑动条的样式和显示的透明度值
     updateSliderBackground(opacitySlider, opacitySlider.value);
+    updateSliderBackground2(audioSlider.value);
 
     // 添加输入事件监听器来动态更新滑动条和透明度值
     opacitySlider.addEventListener('input', function () {
@@ -58,21 +71,82 @@ document.addEventListener('DOMContentLoaded', function () {
         // 保存透明度值到localStorage
         localStorage.setItem('danmaku-opacity', opacitySlider.value);
     });
+    audioSlider.addEventListener('input', function () {
+        if (videoPlayer.volume >= 0.98) {
+            videoPlayer.volume = 1;
+        }else if (videoPlayer.volume <= 0.02) {
+            videoPlayer.volume = 0;
+        }
+        if (videoPlayer.volume <= 1 && videoPlayer.volume > 0.6) {
+            audioFull.style.display = 'block';
+            audio50.style.display = 'none';
+            audio0.style.display = 'none';
+            audionull.style.display = 'none';
+        } else if (videoPlayer.volume <= 0.6 && videoPlayer.volume > 0.3) {
+            audioFull.style.display = 'none';
+            audio50.style.display = 'block';
+            audio0.style.display = 'none';
+            audionull.style.display = 'none';
+        } else if (videoPlayer.volume <= 0.3 && videoPlayer.volume > 0) {
+            audioFull.style.display = 'none';
+            audio50.style.display = 'none';
+            audio0.style.display = 'block';
+            audionull.style.display = 'none';
+        } else if (videoPlayer.volume <= 0.1) {
+            audioFull.style.display = 'none';
+            audio50.style.display = 'none';
+            audio0.style.display = 'none';
+            audionull.style.display = 'block';
+        }
+        const volumeDisplay = document.getElementById('volume-display');
+        volumeDisplay.innerText = `音量: ${Math.round(audioSlider.value)}%`;
+        volumeDisplay.style.display = 'block';
+        // 清除之前的定时器，重新设置定时器
+        if (window.volumeHideTimeout) {
+            clearTimeout(window.volumeHideTimeout);
+        }
+        window.volumeHideTimeout = setTimeout(() => {
+            volumeDisplay.style.display = 'none';
+        }, 2000); // 2秒后隐藏音量显示
+        updateSliderBackground2(audioSlider.value);
+        videoPlayer.volume = audioSlider.value / 100;
+        localStorage.setItem('videoVolume', videoPlayer.volume);
+    });
 });
-
+function clearCountdown() {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+    }
+    if (countdownTimeout) {
+        clearTimeout(countdownTimeout);
+        countdownTimeout = null;
+    }
+    filesTitle.style.display = 'none';
+}
 // 函数：根据滑动条的值更新背景样式
 function updateSliderBackground(slider, value) {
     const percentage = value; // 直接使用value作为百分比
     slider.style.background = `linear-gradient(to right, rgba(255, 255, 255, 0.5) ${percentage}%, rgba(216, 216, 216, 0.3) ${100 - percentage}%)`;
-    popAlphabar.style.left = `calc(${percentage}% / 8)`;
     popAlphabar.textContent = `${percentage}%`;
 }
+function updateSliderBackground2(value) {
+    const percentage = value;
+    //audioSlider.value = videoPlayer.volume; // 确保滑块位置正确反映当前播放时间
+    audioSlider.style.background = `linear-gradient(to right, rgba(255, 255, 255, 0.5) ${percentage}%, rgba(216, 216, 216, 0.3) ${percentage}%)`;
+}
 downButton.addEventListener('click', () => {
-    console.log("啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊");
+    clearCountdown();
+    countdown = 0;
+    filesTitle.style.display = 'none';
+    videoPlayer.pause();
     ipcRenderer.send('down-player-window');
 });
 upButton.addEventListener('click', () => {
-    console.log("喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔喔");
+    clearCountdown();
+    countdown = 0;
+    filesTitle.style.display = 'none';
+    videoPlayer.pause();
     ipcRenderer.send('up-player-window');
 });
 // 弹幕按钮点击事件，显示透明度控制面板
@@ -153,15 +227,18 @@ document.addEventListener('DOMContentLoaded', function () {
         const percentage = (videoPlayer.currentTime / videoPlayer.duration) * 100;
         seekBar.value = videoPlayer.currentTime; // 确保滑块位置正确反映当前播放时间
         seekBar.style.background = `linear-gradient(to right, rgba(255, 255, 255, 0.5) ${percentage}%, rgba(216, 216, 216, 0.3) ${percentage}%)`;
-        const progressBarWidth = seekBar.offsetWidth; // 获取进度条的总宽度
-        const popBarLeft = (percentage / 51) * progressBarWidth; // 根据百分比计算#pop-bar的左偏移量
-
         // 设置#pop-bar的位置。这里我们假设pop-bar的CSS定位已经设置为absolute
         // 注意：您可能需要根据#pop-bar的尺寸做一些调整，以确保它正确对齐滑块
         const popBar = document.getElementById('pop-bar');
+        // 获取进度条的边界和宽度
+        const seekBarRect = seekBar.getBoundingClientRect();
+        const seekBarWidth = seekBarRect.width;
+        const relativePosition = ((seekBar.value - seekBar.min) / (seekBar.max - seekBar.min)) * seekBarWidth;
+        // 计算滑块的绝对位置
+        const absolutePosition = seekBarRect.left + relativePosition;
         if (popBar) {
             // 由于#seek-bar通常位于其容器的中间，可能需要添加额外的偏移来准确对齐pop-bar和滑块
-            popBar.style.left = `calc(${popBarLeft}px - 72.6%)`; // 假设pop-bar需要向左偏移8px以居中对齐
+            popBar.style.marginLeft = `calc(${absolutePosition}px)`;
         }
         popBar.textContent = formatTime(videoPlayer.currentTime);
     }
@@ -243,6 +320,8 @@ document.addEventListener('DOMContentLoaded', function () {
             controlsContainer.style.opacity = '0';
             videoTitle.style.opacity = '0';
             rightMenu.style.opacity = '0';
+            danmakuOpacityControl.style.display = 'none';
+            audioControl.style.display = 'none';
         }, 2000); // 3秒无交互后隐藏
     }
     videoContainer.addEventListener('mousemove', showControlsAndTitle);
@@ -272,6 +351,9 @@ document.addEventListener('DOMContentLoaded', function () {
     showControlsAndTitle();
     // 当鼠标进入元素时触发
     // 当鼠标停留在控件上时，取消隐藏
+    audioControl.addEventListener('mouseenter', function () {
+        clearTimeout(hideControlsTimeout);
+    });
     videoTitle.addEventListener('mouseenter', function () {
         clearTimeout(hideControlsTimeout);
     });
@@ -289,6 +371,8 @@ videoPlayer.addEventListener('click', () => {
 });
 ///////
 playButton.addEventListener('mouseenter', () => {
+    const seekPlayRect = playButton.getBoundingClientRect();
+    popPlay.style.marginLeft = `calc(${seekPlayRect.x}px)`;
     popPlay.showPopover()
 });
 playButton.addEventListener('mouseleave', () => {
@@ -296,6 +380,8 @@ playButton.addEventListener('mouseleave', () => {
 });
 //////
 pauseButton.addEventListener('mouseenter', () => {
+    const pauseButtonRect = pauseButton.getBoundingClientRect();
+    popPause.style.marginLeft = `calc(${pauseButtonRect.x}px)`;
     popPause.showPopover()
 });
 pauseButton.addEventListener('mouseleave', () => {
@@ -303,6 +389,8 @@ pauseButton.addEventListener('mouseleave', () => {
 });
 //////
 upButton.addEventListener('mouseenter', () => {
+    const upButtonRect = upButton.getBoundingClientRect();
+    popUp.style.marginLeft = `calc(${upButtonRect.x}px)`;
     popUp.showPopover()
 });
 upButton.addEventListener('mouseleave', () => {
@@ -310,13 +398,89 @@ upButton.addEventListener('mouseleave', () => {
 });
 //////
 downButton.addEventListener('mouseenter', () => {
+    const downButtonRect = downButton.getBoundingClientRect();
+    popDown.style.marginLeft = `calc(${downButtonRect.x}px)`;
     popDown.showPopover()
 });
 downButton.addEventListener('mouseleave', () => {
     popDown.hidePopover()
 });
 //////
+audioFull.addEventListener('mouseenter', () => {
+    const audioFullRect = audioFull.getBoundingClientRect();
+    popAudio.style.marginLeft = `calc(${audioFullRect.x}px)`;
+    popAudio.showPopover()
+});
+audioFull.addEventListener('mouseleave', () => {
+    popAudio.hidePopover()
+});
+audioFull.addEventListener('click', () => {
+    const audioFullRect = audioFull.getBoundingClientRect();
+    audioControl.style.left = `calc(${audioFullRect.left}px)`;
+    if (audioControl.style.display === 'block') {
+        audioControl.style.display = 'none';
+    } else {
+        audioControl.style.display = 'block';
+    }
+});
+//////
+audio50.addEventListener('mouseenter', () => {
+    const audioFullRect = audio50.getBoundingClientRect();
+    popAudio.style.marginLeft = `calc(${audioFullRect.x}px)`;
+    popAudio.showPopover()
+});
+audio50.addEventListener('mouseleave', () => {
+    popAudio.hidePopover()
+});
+audio50.addEventListener('click', () => {
+    const audioFullRect = audio50.getBoundingClientRect();
+    audioControl.style.left = `calc(${audioFullRect.left}px)`;
+    if (audioControl.style.display === 'block') {
+        audioControl.style.display = 'none';
+    } else {
+        audioControl.style.display = 'block';
+    }
+});
+//////
+audio0.addEventListener('mouseenter', () => {
+    const audioFullRect = audio0.getBoundingClientRect();
+    popAudio.style.marginLeft = `calc(${audioFullRect.x}px)`;
+    popAudio.showPopover()
+});
+audio0.addEventListener('mouseleave', () => {
+    popAudio.hidePopover()
+});
+audio0.addEventListener('click', () => {
+    const audioFullRect = audio0.getBoundingClientRect();
+    audioControl.style.left = `calc(${audioFullRect.left}px)`;
+    if (audioControl.style.display === 'block') {
+        audioControl.style.display = 'none';
+    } else {
+        audioControl.style.display = 'block';
+    }
+});
+//////
+audionull.addEventListener('mouseenter', () => {
+    const audioFullRect = audionull.getBoundingClientRect();
+    popAudio.style.marginLeft = `calc(${audioFullRect.x}px)`;
+    popAudio.showPopover()
+});
+audionull.addEventListener('mouseleave', () => {
+    popAudio.hidePopover()
+});
+audionull.addEventListener('click', () => {
+    const audioFullRect = audionull.getBoundingClientRect();
+    audioControl.style.left = `calc(${audioFullRect.left}px)`;
+    if (audioControl.style.display === 'block') {
+        audioControl.style.display = 'none';
+    } else {
+        audioControl.style.display = 'block';
+    }
+});
+//////
 fullscreenButton.addEventListener('mouseenter', () => {
+    const fullscreenButtonRect = fullscreenButton.getBoundingClientRect();
+    popFull.style.marginLeft = `calc(${fullscreenButtonRect.x}px)`;
     popFull.showPopover()
 });
 fullscreenButton.addEventListener('mouseleave', () => {
@@ -324,20 +488,41 @@ fullscreenButton.addEventListener('mouseleave', () => {
 });
 //////
 winscreenButton.addEventListener('mouseenter', () => {
+    const winscreenButtonRect = winscreenButton.getBoundingClientRect();
+    popWin.style.marginLeft = `calc(${winscreenButtonRect.x}px)`;
     popWin.showPopover()
 })
 winscreenButton.addEventListener('mouseleave', () => {
     popWin.hidePopover()
 });
 //////
-progressBar.addEventListener('mouseenter', () => {
-    followDiv.showPopover()
-});
-progressBar.addEventListener('mouseleave', () => {
-    followDiv.hidePopover()
+progressBar.addEventListener('mousemove', (event) => {
+    const seekBarRect = seekBar.getBoundingClientRect();
+    const seekBarSon = event.clientX - seekBarRect.left;
+    const seekBarWidth = seekBarRect.width;
+    const seekBar100 = seekBarSon / seekBarWidth;
+    const seekBarTime = videoPlayer.duration * seekBar100;
+    popBar2.textContent = convertToMinutesSeconds(seekBarTime);
+    const relativePosition = ((seekBar.value - seekBar.min) / (seekBar.max - seekBar.min)) * seekBarWidth;
+    // 计算滑块的绝对位置
+    const thumbLeft = seekBarRect.left + relativePosition - 1.5;
+    const thumbtop = seekBarRect.y - 20;
+    const thumbRight = thumbLeft + 3;
+    popBar2.style.marginLeft = `calc(${event.clientX}px)`;
+    if (event.clientX >= thumbLeft && event.clientX <= thumbRight && event.clientY >= thumbtop) {
+        followDiv.showPopover()
+    }
+    else if (event.clientX >= seekBarRect.left && event.clientX <= seekBarRect.right && event.clientY >= thumbtop) {
+        popBar2.showPopover()
+    } else {
+        followDiv.hidePopover()
+        popBar2.hidePopover()
+    }
 });
 //////
 subButton.addEventListener('mouseenter', () => {
+    const subButtonRect = subButton.getBoundingClientRect();
+    popSub.style.marginTop = `calc(${subButtonRect.y}px)`;
     popSub.showPopover()
 });
 subButton.addEventListener('mouseleave', () => {
@@ -345,6 +530,8 @@ subButton.addEventListener('mouseleave', () => {
 });
 //////
 comButton.addEventListener('mouseenter', () => {
+    const comButtonRect = comButton.getBoundingClientRect();
+    popCom.style.marginTop = `calc(${comButtonRect.y}px)`;
     popCom.showPopover()
 });
 comButton.addEventListener('mouseleave', () => {
@@ -352,22 +539,41 @@ comButton.addEventListener('mouseleave', () => {
 });
 //////
 setButton.addEventListener('mouseenter', () => {
+    const setButtonRect = setButton.getBoundingClientRect();
+    popSet.style.marginTop = `calc(${setButtonRect.y}px)`;
     popSet.showPopover()
 });
 setButton.addEventListener('mouseleave', () => {
     popSet.hidePopover()
 });
 Alphaimage.addEventListener('mouseenter', () => {
+    const AlphaimageRect = Alphaimage.getBoundingClientRect();
+    popAlpha.style.marginTop = `calc(${AlphaimageRect.y}px)`;
+    popAlpha.style.marginLeft = `calc(${AlphaimageRect.left}px - 2vw)`;
     popAlpha.showPopover()
 });
 Alphaimage.addEventListener('mouseleave', () => {
     popAlpha.hidePopover()
 });
-opacitySlider.addEventListener('mouseenter', () => {
-    popAlphabar.showPopover()
-});
-opacitySlider.addEventListener('mouseleave', () => {
-    popAlphabar.hidePopover()
+opacitySlider.addEventListener('mousemove', (event) => {
+    const opacitySliderRect = opacitySlider.getBoundingClientRect();
+    const opacitySliderWidth = opacitySliderRect.width;
+    const relativePosition = ((opacitySlider.value - opacitySlider.min) / (opacitySlider.max - opacitySlider.min)) * opacitySliderWidth;
+    const absolutePosition = opacitySliderRect.left + relativePosition;
+    // 计算滑块的绝对位置
+    const thumbLeft = opacitySliderRect.left + relativePosition - 2;
+    const thumbtop = opacitySliderRect.y - 8;
+    const thumbbottom = opacitySliderRect.y + 12;
+    const thumbRight = thumbLeft + 4;
+    popAlphabar.style.marginLeft = `calc(${absolutePosition}px)`;
+    popAlphabar.style.marginTop = `calc(${opacitySliderRect.y}px - 8vh)`;
+    if (event.clientX >= thumbLeft && event.clientX <= thumbRight && event.clientY >= thumbtop && event.clientY <= thumbbottom) {
+        popAlphabar.showPopover()
+    } else {
+        setTimeout(() => {
+            popAlphabar.hidePopover()
+        }, 200);
+    }
 });
 document.addEventListener('DOMContentLoaded', function () {
     const playerContainer = document.getElementById('player-container');
@@ -395,16 +601,20 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 //////
 let wakeLock = null;
+function convertToMinutesSeconds(num) {
+    var minutes = Math.floor(num / 60);
+    var seconds = Math.floor(num % 60);
 
+    seconds = seconds < 10 ? "0" + seconds : seconds;
+
+    return minutes + ":" + seconds;
+}
 document.addEventListener('DOMContentLoaded', () => {
     const videoPlayer = document.getElementById('video-player');
     const requestWakeLock = async () => {
         try {
             wakeLock = await navigator.wakeLock.request('screen');
-            console.log('屏幕唤醒锁定成功');
-
             wakeLock.addEventListener('release', () => {
-                console.log('屏幕唤醒锁已释放');
             });
 
             document.addEventListener('visibilitychange', async () => {
@@ -425,13 +635,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     videoPlayer.addEventListener('pause', () => {
         wakeLock?.release().then(() => {
-            console.log('屏幕唤醒锁已释放');
         });
     });
 
     videoPlayer.addEventListener('ended', () => {
         wakeLock?.release().then(() => {
-            console.log('屏幕唤醒锁已释放');
         });
     });
 });
@@ -462,7 +670,6 @@ function convertSRTtoVTT(filePath) {
     ipcRenderer.send('get-downloads-path');
     // 接收下载路径
     ipcRenderer.on('downloads-path', (event, downloadsPath) => {
-        console.log('Downloads path:', downloadsPath);
         // 这里你可以根据获取到的下载路径进行后续操作
         handleDownloadsPath(filePath, downloadsPath);
     });
@@ -473,7 +680,6 @@ function handlevttPath(title, vttPath) {
     const nipaPath = path.join(vttPath, 'nipaplay');
     const subPath = path.join(nipaPath, 'sub');
     const vttFilePath = path.join(subPath, title + '.vtt');
-    console.log('player vtt路径:', vttFilePath);
     loadVTTSubtitles(vttFilePath);
 }
 function handlesrtPath(title, vttPath) {
@@ -482,7 +688,6 @@ function handlesrtPath(title, vttPath) {
     const nipaPath = path.join(vttPath, 'nipaplay');
     const subPath = path.join(nipaPath, 'sub');
     const srtFilePath = path.join(subPath, title + '.srt');
-    console.log('player srt路径:', srtFilePath);
     handleDownloadsPath(srtFilePath, vttPath);
 }
 function handleassPath(title, assPath) {
@@ -491,7 +696,7 @@ function handleassPath(title, assPath) {
     const nipaPath = path.join(assPath, 'nipaplay');
     const subPath = path.join(nipaPath, 'sub');
     const assFilePath = path.join(subPath, title + '.ass');
-    console.log('ass路径:', assFilePath);
+    //console.log('ass路径:', assFilePath);
     loadASSSubtitles(assFilePath);
 }
 function vttSubtitles(filePath) {
@@ -499,7 +704,7 @@ function vttSubtitles(filePath) {
     // 在主进程中定义并发送下载路径
     ipcRenderer.send('get-downloads-path');
     ipcRenderer.on('downloads-path', (event, downloadsPath) => {
-        console.log('Downloads path:', downloadsPath);
+        //console.log('Downloads path:', downloadsPath);
         // 这里你可以根据获取到的下载路径进行后续操作
         handlevtt2Path(filePath, downloadsPath);
     });
@@ -510,14 +715,14 @@ function handlevtt2Path(filePath, downloadsPath) {
     const nipaPath = path.join(downloadsPath, 'nipaplay');
     const subPath = path.join(nipaPath, 'sub');
     const newFilePath = path.join(subPath, title + '.vtt');
-    console.log('newFilePath:', newFilePath);
+    //console.log('newFilePath:', newFilePath);
     // 拷贝文件到新位置
     fs.copyFile(filePath, newFilePath, (err) => {
         if (err) {
             console.error('Failed to copy subtitle file:', err);
             return;
         }
-        console.log('Subtitle file copied to:', newFilePath);
+        //console.log('Subtitle file copied to:', newFilePath);
 
         // 文件拷贝成功后加载字幕
         loadVTTSubtitles(newFilePath);
@@ -528,7 +733,7 @@ function prepareSubtitles(filePath) {
     // 在主进程中定义并发送下载路径
     ipcRenderer.send('get-downloads-path2');
     ipcRenderer.on('downloads-path2', (event, downloadsPath) => {
-        console.log('Downloads path by ass:', downloadsPath);
+        //console.log('Downloads path by ass:', downloadsPath);
         // 这里你可以根据获取到的下载路径进行后续操作
         handlessaPath(filePath, downloadsPath);
     });
@@ -539,30 +744,30 @@ function handlessaPath(filePath, downloadsPath) {
     const nipaPath = path.join(downloadsPath, 'nipaplay');
     const subPath = path.join(nipaPath, 'sub');
     const newFilePath = path.join(subPath, title + '.ass');
-    console.log('newFilePath:', newFilePath);
+    //console.log('newFilePath:', newFilePath);
     // 拷贝文件到新位置
     fs.copyFile(filePath, newFilePath, (err) => {
         if (err) {
             console.error('Failed to copy subtitle file:', err);
             return;
         }
-        console.log('Subtitle file copied to:', newFilePath);
+        //console.log('Subtitle file copied to:', newFilePath);
 
         // 文件拷贝成功后加载字幕
         loadASSSubtitles(newFilePath);
     });
 }
 function handleDownloadsPath(filePath, downloadsPath) {
-    console.log("downloadsPath:", downloadsPath);
-    console.log("filePath:", filePath);
-    console.log("title name:", title);
+    //console.log("downloadsPath:", downloadsPath);
+    //console.log("filePath:", filePath);
+    //console.log("title name:", title);
     const fs = require('fs');
     const path = require('path');
     const nipaPath = path.join(downloadsPath, 'nipaplay');
     const subPath = path.join(nipaPath, 'sub');
-    console.log('I am lain.');
+    //console.log('I am lain.');
     const vttFilePath = path.join(subPath, title + '.vtt');
-    console.log('vtt路径:', vttFilePath);
+    //console.log('vtt路径:', vttFilePath);
     fs.readFile(filePath, 'utf8', (err, data) => {
         if (err) {
             console.error('Error reading SRT file:', err);
@@ -616,7 +821,7 @@ function handleDownloadsPath(filePath, downloadsPath) {
             if (err) {
                 console.error('Error writing VTT file:', err);
             } else {
-                console.log('VTT file saved:', vttFilePath);
+                //console.log('VTT file saved:', vttFilePath);
                 loadVTTSubtitles(vttFilePath); // 加载转换后的 VTT 字幕
             }
         });
@@ -709,17 +914,58 @@ document.addEventListener('DOMContentLoaded', () => {
     if (savedVolume !== null) {
         video.volume = parseFloat(savedVolume);
     }
-
     document.addEventListener('keydown', (event) => {
         switch (event.key) {
             case 'ArrowUp': // 增大音量
                 if (video.volume < 1) {
                     video.volume = Math.min(video.volume + 0.1, 1);
                 }
+                if (video.volume <= 1 && video.volume > 0.6) {
+                    audioFull.style.display = 'block';
+                    audio50.style.display = 'none';
+                    audio0.style.display = 'none';
+                    audionull.style.display = 'none';
+                } else if (video.volume <= 0.6 && video.volume > 0.3) {
+                    audioFull.style.display = 'none';
+                    audio50.style.display = 'block';
+                    audio0.style.display = 'none';
+                    audionull.style.display = 'none';
+                } else if (video.volume <= 0.3 && video.volume > 0) {
+                    audioFull.style.display = 'none';
+                    audio50.style.display = 'none';
+                    audio0.style.display = 'block';
+                    audionull.style.display = 'none';
+                } else if (video.volume == 0) {
+                    audioFull.style.display = 'none';
+                    audio50.style.display = 'none';
+                    audio0.style.display = 'none';
+                    audionull.style.display = 'block';
+                }
                 break;
             case 'ArrowDown': // 减小音量
                 if (video.volume > 0) {
                     video.volume = Math.max(video.volume - 0.1, 0);
+                }
+                if (video.volume <= 1 && video.volume > 0.6) {
+                    audioFull.style.display = 'block';
+                    audio50.style.display = 'none';
+                    audio0.style.display = 'none';
+                    audionull.style.display = 'none';
+                } else if (video.volume <= 0.6 && video.volume > 0.3) {
+                    audioFull.style.display = 'none';
+                    audio50.style.display = 'block';
+                    audio0.style.display = 'none';
+                    audionull.style.display = 'none';
+                } else if (video.volume <= 0.3 && video.volume > 0) {
+                    audioFull.style.display = 'none';
+                    audio50.style.display = 'none';
+                    audio0.style.display = 'block';
+                    audionull.style.display = 'none';
+                } else if (video.volume == 0) {
+                    audioFull.style.display = 'none';
+                    audio50.style.display = 'none';
+                    audio0.style.display = 'none';
+                    audionull.style.display = 'block';
                 }
                 break;
             case 'ArrowLeft': // 视频后退五秒
@@ -729,19 +975,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 video.currentTime = Math.min(video.currentTime + 5, video.duration);
                 break;
         }
-
+        const audioTop = video.volume * 100;
+        audioSlider.value = audioTop;
+        updateSliderBackground2(audioTop);
         // 将音量值存储到 localStorage 中
         if (['ArrowUp', 'ArrowDown'].includes(event.key)) {
             localStorage.setItem('videoVolume', video.volume);
 
             if (!volumeDisplay) {
-                volumeDisplay = document.createElement('div');
-                volumeDisplay.id = 'volume-display';
-                document.body.appendChild(volumeDisplay); // 添加音量显示到页面
+                volumeDisplay = document.getElementById('volume-display');
             }
             volumeDisplay.innerText = `音量: ${Math.round(video.volume * 100)}%`;
             volumeDisplay.style.display = 'block';
-
             // 清除之前的定时器，重新设置定时器
             if (window.volumeHideTimeout) {
                 clearTimeout(window.volumeHideTimeout);
@@ -757,11 +1002,11 @@ const steamworks = require('steamworks.js');
 const client = steamworks.init(2520710);
 const mess = "#helloworld";
 function setRichPresence(key, value) {
-    console.log(`Trying to set Rich Presence with key: ${key}, value: ${value}`);
+    //console.log(`Trying to set Rich Presence with key: ${key}, value: ${value}`);
     if (client && client.localplayer) {
         client.localplayer.setRichPresence(key, value);
-        console.log('Rich Presence set successfully.');
-        console.log(client.localplayer.setRichPresence(key, value));
+        //console.log('Rich Presence set successfully.');
+        //console.log(client.localplayer.setRichPresence(key, value));
     } else {
         console.error(`Could not set the rich presence, steamworks was not properly loaded!`);
     }

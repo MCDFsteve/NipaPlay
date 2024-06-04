@@ -117,7 +117,7 @@ body {
 }
 .sidebar {
     border-right: 1px solid rgb(172, 172, 172);
-    width: 20%;
+    width: 20vw;
     z-index:0;
     background-color: rgb(224, 224, 224);
     padding: 10px;
@@ -505,28 +505,20 @@ h2 {
         color: #ffffff;
     }
 }
-
-#title-text {
-    position: fixed;
-    left: 20px;
-    font-weight: bold;
-    color: #000000;
-    /* 文本颜色 */
-    font-size: 30px;
-    /* 字体大小 */
-    margin-top: 30px;
-}
-
-@media (prefers-color-scheme: dark) {
-    #title-text {
-        color: #ffffff;
-    }
-}
-
 #import-video {
-    margin-top: 100px;
+    margin-top: calc(17vh + 20%);
 }
+.title-text {
+    position: fixed;
+    top: 7vh;
+    left: 2vw;
+    width: 18vw;
+  }
 
+  .title-text img {
+    width: 100%; /* 确保图片适应容器宽度 */
+    height: auto; /* 保持图片的原始比例 */
+  }
 .section-divider {
     border: none;
     border-top: 1px solid rgb(0, 0, 0);
