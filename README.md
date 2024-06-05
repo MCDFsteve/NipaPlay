@@ -20,7 +20,8 @@
 
 
 #### 播放器界面截图
-<img width="1440" alt="image" src="https://github.com/MCDFsteve/NipaPlay/assets/71605531/0ead4a97-ef5a-49cd-85de-160d502a95fa">
+<img width="1440" alt="image" src="https://github.com/MCDFsteve/NipaPlay/assets/71605531/252d5465-d3a4-44a5-9b09-43507cccc5d1">
+
 
 
 
