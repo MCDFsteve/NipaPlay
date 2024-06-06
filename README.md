@@ -1,7 +1,8 @@
-![logo](https://github.com/MCDFsteve/NipaPlay/assets/71605531/9bf3f76f-4f06-45f0-b812-e397ddec310c)
+![logo](https://github.com/MCDFsteve/NipaPlay/assets/71605531/9bf3f76f-4f06-45f0-b812-e397ddec310c) 
 # NipaPlay 一款本地弹幕播放器。看番专用。弹弹play的macOS代餐。
 [![madewithlove](https://img.shields.io/badge/made_with-%E2%9D%A4-red?style=for-the-badge&labelColor=orange)](https://github.com/MCDFsteve/NipaPlay)
-<img src="https://counter.seku.su/cmoe?name=nipaplay&theme=r34" /><br>
+<img src="https://counter.seku.su/cmoe?name=nipaplay&theme=r34" />
+<img height="600" src="https://github.com/MCDFsteve/NipaPlay/assets/71605531/41adac40-3ed4-48d5-b388-1df00e0ada7a">
 ## 特色
 ### 似乎没有（大嘘）
 - electron开发，html5播放器内核（支持mkv），支持硬解hevc/h265，自动调用GPU解码。
