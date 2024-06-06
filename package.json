@@ -1,7 +1,7 @@
 {
   "name": "nipaplay",
   "productName": "NipaPlay",
-  "version": "1.5.0",
+  "version": "1.5.2",
   "description": "咪啪～☆",
   "main": "main.js",
   "author": "DFsteve",
@@ -16,21 +16,21 @@
     "express": "^4.19.2",
     "got": "^14.3.0",
     "jsdom": "^24.0.0",
+    "node-abi": "^3.63.0",
     "node-addon-api": "^8.0.0",
     "node-mpv": "^1.5.0",
-    "plyr": "^3.7.8",
+    "prebuild-install": "^7.1.2",
     "ps-node": "^0.1.6",
     "python": "^0.0.4",
     "steamworks": "^0.0.11",
     "steamworks.js": "^0.3.1",
     "uuid": "^9.0.1",
     "video.js": "^8.12.0",
-    "videojs-contrib-hls": "^5.15.0",
-    "vlc.js": "^5.0.0-alpha",
-    "wcjs-player": "^6.0.1",
-    "xml2js": "^0.6.2"
+    "videojs-contrib-hls": "^5.15.0"
   },
   "scripts": {
+    "postinstall": "electron-builder install-app-deps",
+    "rebuild": "electron-rebuild",
     "start": "electron .",
     "prebuild:mac": "node scripts/prebuild.js mac",
     "prebuild:win": "node scripts/prebuild.js win",
@@ -133,7 +133,7 @@
   },
   "keywords": [],
   "devDependencies": {
-    "electron": "^29.3.0",
+    "electron": "^29.4.2",
     "electron-builder": "^24.13.3",
     "electron-packager": "^17.1.2",
     "electron-rebuild": "^3.2.9"

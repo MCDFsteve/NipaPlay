@@ -1,6 +1,5 @@
 const { ipcRenderer } = require('electron');
 const originalLog = console.log; // 保存原始的console.log函数，以便还可以在渲染器中本地打印日志
-
 console.log = function (...args) {
     ipcRenderer.send('log-message', args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : arg)).join(' '));
     originalLog.apply(console, args); // 保持渲染进程的控制台也可以输出日志
@@ -24,8 +23,12 @@ function updateMatchList(matches, isEpisodes = false, animeInfo = null) {
                 // 如果是集数列表，仅显示集数标题
                 div.textContent = match.episodeTitle || '未知集数';
             } else {
+                if (match.episodeTitle){
+                    div.textContent = `${match.animeTitle} ${match.episodeTitle}` || '未知动画';
+                }else{
+                    div.textContent = match.animeTitle || '未知动画';
+                }
                 // 如果是剧集列表，仅显示动画标题
-                div.textContent = match.animeTitle || '未知动画';
             }
 
             div.onclick = () => {
@@ -43,7 +46,6 @@ function updateMatchList(matches, isEpisodes = false, animeInfo = null) {
                         episodeTitle: match.episodeTitle // 确保episodeTitle也包含在内
                     };
                     ipcRenderer.invoke('process-selection', fullEpisodeInfo).then(response => {
-                        console.log("已处理选择:", response);
                     });
                 }
             };
@@ -51,7 +53,7 @@ function updateMatchList(matches, isEpisodes = false, animeInfo = null) {
             matchList.appendChild(div);
         });
     } else {
-        matchList.innerHTML = '<div class="no-matches">没有可以选择的视频</div>'; // 如果没有匹配项，显示提示信息
+        matchList.innerHTML = '<div class="no-matches">这个视频我猜不出来是什么....笨蛋！！</div>'; // 如果没有匹配项，显示提示信息
     }
 }
 document.getElementById('no-danmaku-play').addEventListener('click', function () {
@@ -116,6 +118,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
+ipcRenderer.on('platform-info', (event, { isMac }) => {
+    if (isMac) {
+        document.body.style.backgroundColor = "transparent";
+        console.log("是mac");
+    }
+});
 
 

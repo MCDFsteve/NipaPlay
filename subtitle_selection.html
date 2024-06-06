@@ -21,7 +21,6 @@
                 background-color: #202020;
             }
         }
-
         #subtitle-options {
             display: flex;
         }
@@ -126,6 +125,16 @@
     <script src="close.js"></script>
     <script>
         const { ipcRenderer } = require('electron');
+        if (isMacOS()) {
+            console.log('mac');
+            const styleSheet = document.createElement('style');
+            styleSheet.textContent = `
+        body {
+            background-color: initial !important;
+}
+`;
+            document.head.appendChild(styleSheet);
+        }
         // 关闭按钮点击事件
         closeButton.addEventListener('click', () => {
             ipcRenderer.send('close-subtitle-window');

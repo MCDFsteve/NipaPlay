@@ -15,6 +15,7 @@ const audio50 = document.getElementById('audio-button-50');
 const audio0 = document.getElementById('audio-button-0');
 const audionull = document.getElementById('audio-button-null');
 const progressBar = document.getElementById('controls-container');
+const reloadDanmaku = document.getElementById('reload-danmaku');
 const followDiv = document.getElementById('pop-bar');
 const popBar2 = document.getElementById('pop-bar2');
 const popAudio = document.getElementById('pop-audio');
@@ -39,11 +40,44 @@ const opacitySlider = document.getElementById('opacity-slider');
 const audioSlider = document.getElementById('audio-slider');
 const danmakuContainer = document.getElementById('danmaku-container');
 const originalLog = console.log; // 保存原始的console.log函数，以便还可以在渲染器中本地打印日志
-
+let fullorwin;
+//ipcRenderer.removeAllListeners('full-window');
 console.log = function (...args) {
     ipcRenderer.send('log-message', args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : arg)).join(' '));
     originalLog.apply(console, args); // 保持渲染进程的控制台也可以输出日志
 };
+function onWindowResize() {
+    const videoPlayer = document.getElementById('videoPlayer');
+    const videoPlayerRect = videoPlayer.getBoundingClientRect();
+    // 创建新的样式
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = `
+        video::-webkit-media-text-track-container {
+            bottom: ${videoPlayerRect.top}px;
+        }
+    `;
+    document.head.appendChild(styleSheet);
+}
+window.addEventListener('resize', onWindowResize);
+ipcRenderer.on('full', (event, center) => {
+    fullorwin = center;
+    console.log('fullorwin', fullorwin);
+    const closeButton = document.getElementById('close-button');
+    const miniButton = document.getElementById('minimize-button');
+    if (fullorwin == 'true') {
+        console.log('Successfully entered full screen mode.');
+        winscreenButton.style.display = 'block';
+        fullscreenButton.style.display = 'none';
+        closeButton.style.display = 'none';
+        miniButton.style.display = 'none';
+    } else if (fullorwin == 'false') {
+        console.log('Exited full screen mode.');
+        winscreenButton.style.display = 'none';
+        fullscreenButton.style.display = 'block';
+        closeButton.style.display = 'block';
+        miniButton.style.display = 'block';
+    }
+});
 document.addEventListener('DOMContentLoaded', function () {
     // 当视频元数据已加载，自动开始播放
     videoPlayer.addEventListener('loadedmetadata', function () {
@@ -51,6 +85,32 @@ document.addEventListener('DOMContentLoaded', function () {
             videoPlayer.play();
         }
     });
+    const savedVolume = localStorage.getItem('videoVolume');
+    if (savedVolume <= 1 && savedVolume > 0.6) {
+        console.log('full');
+        audioFull.style.display = 'block';
+        audio50.style.display = 'none';
+        audio0.style.display = 'none';
+        audionull.style.display = 'none';
+    } else if (savedVolume <= 0.6 && savedVolume > 0.3) {
+        console.log('50');
+        audioFull.style.display = 'none';
+        audio50.style.display = 'block';
+        audio0.style.display = 'none';
+        audionull.style.display = 'none';
+    } else if (savedVolume <= 0.3 && savedVolume > 0) {
+        console.log('0');
+        audioFull.style.display = 'none';
+        audio50.style.display = 'none';
+        audio0.style.display = 'block';
+        audionull.style.display = 'none';
+    } else if (savedVolume <= 0.1) {
+        console.log('null');
+        audioFull.style.display = 'none';
+        audio50.style.display = 'none';
+        audio0.style.display = 'none';
+        audionull.style.display = 'block';
+    }
     const savedOpacity = localStorage.getItem('danmaku-opacity');
     const savedaudioOpacity = localStorage.getItem('videoVolume');
     if (savedOpacity) {
@@ -72,9 +132,12 @@ document.addEventListener('DOMContentLoaded', function () {
         localStorage.setItem('danmaku-opacity', opacitySlider.value);
     });
     audioSlider.addEventListener('input', function () {
+        const volumeDisplay = document.getElementById('volume-display');
+        volumeDisplay.innerText = `音量: ${Math.round(audioSlider.value)}%`;
+        videoPlayer.volume = audioSlider.value / 100;
         if (videoPlayer.volume >= 0.98) {
             videoPlayer.volume = 1;
-        }else if (videoPlayer.volume <= 0.02) {
+        } else if (videoPlayer.volume <= 0.02) {
             videoPlayer.volume = 0;
         }
         if (videoPlayer.volume <= 1 && videoPlayer.volume > 0.6) {
@@ -98,8 +161,6 @@ document.addEventListener('DOMContentLoaded', function () {
             audio0.style.display = 'none';
             audionull.style.display = 'block';
         }
-        const volumeDisplay = document.getElementById('volume-display');
-        volumeDisplay.innerText = `音量: ${Math.round(audioSlider.value)}%`;
         volumeDisplay.style.display = 'block';
         // 清除之前的定时器，重新设置定时器
         if (window.volumeHideTimeout) {
@@ -109,7 +170,6 @@ document.addEventListener('DOMContentLoaded', function () {
             volumeDisplay.style.display = 'none';
         }, 2000); // 2秒后隐藏音量显示
         updateSliderBackground2(audioSlider.value);
-        videoPlayer.volume = audioSlider.value / 100;
         localStorage.setItem('videoVolume', videoPlayer.volume);
     });
 });
@@ -140,14 +200,30 @@ downButton.addEventListener('click', () => {
     countdown = 0;
     filesTitle.style.display = 'none';
     videoPlayer.pause();
-    ipcRenderer.send('down-player-window');
+    if (document.fullscreenElement) {
+        ipcRenderer.send('down-player-window', 'nanami');
+    } else {
+        ipcRenderer.send('down-player-window');
+    }
 });
 upButton.addEventListener('click', () => {
     clearCountdown();
     countdown = 0;
     filesTitle.style.display = 'none';
     videoPlayer.pause();
-    ipcRenderer.send('up-player-window');
+    if (document.fullscreenElement) {
+        ipcRenderer.send('up-player-window', 'nanami');
+    } else {
+        ipcRenderer.send('up-player-window');
+    }
+});
+reloadDanmaku.addEventListener('click', () => {
+    videoPlayer.pause();
+    if (document.fullscreenElement) {
+        ipcRenderer.send('reload-player-danmaku', 'nanami');
+    } else {
+        ipcRenderer.send('reload-player-danmaku');
+    }
 });
 // 弹幕按钮点击事件，显示透明度控制面板
 commentButton.addEventListener('click', () => {
@@ -174,28 +250,14 @@ document.addEventListener('DOMContentLoaded', function () {
             pauseButton.style.display = 'block';
         }
     }
-    document.addEventListener('fullscreenchange', (event) => {
-        const closeButton = document.getElementById('close-button');
-        const miniButton = document.getElementById('minimize-button');
-        if (document.fullscreenElement) {
-            winscreenButton.style.display = 'block';
-            fullscreenButton.style.display = 'none';
-            closeButton.style.display = 'none';
-            miniButton.style.display = 'none';
-        } else {
-            winscreenButton.style.display = 'none';
-            fullscreenButton.style.display = 'block';
-            closeButton.style.display = 'block';
-            miniButton.style.display = 'block';
-        }
-    });
     fullscreenButton.addEventListener('click', function () {
-        document.documentElement.requestFullscreen();
+        ipcRenderer.send('windowed-window');
+        //ipcRenderer.send('windowed-window');
     });
     winscreenButton.addEventListener('click', function () {
-        document.exitFullscreen();
+        ipcRenderer.send('windowed-window');
+        //ipcRenderer.send('windowed-window');
     });
-
     // 播放按钮点击事件
     playButton.addEventListener('click', function () {
         videoPlayer.play();
@@ -265,13 +327,13 @@ document.addEventListener('DOMContentLoaded', function () {
 document.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
         // 切换到全屏
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen();
+        if (fullorwin != 'true') {
+            ipcRenderer.send('windowed-window');
         }
     } else if (event.key === 'Escape') {
         // 退出全屏
-        if (document.fullscreenElement) {
-            document.exitFullscreen();
+        if (fullorwin == 'true') {
+            ipcRenderer.send('windowed-window');
         }
     }
 });
@@ -279,11 +341,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const videoPlayer = document.getElementById('video-player');
 
     videoPlayer.addEventListener('dblclick', () => {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen();
+        if (fullorwin != 'true') {
+            ipcRenderer.send('windowed-window');
         } else {
             // 已在全屏模式，退出全屏
-            document.exitFullscreen();
+            ipcRenderer.send('windowed-window');
         }
     });
 });
@@ -587,6 +649,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // 设置新的计时器
         mouseTimer = setTimeout(() => {
             playerContainer.style.cursor = 'none'; // 两秒后隐藏鼠标
+            popBar2.hidePopover();
         }, 2000); // 2000毫秒后执行
     };
 

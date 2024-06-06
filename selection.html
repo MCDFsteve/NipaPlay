@@ -12,7 +12,6 @@
             background-color: #ffffff;
             user-select: none;
         }
-
         /* 设置滚动条的宽度和轨道颜色 */
         ::-webkit-scrollbar {
             width: 8px;
@@ -171,7 +170,7 @@
 
 <body>
     <div class="drag-area"></div>
-    <div id="close-button" ></div>
+    <div id="close-button"></div>
     <h1>选择匹配的弹幕库</h1>
     <input type="text" id="search-input" style="display:none;" placeholder="没有想要的？哼！勉为其难帮你找吧！！">
     <button id="search-button">搜索</button>
@@ -179,11 +178,9 @@
     <div id="no-danmaku-play" class="selection-item" style="cursor: pointer;">
         什么？你不想要弹幕？好吧好吧点这里直接开始播放！
     </div>
-    <div id="matchList">正在加载数据...</div>
+    <div id="matchList">正在寻找中.......你给我稍微等一下...</div>
     <script src="close.js"></script>
     <script src="selection.js"></script>
-    <script>
-    </script>
 </body>
 
 </html>

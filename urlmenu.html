@@ -14,7 +14,7 @@
             /* 调整输入框宽度为容器宽度减去右侧间隔 */
             border: 10px;
             border-radius: 10px;
-            background-color: rgba(227, 227, 227, 0.8);
+            background-color: rgba(255, 255, 255, 0.8);
             color: #3f3f3f;
             box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.4);
             font-size: 16px;
@@ -134,6 +134,9 @@
     <script src="close.js"></script>
     <script>
         const { ipcRenderer } = require('electron');
+        if (isMacOS()) {
+            document.body.style.backgroundColor = "transparent";
+        }
         // 关闭按钮点击事件
         closeButton.addEventListener('click', () => {
             ipcRenderer.send('close-url-window');
