@@ -15,6 +15,7 @@ const audio50 = document.getElementById('audio-button-50');
 const audio0 = document.getElementById('audio-button-0');
 const audionull = document.getElementById('audio-button-null');
 const progressBar = document.getElementById('controls-container');
+const sidecontrols = document.getElementById('side-controls');
 const reloadDanmaku = document.getElementById('reload-danmaku');
 const followDiv = document.getElementById('pop-bar');
 const popBar2 = document.getElementById('pop-bar2');
@@ -22,6 +23,8 @@ const popAudio = document.getElementById('pop-audio');
 const popSub = document.getElementById('pop-subtitle');
 const popCom = document.getElementById('pop-comment');
 const popSet = document.getElementById('pop-settings');
+const popSwitch1 = document.getElementById('pop-danmakuswitch1');
+const popSwitch2 = document.getElementById('pop-danmakuswitch2');
 const subButton = document.getElementById('subtitle-button');
 const comButton = document.getElementById('comment-button');
 const upButton = document.getElementById('up-button');
@@ -40,6 +43,11 @@ const opacitySlider = document.getElementById('opacity-slider');
 const audioSlider = document.getElementById('audio-slider');
 const danmakuContainer = document.getElementById('danmaku-container');
 const originalLog = console.log; // 保存原始的console.log函数，以便还可以在渲染器中本地打印日志
+const controlsC = document.getElementById('controls-container');
+const controlsRect = sidecontrols.getBoundingClientRect();
+const danmakuSwitch = document.getElementById('danmakucon');
+const danmakuswitch1 = document.getElementById('danmakuSwitch');
+const danmakuswitch2 = document.getElementById('danmakuSwitch2');
 let fullorwin;
 //ipcRenderer.removeAllListeners('full-window');
 console.log = function (...args) {
@@ -79,6 +87,18 @@ ipcRenderer.on('full', (event, center) => {
     }
 });
 document.addEventListener('DOMContentLoaded', function () {
+    danmakuSwitch.style.left = `calc(${controlsRect.x}px)`;
+    const saveddanmuku = localStorage.getItem('danmakuswitch');
+    console.log('saveddanmuku:',saveddanmuku);
+    if (saveddanmuku == 1) {
+        danmakuContainer.style.zIndex = -1;
+        danmakuswitch1.style.display = 'none';
+        danmakuswitch2.style.display = 'block';
+    }else {
+        danmakuContainer.style.zIndex = 9;
+        danmakuswitch1.style.display = 'block';
+        danmakuswitch2.style.display = 'none';
+    }
     // 当视频元数据已加载，自动开始播放
     videoPlayer.addEventListener('loadedmetadata', function () {
         if (videoPlayer.readyState >= 2) { // 确保有足够的数据可以开始播放
@@ -195,12 +215,47 @@ function updateSliderBackground2(value) {
     //audioSlider.value = videoPlayer.volume; // 确保滑块位置正确反映当前播放时间
     audioSlider.style.background = `linear-gradient(to right, rgba(255, 255, 255, 0.5) ${percentage}%, rgba(216, 216, 216, 0.3) ${percentage}%)`;
 }
+ipcRenderer.on('files-path', (event, videoFiles) => {
+    if (videoFiles.length === 1) {
+        console.log('Only one video file in the directory. No action needed.');
+    } else {
+        videoElement.addEventListener('ended', () => {
+            let countdown = 10;
+            filesTitle.style.display = 'block';
+            filesTitle.textContent = `${countdown}秒后播放下一话......`;
+            countdownInterval = setInterval(() => {
+                countdown--;
+                filesTitle.textContent = `${countdown}秒后播放下一话......`;
+                if (countdown === 0) {
+                    clearInterval(countdownInterval);
+                }
+            }, 1000);
+
+            countdownTimeout = setTimeout(() => {
+                if (fullorwin == 'true') {
+                    ipcRenderer.send('down-player-window', 'nanami');
+                } else {
+                    ipcRenderer.send('down-player-window');
+                }
+                filesTitle.style.display = 'none';
+            }, 10000);
+        });
+
+        videoElement.addEventListener('timeupdate', () => {
+            if (!videoElement.ended && (countdownInterval || countdownTimeout)) {
+                clearCountdown();
+                countdown = 0;
+                filesTitle.style.display = 'none';
+            }
+        });
+    }
+});
 downButton.addEventListener('click', () => {
     clearCountdown();
     countdown = 0;
     filesTitle.style.display = 'none';
     videoPlayer.pause();
-    if (document.fullscreenElement) {
+    if (fullorwin == 'true') {
         ipcRenderer.send('down-player-window', 'nanami');
     } else {
         ipcRenderer.send('down-player-window');
@@ -211,7 +266,7 @@ upButton.addEventListener('click', () => {
     countdown = 0;
     filesTitle.style.display = 'none';
     videoPlayer.pause();
-    if (document.fullscreenElement) {
+    if (fullorwin == 'true') {
         ipcRenderer.send('up-player-window', 'nanami');
     } else {
         ipcRenderer.send('up-player-window');
@@ -219,11 +274,23 @@ upButton.addEventListener('click', () => {
 });
 reloadDanmaku.addEventListener('click', () => {
     videoPlayer.pause();
-    if (document.fullscreenElement) {
+    if (fullorwin == 'true') {
         ipcRenderer.send('reload-player-danmaku', 'nanami');
     } else {
         ipcRenderer.send('reload-player-danmaku');
     }
+});
+danmakuswitch1.addEventListener('click', () => {
+    localStorage.setItem('danmakuswitch', 1);
+    danmakuContainer.style.zIndex = -1;
+    danmakuswitch1.style.display = 'none';
+    danmakuswitch2.style.display = 'block';
+});
+danmakuswitch2.addEventListener('click', () => {
+    localStorage.setItem('danmakuswitch', 0);
+    danmakuContainer.style.zIndex = 9;
+    danmakuswitch1.style.display = 'block';
+    danmakuswitch2.style.display = 'none';
 });
 // 弹幕按钮点击事件，显示透明度控制面板
 commentButton.addEventListener('click', () => {
@@ -369,12 +436,19 @@ document.addEventListener('DOMContentLoaded', function () {
     const videoTitle = document.getElementById('video-title');
     const timeDisplay = document.getElementById('time-display');
     const rightMenu = document.getElementById('side-controls');
+    const closeButton = document.getElementById('close-button');
+    const miniButton = document.getElementById('minimize-button');
     let hideControlsTimeout;
     function showControlsAndTitle() {
         // 显示控制UI和视频标题
         controlsContainer.style.opacity = '1';
         videoTitle.style.opacity = '1';
         rightMenu.style.opacity = '1';
+        danmakuSwitch.style.display = 'block';
+        if (fullorwin == 'false') {
+            closeButton.style.display = 'block';
+            miniButton.style.display = 'block';
+        }
 
         // 重置并重新设置计时器
         clearTimeout(hideControlsTimeout);
@@ -384,6 +458,9 @@ document.addEventListener('DOMContentLoaded', function () {
             rightMenu.style.opacity = '0';
             danmakuOpacityControl.style.display = 'none';
             audioControl.style.display = 'none';
+            closeButton.style.display = 'none';
+            miniButton.style.display = 'none';
+            danmakuSwitch.style.display = 'none';
         }, 2000); // 3秒无交互后隐藏
     }
     videoContainer.addEventListener('mousemove', showControlsAndTitle);
@@ -420,6 +497,9 @@ document.addEventListener('DOMContentLoaded', function () {
         clearTimeout(hideControlsTimeout);
     });
     hideui.addEventListener('mouseenter', function () {
+        clearTimeout(hideControlsTimeout);
+    });
+    danmakuSwitch.addEventListener('mouseenter', function () {
         clearTimeout(hideControlsTimeout);
     });
 });
@@ -598,6 +678,24 @@ comButton.addEventListener('mouseenter', () => {
 });
 comButton.addEventListener('mouseleave', () => {
     popCom.hidePopover()
+});
+//////
+danmakuswitch1.addEventListener('mouseenter', () => {
+    const danmakuswitch1Rect = danmakuswitch1.getBoundingClientRect();
+    popSwitch1.style.marginTop = `calc(${danmakuswitch1Rect.y}px)`;
+    popSwitch1.showPopover()
+});
+danmakuswitch1.addEventListener('mouseleave', () => {
+    popSwitch1.hidePopover()
+});
+//////
+danmakuswitch2.addEventListener('mouseenter', () => {
+    const danmakuswitch2Rect = danmakuswitch2.getBoundingClientRect();
+    popSwitch2.style.marginTop = `calc(${danmakuswitch2Rect.y}px)`;
+    popSwitch2.showPopover()
+});
+danmakuswitch2.addEventListener('mouseleave', () => {
+    popSwitch2.hidePopover()
 });
 //////
 setButton.addEventListener('mouseenter', () => {

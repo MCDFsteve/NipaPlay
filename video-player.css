@@ -15,7 +15,37 @@ html {
 video::-internal-media-controls-overlay-cast-button {
     display: none;
 }
+#danmakucon{
+    position: fixed;
+    z-index:100;
+    background-color: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(15px);
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 5px 5px;
+    transition: opacity 0.5s ease;
+    bottom:33.5vh;
+}
+#danmakuSwitch{
+    background-image: url('icons/danmaku.png');
 
+}
+#danmakuSwitch2{
+    background-image: url('icons/danmaku2.png');
+    display: none;
+}
+.danmaku-switch{
+    opacity: 0.5;
+    margin: 2px;
+    background-size: cover;
+    width: 21px;
+    height: 21px;
+    transition: opacity 0.5s ease;
+}
+.danmaku-switch:hover{
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
 #audio-opacity-control {
     bottom:5vh;
     position: fixed;
@@ -211,7 +241,12 @@ video::-internal-media-controls-overlay-cast-button {
     position: fixed;
     transform: translate(-25%, -50%);
 }
-
+#pop-danmakuswitch1,#pop-danmakuswitch2 {
+    width:12px;
+    margin-right: 4.5vh;
+    position: fixed;
+    transform: translate(-50%, -35%);
+}
 #pop-bar,
 #pop-bar2 {
     margin-bottom: 4.5vh;

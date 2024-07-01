@@ -88,6 +88,12 @@
     <div id="subtitle-alert" class="hide">字幕加载成功</div>
     <button id="video-title"></button>
     <button id="files-title"></button>
+    <div id="danmakucon">
+        <div id="danmakuSwitch" class="danmaku-switch"></div>
+        <div id="danmakuSwitch2" class="danmaku-switch"></div>
+    </div>
+    <div id="pop-danmakuswitch1" popover="auto" class="pop">关闭弹幕</div>
+    <div id="pop-danmakuswitch2" popover="auto" class="pop">打开弹幕</div>
     <script src="node_modules/assjs/dist/ass.min.js"></script>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
@@ -140,37 +146,6 @@
         ipcRenderer.send('get-downloads-path2');
         ipcRenderer.send('get-downloads-path3');
         ipcRenderer.send('get-files-path');
-        ipcRenderer.on('files-path', (event, videoFiles) => {
-            if (videoFiles.length === 1) {
-                console.log('Only one video file in the directory. No action needed.');
-            } else {
-                videoElement.addEventListener('ended', () => {
-                    let countdown = 10;
-                    filesTitle.style.display = 'block';
-                    filesTitle.textContent = `${countdown}秒后播放下一话......`;
-                    countdownInterval = setInterval(() => {
-                        countdown--;
-                        filesTitle.textContent = `${countdown}秒后播放下一话......`;
-                        if (countdown === 0) {
-                            clearInterval(countdownInterval);
-                        }
-                    }, 1000);
-
-                    countdownTimeout = setTimeout(() => {
-                        ipcRenderer.send('down-player-window', videoElement.src);
-                        filesTitle.style.display = 'none';
-                    }, 10000);
-                });
-
-                videoElement.addEventListener('timeupdate', () => {
-                    if (!videoElement.ended && (countdownInterval || countdownTimeout)) {
-                        clearCountdown();
-                        countdown = 0;
-                        filesTitle.style.display = 'none';
-                    }
-                });
-            }
-        });
         // 接收下载路径
         ipcRenderer.on('downloads-path', (event, vttPath) => {
             console.log('vttPath path:', vttPath);

@@ -1377,7 +1377,8 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
         window.webContents.on('did-finish-load', () => {
             console.log("看我看我！！！！！这是播放路径：", url);
             if (isFullScreen == 'nanami') {
-                window.webContents.send('full', 'true');
+                window.setFullScreen(!window.isFullScreen());
+                //window.setFullScreen(!window.isFullScreen());
                 isFullScreen = null;
             }
             center = null;
@@ -1416,8 +1417,11 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
         }
     });
 
-    ipcMain.on('down-player-window', (event) => {
-        isFullScreen = 'nanami';
+    ipcMain.on('down-player-window', (event,fullscreen) => {
+        isFullScreen = fullscreen;
+        if (isFullScreen == 'nanami') {
+            window.setFullScreen(!window.isFullScreen());
+        }
         if (isLocalPath(videoPath)) {
             console.log('down!');
             window = BrowserWindow.fromWebContents(event.sender);
@@ -1446,8 +1450,11 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
         }
     });
 
-    ipcMain.on('up-player-window', (event) => {
-        isFullScreen = 'nanami';
+    ipcMain.on('up-player-window', (event,fullscreen) => {
+        isFullScreen = fullscreen;
+        if (isFullScreen == 'nanami') {
+            window.setFullScreen(!window.isFullScreen());
+        }
         if (isLocalPath(videoPath)) {
             console.log('up!');
             window = BrowserWindow.fromWebContents(event.sender);
@@ -1479,9 +1486,12 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
         window = BrowserWindow.fromWebContents(event.sender);
         window.setFullScreen(!window.isFullScreen());
     });
-    ipcMain.on('reload-player-danmaku', (event) => {
+    ipcMain.on('reload-player-danmaku', (event,fullscreen) => {
         console.log('reload!!');
-        isFullScreen = 'nanami';
+        isFullScreen = fullscreen;
+        if (isFullScreen == 'nanami') {
+            window.setFullScreen(!window.isFullScreen());
+        }
         console.log('isFullScreen:', isFullScreen);
         window = BrowserWindow.fromWebContents(event.sender);
         openVideoAndFetchDetails(videoPath, 'lain', 'lain');
