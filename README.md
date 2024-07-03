@@ -13,6 +13,7 @@
 - 播放器窗口和主窗口分离，可以同时播放多个视频（谁会需要这玩意）。
 ### 下载
 - 直接在右侧[Releases](https://github.com/MCDFsteve/NipaPlay/releases)下载最新包即可使用。目前支持Windows版和macOS版，Linux版。
+### 软件持续维护和更新中...
 ### macOS用户请注意
 - 直接运行程序会提示已损坏，请在终端输入sudo xattr -dr com.apple.quarantine 程序.app的运行路径（可以从访达拖放），输入密码以后就能正常打开了
 ### 软件截图
