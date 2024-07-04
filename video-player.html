@@ -82,7 +82,7 @@
     </div>
     <!-- 音量调节控制面板 -->
     <div id="audio-opacity-control" style="display: none;">
-            <input type="range" id="audio-slider" min="0" max="100" value="100">
+        <input type="range" id="audio-slider" min="0" max="100" value="100">
     </div>
     <div id="volume-display" style="display: none;">音量: 50%</div>
     <div id="subtitle-alert" class="hide">字幕加载成功</div>
@@ -98,14 +98,19 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const videoElement = document.getElementById('video-player');
-        const path = urlParams.get('path');
+        const patha = require('path');
+        const path = urlParams.get('videopath');
         const path2 = urlParams.get('path2');
+        const episodeId = urlParams.get('episodeId');
+        const danmakuPath = urlParams.get('danmakuPath');
+        const danmakuPath2 = patha.join(danmakuPath, `${episodeId}.js`);
         const { ipcRenderer } = require('electron');
         videoElement.src = path;
         videoElement.load();
         // 尝试从 URL 参数中获取提供的新标题
         const newTitle = urlParams.get('title');
         document.addEventListener('DOMContentLoaded', async () => {
+            loadDanmakuFile(danmakuPath2);
             const savedTime = parseFloat(localStorage.getItem(videoElement.src)) || 0;
             if (savedTime > 0) {
                 videoElement.currentTime = savedTime;
@@ -149,6 +154,7 @@
         // 接收下载路径
         ipcRenderer.on('downloads-path', (event, vttPath) => {
             console.log('vttPath path:', vttPath);
+            console.log('danmakuPath:', danmakuPath2);
             console.log('title path:', title);
             // 这里你可以根据获取到的下载路径进行后续操作
             handlevttPath(title, vttPath);
@@ -164,17 +170,33 @@
     </script>
     <script src="player.js"></script>
     <script src="node_modules/danmaku/dist/danmaku.min.js"></script>
-    <script id="dynamic-script"></script>
     <script src="node_modules/video.js/dist/video.js"></script>
     <script src="node_modules/videojs-contrib-hls/dist/videojs-contrib-hls.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            ipcRenderer.on('file-content', (event, content) => {
-                const dynamicScript = document.getElementById('dynamic-script');
-                dynamicScript.textContent = content;
-                document.body.appendChild(dynamicScript);
-            });
-        });
+        function loadDanmakuFile(filePath) {
+            fetch(filePath)
+                .then(response => response.text())
+                .then(content => {
+                    loadDanmaku(content);
+                })
+                .catch(error => {
+                    console.error('Error loading danmaku file:', error);
+                });
+        }
+        function loadDanmaku(content) {
+            // 查找并移除旧的动态脚本
+            const oldScript = document.querySelector('script[data-role="dynamic-script"]');
+            if (oldScript) {
+                oldScript.remove();
+            }
+
+            // 创建新的动态脚本
+            const newScript = document.createElement('script');
+            newScript.setAttribute('data-role', 'dynamic-script');
+            newScript.textContent = content;
+            document.body.appendChild(newScript);
+        }
+
         function isMacOS() {
             return navigator.platform.toUpperCase().indexOf('MAC') >= 0;
         }

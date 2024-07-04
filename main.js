@@ -54,6 +54,7 @@ app.on('window-all-closed', () => {
 });
 app.on('ready', () => {
     // Windows: handle file opening at startup
+    moveMessagesToNipa();
     if (process.platform === 'win32' && process.argv.length >= 2) {
         const filePath = process.argv.find(arg => arg.match(/\.(mp4|avi|mov|mkv|wmv|flv|m4v|webm)$/));
         if (filePath) {
@@ -1351,14 +1352,6 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
         frame: isMac ? undefined : false,
         //resizable: process.platform === 'darwin' ? false : true // MacOS不允许调整窗口大小，Windows允许
     });
-    if (fs.existsSync(danmakuFilePath)) {
-        const content = fs.readFileSync(danmakuFilePath, 'utf8');
-        videoWindow.webContents.on('did-finish-load', () => {
-            videoWindow.webContents.send('file-content', content);
-        });
-    } else {
-        console.log("弹幕文件不存在，将不加载弹幕.");
-    }
     videoWindow.on('enter-full-screen', () => {
         console.log('进入全屏模式');
         videoWindow.webContents.send('full', 'true');
@@ -1370,7 +1363,7 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
     const videoPath2 = sanitizeFileName(path.basename(videoPath, path.extname(videoPath)));
     // 使用 encodeURIComponent 确保标题中的特殊字符被正确处理
     const encodedTitle = encodeURIComponent(newTitle || '');
-    const url = `file://${__dirname}/video-player.html?path=${encodeURIComponent(videoPath)}&path2=${encodeURIComponent(videoPath2)}&title=${encodeURIComponent(newTitle)}&episodeId=${episodeId}`;
+    const url = `file://${__dirname}/video-player.html?videopath=${encodeURIComponent(videoPath)}&path2=${encodeURIComponent(videoPath2)}&title=${encodeURIComponent(newTitle)}&episodeId=${encodeURIComponent(episodeId)}&danmakuPath=${encodeURIComponent(danmakuPath)}`;
     if (center == 'amadeus' || center == 'lain') {
         window.loadURL(url);
         // 等待页面加载完成后再检查窗口是否全屏
