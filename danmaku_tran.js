@@ -32,7 +32,7 @@ function formatComment(comment) {
     const fontSize = comment.style.fontSize;
     const color = comment.style.color;
     const textShadow = comment.style.textShadow;
-    return `{ time: ${time}, text: '${text}', mode: '${mode}', style: { fontSize: '${fontSize}', color: '${color}', textShadow: '${textShadow}' } }`;
+    return `{ time: ${time}, text: '${text}', mode: '${mode}', style: { font: '${fontSize}  sans-serif', fillStyle: '${color}', strokeStyle: '${textShadow}',lineWidth: 3.0 } }`;
 }
 function processComments(jsonFilePath, outputDir, callback) {
     fs.readFile(jsonFilePath, 'utf8', (err, data) => {
@@ -46,8 +46,8 @@ function processComments(jsonFilePath, outputDir, callback) {
             const [time, mode, color] = comment.p.split(',');
             const colorCSS = convertHexColorToCSS(parseInt(color));
             const textShadow = colorCSS === '#000000'
-                ? '-1px -1px #fff, -1px 1px #fff, 1px -1px #fff, 1px 1px #fff'
-                : '-1px -1px #000, -1px 1px #000, 1px -1px #000, 1px 1px #000';
+                ? '#fff'
+                : '#000';
             return {
                 time: parseFloat(time),
                 text: escapeStringForJS(comment.m),
@@ -61,7 +61,7 @@ function processComments(jsonFilePath, outputDir, callback) {
         });
 
         const formattedComments = comments.map(formatComment).join(',\n');
-        const template = `var danmaku = new Danmaku({\n    container: document.getElementById('danmaku-container'),\n    media: document.getElementById('video-player'),\n    comments: [\n${formattedComments}\n]\n});`;
+        const template = `var danmaku = new Danmaku({\n    container: document.getElementById('danmaku-container'),\n    media: document.getElementById('video-player'),\n    comments: [\n${formattedComments}\n],\ engine: 'canvas'});`;
         const outputFilePath = path.join(outputDir, path.basename(jsonFilePath, '.json') + '.js');
         fs.writeFile(outputFilePath, template, 'utf8', (err) => {
             if (err) {

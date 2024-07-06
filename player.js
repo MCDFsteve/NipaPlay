@@ -87,7 +87,6 @@ ipcRenderer.on('full', (event, center) => {
     }
 });
 document.addEventListener('DOMContentLoaded', function () {
-    danmakuSwitch.style.left = `calc(${controlsRect.x}px)`;
     const saveddanmuku = localStorage.getItem('danmakuswitch');
     console.log('saveddanmuku:',saveddanmuku);
     if (saveddanmuku == 1) {
@@ -392,6 +391,13 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 ////////////
 document.addEventListener('keydown', (event) => {
+    if (event.key === 'd' || event.key === 'D') { // 检查按下的是否是 'D' 键
+        if (danmakuswitch1.style.display === 'block') {
+            danmakuswitch1.click();
+        } else if (danmakuswitch2.style.display === 'block') {
+            danmakuswitch2.click();
+        }
+    }
     if (event.key === 'Enter') {
         // 切换到全屏
         if (fullorwin != 'true') {
