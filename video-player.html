@@ -49,7 +49,9 @@
             </div>
             <div id="pop-bar" popover="auto" class="pop">进度条</div>
             <div id="pop-bar2" popover="auto" class="pop">进度条2</div>
-            <div id="pop-alphabar" popover="auto" class="pop">不透明度</div>
+            <div id="pop-alphabar" popover="auto" class="pop">透明度</div>
+            <div id="pop-linebar" popover="auto" class="pop">描边粗细</div>
+            <div id="pop-fontbar" popover="auto" class="pop">字体大小</div>
             <div id="right-controls">
                 <div id="time-display">00:00 / 00:00</div>
                 <button id="fullscreen-button" style="background-image: url('icons/fullscreen.png')">全屏</button>
@@ -74,9 +76,21 @@
     <div id="danmaku-opacity-control" style="display: none;">
         <button id="close-opacity-control"></button>
         <div id="alphamenu">
+            <div id="opacity-slider-container">
             <div id="alpha-image"></div>
-            <div id="pop-alpha" popover="auto" class="pop">弹幕透明度</div>
+            <div id="pop-alpha" popover="auto" class="pop">透明度</div>
             <input type="range" id="opacity-slider" min="0" max="100" value="100">
+        </div>
+            <div id="line-width-slider-container">
+                <div id="line-image"></div>
+                <div id="pop-line" popover="auto" class="pop">描边粗细</div>
+                <input type="range" id="line-width-slider" min="1" max="6" value="3">
+            </div>
+            <div id="font-size-slider-container">
+                <div id="font-image"></div>
+                <div id="pop-font" popover="auto" class="pop">字体大小</div>
+                <input type="range" id="font-size-slider" min="1" max="6" value="3">
+            </div>
             <button id="reload-danmaku">弹幕不正确？点此手动选择</button>
         </div>
     </div>
@@ -105,6 +119,8 @@
         const danmakuPath = urlParams.get('danmakuPath');
         const danmakuPath2 = patha.join(danmakuPath, `${episodeId}.js`);
         const { ipcRenderer } = require('electron');
+        let lineWidth = 3;
+        let danmakufsBase = 3;
         videoElement.src = path;
         videoElement.load();
         // 尝试从 URL 参数中获取提供的新标题
@@ -169,7 +185,7 @@
         });
     </script>
     <script src="player.js"></script>
-    <script src="node_modules/danmaku/dist/danmaku.canvas.min.js"></script>
+    <script id="danmaku-core" src="danmaku.canvas.js"></script>
     <script src="node_modules/video.js/dist/video.js"></script>
     <script src="node_modules/videojs-contrib-hls/dist/videojs-contrib-hls.js"></script>
     <script>
@@ -184,17 +200,7 @@
                 });
         }
         function loadDanmaku(content) {
-            // 查找并移除旧的动态脚本
-            const oldScript = document.querySelector('script[data-role="dynamic-script"]');
-            if (oldScript) {
-                oldScript.remove();
-            }
-
-            // 创建新的动态脚本
-            const newScript = document.createElement('script');
-            newScript.setAttribute('data-role', 'dynamic-script');
-            newScript.textContent = content;
-            document.body.appendChild(newScript);
+            eval(content);
         }
 
         function isMacOS() {

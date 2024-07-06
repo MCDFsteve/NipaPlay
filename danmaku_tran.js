@@ -32,7 +32,7 @@ function formatComment(comment) {
     const fontSize = comment.style.fontSize;
     const color = comment.style.color;
     const textShadow = comment.style.textShadow;
-    return `{ time: ${time}, text: '${text}', mode: '${mode}', style: { font: '${fontSize}  sans-serif', fillStyle: '${color}', strokeStyle: '${textShadow}',lineWidth: 3.0 } }`;
+    return `{ time: ${time}, text: '${text}', mode: '${mode}', style: {  fillStyle: '${color}', strokeStyle: '${textShadow}'} }`;
 }
 function processComments(jsonFilePath, outputDir, callback) {
     fs.readFile(jsonFilePath, 'utf8', (err, data) => {
