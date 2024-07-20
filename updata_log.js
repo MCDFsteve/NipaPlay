@@ -1,6 +1,13 @@
 
 var updatesData = [
     {
+        version: "1.5.9",
+        date: "2024.07.20",
+        changes: [
+            "修复了点击选择弹幕时弹出选择字幕的问题。（来自yuygfgg）",
+        ]
+    },
+    {
         version: "1.5.8",
         date: "2024.07.06",
         changes: [
