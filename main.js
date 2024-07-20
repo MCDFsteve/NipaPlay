@@ -1487,7 +1487,7 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
         }
         console.log('isFullScreen:', isFullScreen);
         window = BrowserWindow.fromWebContents(event.sender);
-        openVideoAndFetchDetails(videoPath, 'lain', 'lain');
+        openVideoAndFetchDetails(videoPath, 'lain', 'lain', true);
     });
     ipcMain.on('minimize-player-window', (event) => {
         const window = BrowserWindow.fromWebContents(event.sender);
@@ -1513,7 +1513,7 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
 function isLocalPath(filePath) {
     return !filePath.startsWith('http://') && !filePath.startsWith('https://');
 }
-async function openVideoAndFetchDetails(videoPath, episodeId, center) {
+async function openVideoAndFetchDetails(videoPath, episodeId, center, isDanmukuChoose = false) {
     console.log("函数开始执行，视频路径：", videoPath);
     const outputDir = path.join(danmakuPath);
 
@@ -1521,19 +1521,25 @@ async function openVideoAndFetchDetails(videoPath, episodeId, center) {
     CreateloadWindow(center);
 
     try {
-        // Step 1: Fetch subtitle tracks from the video file
-        const subtitleTracks = await fetchSubtitleTracks(videoPath);
         let subtitlePath = null;
-        if (subtitleTracks.length > 0) {
-            // Step 2: Show subtitle selection window
-            const selectedTrack = await showSubtitleSelection(subtitleTracks, center);
-            console.log('selectedTrack:', selectedTrack);
-            if (selectedTrack == null || selectedTrack == undefined) {
-                return
+        console.log(isDanmukuChoose);
+        // 如果 isDanmukuChoose 为 false，则执行字幕选择逻辑
+        if (!isDanmukuChoose) {
+            console.log("sub choose!");
+            // Step 1: Fetch subtitle tracks from the video file
+            const subtitleTracks = await fetchSubtitleTracks(videoPath);
+            if (subtitleTracks.length > 0) {
+                // Step 2: Show subtitle selection window
+                const selectedTrack = await showSubtitleSelection(subtitleTracks, center);
+                console.log('selectedTrack:', selectedTrack);
+                if (selectedTrack == null || selectedTrack == undefined) {
+                    return;
+                }
+                // Step 3: Extract selected subtitle
+                subtitlePath = await extractSubtitles(videoPath, selectedTrack, subPath);
             }
-            // Step 3: Extract selected subtitle
-            subtitlePath = await extractSubtitles(videoPath, selectedTrack, subPath);
         }
+
         console.log("未找到存储结果，开始识别:", videoPath);
         let response;
         if (videoPath.startsWith('https')) {
@@ -1541,12 +1547,14 @@ async function openVideoAndFetchDetails(videoPath, episodeId, center) {
         } else {
             response = await recognizeVideo(videoPath, center);
         }
-        //console.log('response:', response);
-        //console.log("post结果:", response.isMatched, response.animeTitle, response.episodeId, response.animeId);
-        if (response.isMatched) {
+
+        // 如果 isDanmukuChoose 为 true，直接进入弹幕选择窗口
+        if (isDanmukuChoose) {
+            createSelectionWindow(response.matches, videoPath, episodeId, center);
+        } else if (response.isMatched) {
             const newTitle = `${response.animeTitle} ${response.episodeTitle}`;
             const newepisodeId = response.episodeId;
-            console.log('id+title:', newTitle, newepisodeId)
+            console.log('id+title:', newTitle, newepisodeId);
             danmakudownload(newTitle, videoPath, newepisodeId, center);
         } else {
             createSelectionWindow(response.matches, videoPath, episodeId, center);
