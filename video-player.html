@@ -158,7 +158,7 @@
         // 然后将新记录添加到数组的开头
         watchedVideos.unshift(videoRecord);
         localStorage.setItem('watchedVideos', JSON.stringify(watchedVideos));
-        console.log("Updated watched video list with:", title);
+        console.log("Updated watched video list with and danmakuPath2 :", danmakuPath2);
         ipcRenderer.send('update-watched-video', videoRecord);
         let vttPath;
         let countdownInterval;

@@ -61,7 +61,16 @@ document.getElementById('no-danmaku-play').addEventListener('click', function ()
     ipcRenderer.invoke('process-selection', { animeTitle: "直接播放" });
     console.log('yes');
 });
-
+document.getElementById('file-danmaku-play').addEventListener('click', async function () {
+    const result = await ipcRenderer.invoke('open-file-dialog');
+    if (!result.canceled && result.filePaths.length > 0) {
+        const file = result.filePaths[0];
+        ipcRenderer.invoke('process-selection', { animeTitle: 'file', file: file });
+        console.log('file', file);
+    } else {
+        console.log('No file selected');
+    }
+});
 // 监听来自主进程的 'update-selection' 事件，以更新匹配列表
 ipcRenderer.on('update-selection', (event, matches) => {
     updateMatchList(matches);

@@ -346,6 +346,15 @@ ipcMain.handle('dialog:openFile', async (event, options) => {
         return filePaths[0]; // 返回选择的第一个文件路径
     }
 });
+ipcMain.handle('open-file-dialog', async () => {
+    const result = await dialog.showOpenDialog({
+        properties: ['openFile'],
+        filters: [
+            { name: 'Danmaku Files', extensions: ['xml', 'json'] }
+        ]
+    });
+    return result;
+});
 ipcMain.handle('read-file', async (event, filePath) => {
     try {
         const content = fs.readFileSync(path.join(__dirname, filePath), { encoding: 'utf-8' });
@@ -506,7 +515,7 @@ function createUrlWindow() {
         show: false,
         frame: false,
         modal: true, // 设置为模态窗口
-        vibrancy:'popover',
+        vibrancy: 'popover',
         parent: mainWindow, // 设置父窗口
         icon: path.join(__dirname, 'window_icon.png'),
         autoHideMenuBar: true,
@@ -973,6 +982,30 @@ async function recognizeVideo2(title) {
         request.end();
     });
 }
+function convertXmlToJson(xml) {
+    const comments = [];
+    const regex = /<d p="([^"]+)">([^<]+)<\/d>/g;
+    let match;
+
+    while ((match = regex.exec(xml)) !== null) {
+        const pAttr = match[1];
+        const textContent = match[2];
+        const pParams = pAttr.split(',');
+
+        if (pParams.length >= 4) {
+            const comment = {
+                p: `${pParams[0]},${pParams[1]},${pParams[3]}`, // Using the 4th value as the 3rd in JSON
+                m: textContent
+            };
+            comments.push(comment);
+        }
+    }
+
+    return {
+        count: comments.length,
+        comments: comments
+    };
+}
 function danmakudownload(newTitle, videoPath, episodeId, center) {
     const jsonFilePath = path.join(video_commentPath, `${episodeId}.json`);
     console.log('jsonFilePath:', jsonFilePath);
@@ -1241,9 +1274,9 @@ function createSelectionWindow(matches, videoPath, episodeId, center) {
     }
     selectionWindow = new BrowserWindow({
         width: 500,
-        height: 333,
+        height: 400,
         maxWidth: 500,
-        maxHeight: 333,
+        maxHeight: 800,
         minWidth: 500,
         minHeight: 333,
         alwaysOnTop: true,
@@ -1276,6 +1309,25 @@ function createSelectionWindow(matches, videoPath, episodeId, center) {
         console.log('newTitle 114:', newTitle);
         const episodeId = selectedMatch.episodeId;
         const jsonFilePath = path.join(video_commentPath, `${episodeId}.json`);
+        const sourceFile = selectedMatch.file; // file selected by the user
+        const targetFile = path.join(video_commentPath, 'file.json');
+        if (sourceFile.endsWith('.xml')) {
+            try {
+                const xmlData = fs.readFileSync(sourceFile, 'utf-8');
+                const jsonData = convertXmlToJson(xmlData);
+                fs.writeFileSync(targetFile, JSON.stringify(jsonData, null, 2), 'utf-8');
+                console.log('File converted and copied successfully');
+            } catch (err) {
+                console.error('Error processing XML file:', err);
+            }
+        } else {
+            try {
+                fs.copyFileSync(sourceFile, targetFile);
+                console.log('File copied successfully');
+            } catch (err) {
+                console.error('Error copying file:', err);
+            }
+        }
         const outputDir = path.join(danmakuPath);
         CreateloadWindow(center);
         selectionWindow.close();
@@ -1312,9 +1364,19 @@ function createSelectionWindow(matches, videoPath, episodeId, center) {
                     reject(error);
                 });
             });
+        } else if (selectedMatch.animeTitle === 'file') {
+            processComments(targetFile, outputDir, (err) => {
+                if (err) {
+                    console.error('Error processing comments:', err);
+                    return;
+                }
+            });
+            console.log('selectedMatch.animeTitle:', selectedMatch.animeTitle);
+            const defaultTitle = videoPath.split('/').pop().split('.').slice(0, -1).join('.');
+            createVideoWindow(videoPath, defaultTitle, 'file', center);
         } else {
             const defaultTitle = videoPath.split('/').pop().split('.').slice(0, -1).join('.');
-            createVideoWindow(videoPath, defaultTitle, 'lain', center);
+            createVideoWindow(videoPath, defaultTitle, selectedMatch.animeTitle, center);
         }
 
         // 如果没有 episodeId，则直接返回
@@ -1323,7 +1385,7 @@ function createSelectionWindow(matches, videoPath, episodeId, center) {
 }
 // 创建视频窗口
 function createVideoWindow(videoPath, newTitle, episodeId, center) {
-    console.log("创建视频窗口，使用的视频路径：", videoPath);
+    console.log("创建视频窗口，使用的视频路径 and episodeId：", videoPath,episodeId);
     let isMac = process.platform === 'darwin';
     const danmakuFilePath = path.join(danmakuPath, `${episodeId}.js`);
     console.log("创建视频窗口，使用的弹幕路径：", danmakuFilePath);
@@ -1410,7 +1472,7 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
         }
     });
 
-    ipcMain.on('down-player-window', (event,fullscreen) => {
+    ipcMain.on('down-player-window', (event, fullscreen) => {
         isFullScreen = fullscreen;
         if (isFullScreen == 'nanami') {
             window.setFullScreen(!window.isFullScreen());
@@ -1443,7 +1505,7 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
         }
     });
 
-    ipcMain.on('up-player-window', (event,fullscreen) => {
+    ipcMain.on('up-player-window', (event, fullscreen) => {
         isFullScreen = fullscreen;
         if (isFullScreen == 'nanami') {
             window.setFullScreen(!window.isFullScreen());
@@ -1479,7 +1541,7 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
         window = BrowserWindow.fromWebContents(event.sender);
         window.setFullScreen(!window.isFullScreen());
     });
-    ipcMain.on('reload-player-danmaku', (event,fullscreen) => {
+    ipcMain.on('reload-player-danmaku', (event, fullscreen) => {
         console.log('reload!!');
         isFullScreen = fullscreen;
         if (isFullScreen == 'nanami') {
