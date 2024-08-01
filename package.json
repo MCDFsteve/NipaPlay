@@ -1,7 +1,7 @@
 {
   "name": "nipaplay",
   "productName": "NipaPlay",
-  "version": "1.5.10",
+  "version": "1.5.11",
   "description": "咪啪～☆",
   "main": "main.js",
   "author": "DFsteve",
@@ -42,6 +42,7 @@
     "linux": "npm run prebuild:linux && electron-builder --linux --x64",
     "linuxarm": "npm run prebuild:linux && electron-builder --linux",
     "build": "npm run win && npm run mac && npm run macx64 && npm run linux && npm run linuxarm && npm run woa",
+    "build2": "npm run win && npm run mac && npm run macx64 && npm run linux",
     "test": "npm run win && npm run mac && npm run macx64"
   },
   "fileAssociations": [
@@ -78,8 +79,7 @@
       "!**/.DS_Store",
       "!**/*.bak",
       "!**/ffmpeg/ffmpeg_mac",
-      "!**/ffmpeg/ffmpeg_linux64",
-      "!**/ffmpeg/ffmpeg_linuxarm"
+      "!**/ffmpeg/ffmpeg_win"
     ],
     "publish": {
       "provider": "github",

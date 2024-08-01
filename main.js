@@ -1136,6 +1136,10 @@ function parseSubtitleTracks(stderrData) {
     let match;
     while ((match = streamPattern.exec(normalizedData)) !== null) {
         const [_, id, format, handlerName, title] = match;
+        if (format.includes('pgssub') || format.includes('dvdsub')) {
+            // 跳过位图格式的字幕
+            continue;
+        }
         const subtitleTrack = {
             id: id,
             format: format,
@@ -1311,7 +1315,7 @@ function createSelectionWindow(matches, videoPath, episodeId, center) {
         const jsonFilePath = path.join(video_commentPath, `${episodeId}.json`);
         const sourceFile = selectedMatch.file; // file selected by the user
         const targetFile = path.join(video_commentPath, 'file.json');
-        if (sourceFile.endsWith('.xml')) {
+        if (typeof sourceFile === 'string' && sourceFile.endsWith('.xml')) {
             try {
                 const xmlData = fs.readFileSync(sourceFile, 'utf-8');
                 const jsonData = convertXmlToJson(xmlData);

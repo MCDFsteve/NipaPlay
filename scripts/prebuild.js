@@ -44,18 +44,19 @@ switch (targetOS) {
       targetSpecificFiles = [
         "!**/ffmpeg/ffmpeg_mac",
         "!**/ffmpeg/ffmpeg_win",
-        "!**/ffmpeg/ffmpeg_linuxarm"
+        //"!**/ffmpeg/ffmpeg_linuxarm"
       ];
     } else if (arch === 'arm64') {
       targetSpecificFiles = [
         "!**/ffmpeg/ffmpeg_mac",
         "!**/ffmpeg/ffmpeg_win",
-        "!**/ffmpeg/ffmpeg_linux64"
+        //"!**/ffmpeg/ffmpeg_linux64"
       ];
     } else {
       targetSpecificFiles = [
         "!**/ffmpeg/ffmpeg_mac",
-        "!**/ffmpeg/ffmpeg_win"
+        "!**/ffmpeg/ffmpeg_win",
+        
       ];
     }
     break;

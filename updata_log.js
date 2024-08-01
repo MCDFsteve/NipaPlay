@@ -1,6 +1,13 @@
 
 var updatesData = [
     {
+        version: "1.5.11",
+        date: "2024.08.01",
+        changes: [
+            "修复了手动选择弹幕界面，选中的弹幕库没反应的bug。",
+        ]
+    },
+    {
         version: "1.5.10",
         date: "2024.07.23",
         changes: [

@@ -6,7 +6,7 @@ console.log = function (...args) {
 };
 // 关闭按钮点击事件
 closeButton.addEventListener('click', () => {
-    console.log('nipa');
+    //console.log('nipa');
     ipcRenderer.send('close-selection-window');
 });
 function updateMatchList(matches, isEpisodes = false, animeInfo = null) {
@@ -59,16 +59,16 @@ function updateMatchList(matches, isEpisodes = false, animeInfo = null) {
 document.getElementById('no-danmaku-play').addEventListener('click', function () {
     // 发送到主进程的对象不包括episodeId
     ipcRenderer.invoke('process-selection', { animeTitle: "直接播放" });
-    console.log('yes');
+    //console.log('yes');
 });
 document.getElementById('file-danmaku-play').addEventListener('click', async function () {
     const result = await ipcRenderer.invoke('open-file-dialog');
     if (!result.canceled && result.filePaths.length > 0) {
         const file = result.filePaths[0];
         ipcRenderer.invoke('process-selection', { animeTitle: 'file', file: file });
-        console.log('file', file);
+        //console.log('file', file);
     } else {
-        console.log('No file selected');
+        //console.log('No file selected');
     }
 });
 // 监听来自主进程的 'update-selection' 事件，以更新匹配列表
@@ -83,10 +83,10 @@ document.getElementById('search-input').addEventListener('keydown', function (ev
 });
 
 async function handleSearch() {
-    console.log("Search initiated");
+    //console.log("Search initiated");
     const searchInput = document.getElementById('search-input');
     let searchTerm = searchInput.value.trim();
-    console.log(`Initiating search for: ${searchTerm}`);
+    //console.log(`Initiating search for: ${searchTerm}`);
     if (searchTerm === "铃音") {
         searchTerm = "lain";
     }
@@ -99,7 +99,7 @@ async function handleSearch() {
             console.error("Error during search: ", error);
         }
     } else {
-        console.log("No search term entered");
+        //console.log("No search term entered");
     }
 }
 document.addEventListener('DOMContentLoaded', () => {
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
 ipcRenderer.on('platform-info', (event, { isMac }) => {
     if (isMac) {
         document.body.style.backgroundColor = "transparent";
-        console.log("是mac");
+        //console.log("是mac");
     }
 });
 
