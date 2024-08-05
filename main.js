@@ -834,7 +834,7 @@ function getRecognitionResult(videoPath) {
 async function recognizeVideo(videoPath, center) {
     const fileName = path.basename(videoPath);
     let hash;
-    if (center == 'lain') {
+    if (center === 'lain') {
         hash = 'd41d8cd98f00b204e9800998ecf8427e';
         console.log('hash get!');
     } else {
@@ -857,7 +857,8 @@ async function recognizeVideo(videoPath, center) {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
             'Content-Length': Buffer.byteLength(requestData)
-        }
+        },
+        timeout: 5000  // 设定请求超时时间为 5000 毫秒（5 秒）
     };
 
     return new Promise((resolve, reject) => {
@@ -881,14 +882,22 @@ async function recognizeVideo(videoPath, center) {
                     });
                 } catch (parseError) {
                     console.error('解析 HTTPS 请求响应时发生错误:', parseError);
-                    reject(parseError);
+                    resolve(false);
                 }
             });
         });
+
         request.on('error', (error) => {
             console.error('发送 HTTPS 请求时发生错误:', error);
-            reject(error);
+            resolve(false);
         });
+
+        request.on('timeout', () => {
+            console.error('请求超时');
+            request.destroy();
+            resolve(false);
+        });
+
         request.write(requestData);
         request.end();
     });
@@ -1266,8 +1275,67 @@ function showSubtitleSelection(tracks, center) {
         });
     });
 }
+async function scanAndProcessFiles(videoPath, video_commentPath) {
+    const fs = require('fs').promises;
+    const outputDir = path.join(danmakuPath);
+    try {
+        const videoDir = path.dirname(videoPath);
+
+        // 扫描目录中的所有文件
+        const files = await fs.readdir(videoDir);
+        console.log('All files in directory:', files);
+
+        // 查找 JSON 文件和 XML 文件（不区分大小写）
+        const jsonFiles = files.filter(file => path.extname(file).toLowerCase() === '.json');
+        const xmlFiles = files.filter(file => path.extname(file).toLowerCase() === '.xml');
+
+        console.log('jsonFiles:', jsonFiles);
+        console.log('xmlFiles:', xmlFiles);
+
+        let sourceFile = '';
+        let targetFile = path.join(video_commentPath, 'file.json');
+
+        if (jsonFiles.length > 0) {
+            sourceFile = path.join(videoDir, jsonFiles[0]);
+
+            try {
+                await fs.copyFile(sourceFile, targetFile);
+                console.log('File copied successfully');
+                processComments(targetFile, outputDir, (err) => {
+                    if (err) {
+                        console.error('Error processing comments:', err);
+                    }
+                });
+            } catch (err) {
+                console.error('Error copying file:', err);
+            }
+        } else if (xmlFiles.length > 0) {
+            sourceFile = path.join(videoDir, xmlFiles[0]);
+
+            try {
+                const xmlData = await fs.readFile(sourceFile, 'utf-8');
+                const jsonData = convertXmlToJson(xmlData);
+                await fs.writeFile(targetFile, JSON.stringify(jsonData, null, 2), 'utf-8');
+                console.log('File converted and copied successfully');
+                processComments(targetFile, outputDir, (err) => {
+                    if (err) {
+                        console.error('Error processing comments:', err);
+                    }
+                });
+            } catch (err) {
+                console.error('Error processing XML file:', err);
+            }
+        } else {
+            console.log('No JSON or XML files found.');
+        }
+    } catch (err) {
+        console.error('Error scanning directory:', err);
+    }
+}
+
 // 在 createSelectionWindow 中检查并移除旧的处理器
 function createSelectionWindow(matches, videoPath, episodeId, center) {
+    // 扫描目录中的所有文件
     let isMac = process.platform === 'darwin';
     console.log("匹配成功，即将播放的视频路径：", videoPath);
     if (loadWindow && !loadWindow.isDestroyed()) {
@@ -1325,12 +1393,7 @@ function createSelectionWindow(matches, videoPath, episodeId, center) {
                 console.error('Error processing XML file:', err);
             }
         } else {
-            try {
-                fs.copyFileSync(sourceFile, targetFile);
-                console.log('File copied successfully');
-            } catch (err) {
-                console.error('Error copying file:', err);
-            }
+            console.error('Error copying file');
         }
         const outputDir = path.join(danmakuPath);
         CreateloadWindow(center);
@@ -1379,8 +1442,9 @@ function createSelectionWindow(matches, videoPath, episodeId, center) {
             const defaultTitle = videoPath.split('/').pop().split('.').slice(0, -1).join('.');
             createVideoWindow(videoPath, defaultTitle, 'file', center);
         } else {
+            scanAndProcessFiles(videoPath, video_commentPath);
             const defaultTitle = videoPath.split('/').pop().split('.').slice(0, -1).join('.');
-            createVideoWindow(videoPath, defaultTitle, selectedMatch.animeTitle, center);
+            createVideoWindow(videoPath, defaultTitle, 'file', center);
         }
 
         // 如果没有 episodeId，则直接返回
@@ -1389,7 +1453,7 @@ function createSelectionWindow(matches, videoPath, episodeId, center) {
 }
 // 创建视频窗口
 function createVideoWindow(videoPath, newTitle, episodeId, center) {
-    console.log("创建视频窗口，使用的视频路径 and episodeId：", videoPath,episodeId);
+    console.log("创建视频窗口，使用的视频路径 and episodeId：", videoPath, episodeId);
     let isMac = process.platform === 'darwin';
     const danmakuFilePath = path.join(danmakuPath, `${episodeId}.js`);
     console.log("创建视频窗口，使用的弹幕路径：", danmakuFilePath);
@@ -1612,6 +1676,12 @@ async function openVideoAndFetchDetails(videoPath, episodeId, center, isDanmukuC
             response = await recognizeVideo2(videoPath);
         } else {
             response = await recognizeVideo(videoPath, center);
+        }
+
+        // 如果 response 为 false，直接执行 createSelectionWindow
+        if (response === false) {
+            createSelectionWindow([], videoPath, episodeId, center);
+            return;
         }
 
         // 如果 isDanmukuChoose 为 true，直接进入弹幕选择窗口
