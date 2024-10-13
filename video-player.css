@@ -264,7 +264,7 @@ video::-internal-media-controls-overlay-cast-button {
     transform: translate(-50%, -50%);
 }
 
-#pop-alphabar,#pop-linebar,#pop-fontbar {
+#pop-alphabar,#pop-linebar,#pop-fontbar,#pop-speedbar {
     position: fixed;
     transform: translate(-50%, -50%);
 }
@@ -277,7 +277,7 @@ video::-internal-media-controls-overlay-cast-button {
     transform: translate(-50%, -25%);
     width: 12px;
 }
-#pop-alpha,#pop-line,#pop-font {
+#pop-alpha,#pop-line,#pop-font,#pop-speed {
     margin-right: 4.5vh;
     position: fixed;
     transform: translate(-50%, -37%);
@@ -615,7 +615,7 @@ video::-webkit-media-text-track-container {
     transition: opacity 0.5s ease;
 }
 
-#danmaku-opacity-control {
+#danmaku-opacity-control,#options-control {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
@@ -655,7 +655,7 @@ video::-webkit-media-text-track-container {
     transition: opacity 0.5s ease;
 }
 
-#close-opacity-control {
+#close-opacity-control,#close-options-control {
     background-image: url('icons/kill.png');
     /* 替换为你的图像路径 */
     background-size: cover;
@@ -672,12 +672,12 @@ video::-webkit-media-text-track-container {
     transition: opacity 0.5s ease;
 }
 
-#close-opacity-control:hover {
+#close-opacity-control:hover,#close-options-control:hover {
     opacity: 1.0;
     transition: opacity 0.5s ease;
 }
 
-#opacity-slider-container,#line-width-slider-container,#font-size-slider-container,#reload-danmaku {
+#opacity-slider-container,#speed-slider-container,#line-width-slider-container,#font-size-slider-container,#reload-danmaku {
     width: 100%;
     height:100%;
     display: flex;
@@ -687,10 +687,10 @@ video::-webkit-media-text-track-container {
     margin-left:calc(0.25vw + 0.15vh);
     margin-bottom:calc(1.5vw + 1vh);
 }
-#opacity-slider-container{
+#opacity-slider-container,#speed-slider-container{
     margin-top:calc(2.5vw + 1.5vh);
 }
-#opacity-slider,#line-width-slider,#font-size-slider {
+#opacity-slider,#line-width-slider,#font-size-slider,#speed-slider {
     right:calc(0.5vw + 0.3vh);
     width: 70%;
     position: absolute;
@@ -701,7 +701,7 @@ video::-webkit-media-text-track-container {
     appearance: none;
 }
 
-#alpha-image,#line-image,#font-image {
+#alpha-image,#line-image,#font-image,#speed-image {
     position: absolute;
     background-size: cover;
     border: none;
@@ -715,6 +715,9 @@ video::-webkit-media-text-track-container {
 }
 #alpha-image {
     background-image: url('icons/alpha.png');
+}
+#speed-image {
+    background-image: url('icons/speed.png');
 }
 #line-image {
     background-image: url('icons/line.png');
@@ -736,8 +739,14 @@ video::-webkit-media-text-track-container {
     transform: translateY(-50%);
     justify-content: center;
 }
-
-#opacity-slider::-webkit-slider-thumb,#line-width-slider::-webkit-slider-thumb,#font-size-slider::-webkit-slider-thumb {
+#optionsmenu {
+    position: relative;
+    display: block;
+    top: 0%;
+    transform: translateY(-50%);
+    justify-content: center;
+}
+#opacity-slider::-webkit-slider-thumb,#speed-slider::-webkit-slider-thumb,#line-width-slider::-webkit-slider-thumb,#font-size-slider::-webkit-slider-thumb {
     width: 4px;
     /* 滑块宽度 */
     height: 16px;
@@ -754,12 +763,12 @@ video::-webkit-media-text-track-container {
     transition: opacity 0.5s ease;
 }
 
-#alpha-image:hover,#line-image:hover,#font-image:hover {
+#alpha-image:hover,#line-image:hover,#font-image:hover,#speed-image:hover {
     opacity: 1.0;
     transition: opacity 0.5s ease;
 }
 
-#opacity-slider::-webkit-slider-thumb:hover,#line-width-slider::-webkit-slider-thumb:hover,#font-size-slider::-webkit-slider-thumb:hover {
+#opacity-slider::-webkit-slider-thumb:hover,#speed-slider::-webkit-slider-thumb:hover,#line-width-slider::-webkit-slider-thumb:hover,#font-size-slider::-webkit-slider-thumb:hover {
     cursor: pointer;
     opacity: 1.0;
     transition: opacity 0.5s ease;

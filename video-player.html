@@ -50,6 +50,7 @@
             <div id="pop-bar" popover="auto" class="pop">进度条</div>
             <div id="pop-bar2" popover="auto" class="pop">进度条2</div>
             <div id="pop-alphabar" popover="auto" class="pop">透明度</div>
+            <div id="pop-speedbar" popover="auto" class="pop">播放速度</div>
             <div id="pop-linebar" popover="auto" class="pop">描边粗细</div>
             <div id="pop-fontbar" popover="auto" class="pop">字体大小</div>
             <div id="right-controls">
@@ -92,6 +93,17 @@
                 <input type="range" id="font-size-slider" min="1" max="6" value="3">
             </div>
             <button id="reload-danmaku">弹幕不正确？点此手动选择</button>
+        </div>
+    </div>
+    <!-- 设置面板 -->
+    <div id="options-control" style="display: none;">
+        <button id="close-options-control"></button>
+        <div id="optionsmenu">
+            <div id="speed-slider-container">
+            <div id="speed-image"></div>
+            <div id="pop-speed" popover="auto" class="pop">播放速度</div>
+            <input type="range" id="speed-slider" min="0.1" max="5" step="0.1" value="1">
+        </div>
         </div>
     </div>
     <!-- 音量调节控制面板 -->

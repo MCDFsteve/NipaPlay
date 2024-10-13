@@ -1,0 +1,8 @@
+"lang"
+{
+	"Language"	"english"
+	"Tokens"
+	{
+		"#helloworld"	"正在观看：%bangumi%"
+	}
+}

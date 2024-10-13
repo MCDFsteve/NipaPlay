@@ -27,25 +27,32 @@ const popSwitch1 = document.getElementById('pop-danmakuswitch1');
 const popSwitch2 = document.getElementById('pop-danmakuswitch2');
 const subButton = document.getElementById('subtitle-button');
 const comButton = document.getElementById('comment-button');
+const optionButton = document.getElementById('settings-button');
 const upButton = document.getElementById('up-button');
 const downButton = document.getElementById('down-button');
 const setButton = document.getElementById('settings-button');
 const hideui = document.getElementById('uihide');
 const popAlpha = document.getElementById('pop-alpha');
+const popSpeed = document.getElementById('pop-speed');
 const popLine = document.getElementById('pop-line');
 const popFont = document.getElementById('pop-font');
 const popAlphabar = document.getElementById('pop-alphabar');
 const popLinebar = document.getElementById('pop-linebar');
 const popFontbar = document.getElementById('pop-fontbar');
+const popSpeedbar = document.getElementById('pop-speedbar');
 const Alphaimage = document.getElementById('alpha-image');
+const Speedimage = document.getElementById('speed-image');
 const Lineimage = document.getElementById('line-image');
 const Fontimage = document.getElementById('font-image');
 // 获取弹幕按钮和新的弹幕透明度控制面板元素
 const commentButton = document.getElementById('comment-button');
 const danmakuOpacityControl = document.getElementById('danmaku-opacity-control');
+const optionsControl = document.getElementById('options-control');
 const audioControl = document.getElementById('audio-opacity-control');
 const closeOpacityControl = document.getElementById('close-opacity-control');
+const closeOptionsControl = document.getElementById('close-options-control');
 const opacitySlider = document.getElementById('opacity-slider');
+const speedSlider = document.getElementById('speed-slider');
 const lineSlider = document.getElementById('line-width-slider');
 const fontSlider = document.getElementById('font-size-slider');
 const audioSlider = document.getElementById('audio-slider');
@@ -215,10 +222,19 @@ document.addEventListener('DOMContentLoaded', function () {
         audionull.style.display = 'block';
     }
     const savedOpacity = localStorage.getItem('danmaku-opacity');
+    const savedSpeed = localStorage.getItem('video-speed');
     const savedaudioOpacity = localStorage.getItem('videoVolume');
     if (savedOpacity) {
         opacitySlider.value = savedOpacity;
         danmakuContainer.style.opacity = savedOpacity / 100;
+    }
+    if (savedSpeed) {
+        speedSlider.value = savedSpeed;
+        console.log('speed:',savedSpeed);
+        videoPlayer.playbackRate = savedSpeed;
+    }else{
+        videoPlayer.playbackRate = 1;
+        speedSlider.value = 1;
     }
     if (savedaudioOpacity) {
         audioSlider.value = savedaudioOpacity * 100;
@@ -228,20 +244,7 @@ document.addEventListener('DOMContentLoaded', function () {
     updateSliderBackground2(audioSlider.value);
     updateSliderBackground3(lineSlider, lineWidth);
     updateSliderBackground4(fontSlider, danmakufsBase);
-
-    // 添加输入事件监听器来动态更新滑动条和透明度值
-    opacitySlider.addEventListener('input', function () {
-        updateSliderBackground(opacitySlider, opacitySlider.value);
-        danmakuContainer.style.opacity = opacitySlider.value / 100;
-        // 保存透明度值到localStorage
-        localStorage.setItem('danmaku-opacity', opacitySlider.value);
-    });
-    lineSlider.addEventListener('input', function () {
-        updateSliderBackground3(lineSlider, lineSlider.value);
-    });
-    fontSlider.addEventListener('input', function () {
-        updateSliderBackground4(fontSlider, fontSlider.value);
-    });
+    updateSliderBackground5(speedSlider, speedSlider.value);
     audioSlider.addEventListener('input', function () {
         const volumeDisplay = document.getElementById('volume-display');
         volumeDisplay.innerText = `音量: ${Math.round(audioSlider.value)}%`;
@@ -310,6 +313,12 @@ function updateSliderBackground4(slider, value) {
     const percentage = value; // 直接使用value作为百分比
     slider.style.background = `linear-gradient(to right, rgba(255, 255, 255, 0.5) ${percentage}%, rgba(216, 216, 216, 0.3) ${100 - percentage}%)`;
     popFontbar.textContent = `${danmakufsBase}0px`;
+}
+function updateSliderBackground5(slider, value) {
+    const percentage = ((value - 0.1) * 100) / 4.9; // 转换为百分比
+    //console.log('percentage:',percentage.toFixed(2));
+    slider.style.background = `linear-gradient(to right, rgba(255, 255, 255, 0.5) ${percentage}%, rgba(216, 216, 216, 0.3) ${100 - percentage}%)`;
+    popSpeedbar.textContent = `${value}倍`;
 }
 function updateSliderBackground2(value) {
     const percentage = value;
@@ -397,15 +406,35 @@ danmakuswitch2.addEventListener('click', () => {
 commentButton.addEventListener('click', () => {
     danmakuOpacityControl.style.display = 'block';
 });
-
+//设置按钮点击事件，显示设置面板
+optionButton.addEventListener('click', () => {
+    optionsControl.style.display = 'block';
+});
 // 关闭按钮点击事件，隐藏透明度控制面板
 closeOpacityControl.addEventListener('click', () => {
     danmakuOpacityControl.style.display = 'none';
 });
-
-// 透明度滑块控制弹幕透明度
-opacitySlider.addEventListener('input', () => {
+//关闭设置面板
+closeOptionsControl.addEventListener('click', () => {
+    optionsControl.style.display = 'none';
+});
+// 添加输入事件监听器来动态更新滑动条和透明度值
+opacitySlider.addEventListener('input', function () {
+    updateSliderBackground(opacitySlider, opacitySlider.value);
     danmakuContainer.style.opacity = opacitySlider.value / 100;
+    // 保存透明度值到localStorage
+    localStorage.setItem('danmaku-opacity', opacitySlider.value);
+});
+lineSlider.addEventListener('input', function () {
+    updateSliderBackground3(lineSlider, lineSlider.value);
+});
+fontSlider.addEventListener('input', function () {
+    updateSliderBackground4(fontSlider, fontSlider.value);
+});
+speedSlider.addEventListener('input', function () {
+    updateSliderBackground5(speedSlider, speedSlider.value);
+    videoPlayer.playbackRate = speedSlider.value;
+    localStorage.setItem('video-speed', speedSlider.value);
 });
 document.addEventListener('DOMContentLoaded', function () {
     // 更新按钮状态的函数
@@ -565,6 +594,7 @@ document.addEventListener('DOMContentLoaded', function () {
             videoTitle.style.opacity = '0';
             rightMenu.style.opacity = '0';
             danmakuOpacityControl.style.display = 'none';
+            optionsControl.style.display = 'none';
             audioControl.style.display = 'none';
             closeButton.style.display = 'none';
             miniButton.style.display = 'none';
@@ -823,6 +853,15 @@ Alphaimage.addEventListener('mouseenter', () => {
 Alphaimage.addEventListener('mouseleave', () => {
     popAlpha.hidePopover()
 });
+Speedimage.addEventListener('mouseenter', () => {
+    const SpeedimageRect = Speedimage.getBoundingClientRect();
+    popSpeed.style.marginTop = `calc(${SpeedimageRect.y}px)`;
+    popSpeed.style.marginLeft = `calc(${SpeedimageRect.left}px - 2vw)`;
+    popSpeed.showPopover()
+});
+Speedimage.addEventListener('mouseleave', () => {
+    popSpeed.hidePopover()
+});
 Lineimage.addEventListener('mouseenter', () => {
     const LineimageRect = Lineimage.getBoundingClientRect();
     popLine.style.marginTop = `calc(${LineimageRect.y}px)`;
@@ -900,6 +939,26 @@ fontSlider.addEventListener('mousemove', (event) => {
     } else {
         setTimeout(() => {
             popFontbar.hidePopover()
+        }, 200);
+    }
+});
+speedSlider.addEventListener('mousemove', (event) => {
+    const speedSliderRect = speedSlider.getBoundingClientRect();
+    const speedSliderWidth = speedSliderRect.width;
+    const relativePosition = ((speedSlider.value - speedSlider.min) / (speedSlider.max - speedSlider.min)) * speedSliderWidth;
+    const absolutePosition = speedSliderRect.left + relativePosition;
+    // 计算滑块的绝对位置
+    const thumbLeft = speedSliderRect.left + relativePosition - 2;
+    const thumbtop = speedSliderRect.y - 8;
+    const thumbbottom = speedSliderRect.y + 12;
+    const thumbRight = thumbLeft + 4;
+    popSpeedbar.style.marginLeft = `calc(${absolutePosition}px)`;
+    popSpeedbar.style.marginTop = `calc(${speedSliderRect.y}px - 8vh)`;
+    if (event.clientX >= thumbLeft && event.clientX <= thumbRight && event.clientY >= thumbtop && event.clientY <= thumbbottom) {
+        popSpeedbar.showPopover()
+    } else {
+        setTimeout(() => {
+            popSpeedbar.hidePopover()
         }, 200);
     }
 });
