@@ -133,11 +133,12 @@ function danmakufont() {
         fs.writeFileSync(danmakufsBaseConfigPath, JSON.stringify(configData, null, 2), 'utf8');
     }
 
-    // 监听滑块变化事件
     danmakufsBaseSlider.addEventListener('input', (event) => {
-        const newdanmakufsBase = parseInt(event.target.value, 10);
-        updatedanmakufsBase(newdanmakufsBase);
+        // 将滑动条的值转换为浮点数，并保留一位小数
+        const newdanmakufsBase = parseFloat(event.target.value).toFixed(1);
 
+        // 传递转换后的值更新
+        updatedanmakufsBase(newdanmakufsBase);
     });
 
     // 初始化时设置描边宽度
@@ -230,9 +231,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     if (savedSpeed) {
         speedSlider.value = savedSpeed;
-        console.log('speed:',savedSpeed);
+        console.log('speed:', savedSpeed);
         videoPlayer.playbackRate = savedSpeed;
-    }else{
+    } else {
         videoPlayer.playbackRate = 1;
         speedSlider.value = 1;
     }
@@ -305,14 +306,14 @@ function updateSliderBackground(slider, value) {
     popAlphabar.textContent = `${percentage}%`;
 }
 function updateSliderBackground3(slider, value) {
-    const percentage = value; // 直接使用value作为百分比
+    const percentage = ((value - 1) / (6 - 1)) * 100;
     slider.style.background = `linear-gradient(to right, rgba(255, 255, 255, 0.5) ${percentage}%, rgba(216, 216, 216, 0.3) ${100 - percentage}%)`;
     popLinebar.textContent = `${lineWidth}`;
 }
 function updateSliderBackground4(slider, value) {
     const percentage = value; // 直接使用value作为百分比
     slider.style.background = `linear-gradient(to right, rgba(255, 255, 255, 0.5) ${percentage}%, rgba(216, 216, 216, 0.3) ${100 - percentage}%)`;
-    popFontbar.textContent = `${danmakufsBase}0px`;
+    popFontbar.textContent = `${danmakufsBase*10}px`;
 }
 function updateSliderBackground5(slider, value) {
     const percentage = ((value - 0.1) * 100) / 4.9; // 转换为百分比

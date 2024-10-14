@@ -1,6 +1,13 @@
 
 var updatesData = [
     {
+        version: "1.5.14",
+        date: "2024.10.14",
+        changes: [
+            "字体大小可调节档位翻倍，支持15，25，35，45，55字体大小。",
+        ]
+    },
+    {
         version: "1.5.13",
         date: "2024.10.13",
         changes: [
