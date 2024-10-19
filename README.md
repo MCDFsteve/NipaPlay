@@ -1,4 +1,4 @@
-<img width="400" alt="image" src="https://github.com/user-attachments/assets/b8ff5331-5d3b-436d-ab06-0f537f8c25a3" /> <img width="200" alt="image" src="https://github.com/user-attachments/assets/448c891e-0c2c-439e-990e-c0cb9ed622d9" />  <img src="https://counter.seku.su/cmoe?name=nipaplay&theme=r34" />
+<img width="400" alt="image" src="https://github.com/user-attachments/assets/b8ff5331-5d3b-436d-ab06-0f537f8c25a3" /> <img width="200" alt="image" src="https://github.com/user-attachments/assets/a1f0da36-751f-4806-aa76-7ab640156fbd" />  <img src="https://counter.seku.su/cmoe?name=nipaplay&theme=r34" />
 
 
 # NipaPlay 一款本地弹幕播放器。看番专用。弹弹play的macOS代餐。
