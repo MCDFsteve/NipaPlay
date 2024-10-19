@@ -21,7 +21,10 @@
 - 直接运行程序会提示已损坏，请在终端输入sudo xattr -dr com.apple.quarantine 程序.app的运行路径（可以从访达拖放），输入密码以后就能正常打开了
 ### 软件截图
 #### 主界面截图
-<img width="800" alt="image" src="https://github.com/MCDFsteve/NipaPlay/assets/71605531/4715a1a2-1e1d-4660-a48a-f42a2f8cb866"/>
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/d79a8fc9-dbbf-4441-962d-a161cd1ad70c">
+
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/e6c0325b-bead-4e28-bbc2-416e5562971e">
+
 
 
 
