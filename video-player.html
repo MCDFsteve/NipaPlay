@@ -15,9 +15,12 @@
         <div id="minimize-button" style="display: none;"></div>
     </div>
     <div id="player-container">
+        <div id="black-background"></div>
         <video id="video-player" autoplay></video>
+        <div id="black-mask"></div>
         <div id="danmaku-container" style="z-index:9;"></div>
         <div id="subtitle-container"></div>
+        <div id="darg_menu"></div>
     </div>
     <div id="uihide">
         <div id="controls-container">
@@ -38,50 +41,59 @@
                     style="background-image: url('icons/audio_0.png'); display: none;"></button>
                 <button id="audio-button-null" class="control-button"
                     style="background-image: url('icons/audio_null.png'); display: none;"></button>
-                <div id="pop-play" popover="auto" class="pop">播放</div>
-                <div id="pop-pause" popover="auto" class="pop">暂停</div>
-                <div id="pop-up" popover="auto" class="pop">上一话</div>
-                <div id="pop-down" popover="auto" class="pop">下一话</div>
-                <div id="pop-audio" popover="auto" class="pop">音量</div>
             </div>
             <div id="center-controls">
                 <input id="seek-bar" type="range" min="0" max="100" value="0">
             </div>
-            <div id="pop-bar" popover="auto" class="pop">进度条</div>
-            <div id="pop-bar2" popover="auto" class="pop">进度条2</div>
-            <div id="pop-alphabar" popover="auto" class="pop">透明度</div>
-            <div id="pop-speedbar" popover="auto" class="pop">播放速度</div>
-            <div id="pop-linebar" popover="auto" class="pop">描边粗细</div>
-            <div id="pop-fontbar" popover="auto" class="pop">字体大小</div>
             <div id="right-controls">
                 <div id="time-display">00:00 / 00:00</div>
                 <button id="fullscreen-button" style="background-image: url('icons/fullscreen.png')">全屏</button>
                 <button id="windowed-button"
                     style="background-image: url('icons/windowscreen.png'); display: none;">窗口化</button>
-                <div id="pop-full" popover="auto" class="pop">全屏</div>
-                <div id="pop-win" popover="auto" class="pop">窗口化</div>
             </div>
         </div>
-        <div id="side-controls">
-            <button id="subtitle-button" class="side-button"
-                style="background-image: url('icons/subtitle.png')"></button>
-            <button id="comment-button" class="side-button" style="background-image: url('icons/comment.png')"></button>
-            <button id="settings-button" class="side-button"
-                style="background-image: url('icons/settings.png')"></button>
-            <div id="pop-subtitle" popover="auto" class="pop">字幕</div>
-            <div id="pop-comment" popover="auto" class="pop">弹幕</div>
-            <div id="pop-settings" popover="auto" class="pop">设置</div>
+        <div id="pop-play" popover="auto" class="pop">播放</div>
+        <div id="pop-pause" popover="auto" class="pop">暂停</div>
+        <div id="pop-up" popover="auto" class="pop">上一话</div>
+        <div id="pop-down" popover="auto" class="pop">下一话</div>
+        <div id="pop-audio" popover="auto" class="pop">音量</div>
+        <div id="pop-bar" popover="auto" class="pop">进度条</div>
+        <div id="pop-bar2" popover="auto" class="pop">进度条2</div>
+        <div id="pop-alphabar" popover="auto" class="pop">透明度</div>
+        <div id="pop-speedbar" popover="auto" class="pop">播放速度</div>
+        <div id="pop-linebar" popover="auto" class="pop">描边粗细</div>
+        <div id="pop-fontbar" popover="auto" class="pop">字体大小</div>
+        <div id="pop-lightbar" popover="auto" class="pop">视频亮度</div>
+        <div id="pop-full" popover="auto" class="pop">全屏</div>
+        <div id="pop-win" popover="auto" class="pop">窗口化</div>
+        <div id="pop-subtitle" popover="auto" class="pop">字幕</div>
+        <div id="pop-comment" popover="auto" class="pop">弹幕</div>
+        <div id="pop-settings" popover="auto" class="pop">设置</div>
+        <div id="side-container">
+            <div id="side-controls">
+                <button id="subtitle-button" class="side-button"
+                    style="background-image: url('icons/subtitle.png')"></button>
+                <button id="comment-button" class="side-button"
+                    style="background-image: url('icons/comment.png')"></button>
+                <button id="settings-button" class="side-button"
+                    style="background-image: url('icons/settings.png')"></button>
+            </div>
+
+            <div id="danmakucon">
+                <div id="danmakuSwitch" class="danmaku-switch"></div>
+                <div id="danmakuSwitch2" class="danmaku-switch"></div>
+            </div>
         </div>
     </div>
     <!-- 弹幕透明度控制面板 -->
     <div id="danmaku-opacity-control" style="display: none;">
-        <button id="close-opacity-control"></button>
         <div id="alphamenu">
+            <button id="close-opacity-control"></button>
             <div id="opacity-slider-container">
-            <div id="alpha-image"></div>
-            <div id="pop-alpha" popover="auto" class="pop">透明度</div>
-            <input type="range" id="opacity-slider" min="0" max="100" value="100">
-        </div>
+                <div id="alpha-image"></div>
+                <div id="pop-alpha" popover="auto" class="pop">透明度</div>
+                <input type="range" id="opacity-slider" min="0" max="100" value="100">
+            </div>
             <div id="line-width-slider-container">
                 <div id="line-image"></div>
                 <div id="pop-line" popover="auto" class="pop">描边粗细</div>
@@ -97,13 +109,19 @@
     </div>
     <!-- 设置面板 -->
     <div id="options-control" style="display: none;">
-        <button id="close-options-control"></button>
         <div id="optionsmenu">
+            <button id="close-options-control"></button>
             <div id="speed-slider-container">
-            <div id="speed-image"></div>
-            <div id="pop-speed" popover="auto" class="pop">播放速度</div>
-            <input type="range" id="speed-slider" min="0.1" max="5" step="0.1" value="1">
-        </div>
+                <div id="speed-image"></div>
+                <div id="pop-speed" popover="auto" class="pop">播放速度</div>
+                <input type="range" id="speed-slider" min="0.1" max="5" step="0.1" value="1">
+            </div>
+            <div id="video-light-container" class="
+            option-class">
+                <div id="light-image" class="option-image"></div>
+                <div id="pop-light" popover="auto" class="pop">视频亮度</div>
+                <input type="range" id="light-slider" min="0" max="100" step="1" value="100">
+            </div>
         </div>
     </div>
     <!-- 音量调节控制面板 -->
@@ -114,12 +132,10 @@
     <div id="subtitle-alert" class="hide">字幕加载成功</div>
     <button id="video-title"></button>
     <button id="files-title"></button>
-    <div id="danmakucon">
-        <div id="danmakuSwitch" class="danmaku-switch"></div>
-        <div id="danmakuSwitch2" class="danmaku-switch"></div>
-    </div>
     <div id="pop-danmakuswitch1" popover="auto" class="pop">关闭弹幕</div>
     <div id="pop-danmakuswitch2" popover="auto" class="pop">打开弹幕</div>
+    <div class="drag-area">
+    </div>
     <script src="node_modules/assjs/dist/ass.min.js"></script>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
