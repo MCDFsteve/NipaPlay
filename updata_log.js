@@ -1,6 +1,13 @@
 
 var updatesData = [
     {
+        version: "1.6.1",
+        date: "2024.10.19",
+        changes: [
+            "修复了装载ass字幕导致的显示问题。",
+        ]
+    },
+    {
         version: "1.6.0",
         date: "2024.10.19",
         changes: [

@@ -153,6 +153,27 @@ video::-internal-media-controls-overlay-cast-button {
     background-color: black;  /* 背景设为黑色 */
     pointer-events: none;  /* 使鼠标事件穿透遮罩层 */
 }
+#subtitle-container {
+    z-index: 3;
+    bottom: 50px;
+    /* 字幕距离视频底部的距离，可调整 */
+    left: 0;
+    width: 100%;
+    text-align: center;
+    /* 保证字幕居中显示 */
+    pointer-events: none;
+    /* 确保字幕不会干扰到视频的点击事件 */
+}
+#video-player {
+    position: fixed;
+    z-index: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    /* 或者根据实际需求调整高度 */
+    width: 100%;
+}
 .drag-area {
     position: fixed;
     top: 0;
@@ -433,31 +454,8 @@ video::-internal-media-controls-overlay-cast-button {
     transition: opacity 0.5s ease;
 }
 
-#video-player {
-    z-index: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    /* 或者根据实际需求调整高度 */
-    width: 100%;
-}
-
 video::-webkit-media-text-track-container {
     bottom: 4vh;
-}
-
-#subtitle-container {
-    z-index: 3;
-    position: absolute;
-    bottom: 50px;
-    /* 字幕距离视频底部的距离，可调整 */
-    left: 0;
-    width: 100%;
-    text-align: center;
-    /* 保证字幕居中显示 */
-    pointer-events: none;
-    /* 确保字幕不会干扰到视频的点击事件 */
 }
 
 :root {
