@@ -21,17 +21,21 @@
 - 直接运行程序会提示已损坏，请在终端输入sudo xattr -dr com.apple.quarantine 程序.app的运行路径（可以从访达拖放），输入密码以后就能正常打开了
 ### 软件截图
 #### 主界面截图
-<img width="800" alt="image" src="https://github.com/user-attachments/assets/d79a8fc9-dbbf-4441-962d-a161cd1ad70c">
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/3b05c1f5-9a9a-4b13-849a-577cc06f456f">
 
-<img width="800" alt="image" src="https://github.com/user-attachments/assets/e6c0325b-bead-4e28-bbc2-416e5562971e">
+
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/f529bf58-341e-43dc-880b-03a3afce5605">
+
 
 
 
 
 #### 播放器界面截图
-<img width="800" alt="image" src="https://github.com/user-attachments/assets/4b568def-4fea-45e4-801d-83173ec9ca79"/>
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/06463b76-de82-4c8e-a201-11062054bafd">
 
-<img width="800" alt="image" src="https://github.com/user-attachments/assets/4c3e2ea9-eddc-4d3d-bba0-4c588454b357"/>
+
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/923c2a41-018b-45e8-902f-2e49f9c6e4e5">
+
 
 
 
