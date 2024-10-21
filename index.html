@@ -23,7 +23,9 @@
         <button id="new-series" onclick="returnToNewSeries()"><img src="icons/newanime.png"
                 alt="icon"><span>新番更新</span></button>
         <button id="viewing-history"><img src="icons/animehistory.png" alt="icon"><span>观看记录</span></button>
-        <button id="achievement"><img src="icons/animeachievement.png" alt="icon"><span>成就</span></button>
+        <button id="achievement" style="display: none;"><img src="icons/animeachievement.png"
+                alt="icon"><span>成就</span></button>
+        <button id="settings"><img src="icons/settings_main.png" alt="icon"><span>设置</span></button>
         <button id="about-menu"><img src="icons/animestar.png" alt="icon"><span>关于NipaPlay</span></button>
     </div>
     <div class="content-area0"></div>
@@ -39,7 +41,7 @@
             <input type="file" id="file-input" style="display: none;" accept="video/*">
         </div>
         <!-- 媒体库内容区 -->
-        <div id="media-library-content" class="content-page" style="display:none;">
+        <div id="media-library-content" class="content-page" style="display:none;margin-left: 20px;">
             <h2>媒体库</h2>
             <hr class="section-divider">
             <div id="media-content" class="scrollable-list">
@@ -54,7 +56,7 @@
         </div>
 
         <!-- 新番更新内容区 -->
-        <div id="new-series-content" class="content-page" style="display:none;">
+        <div id="new-series-content" class="content-page" style="display:none;margin-left: 20px;">
             <h2>新番更新</h2>
             <hr class="section-divider">
             <div id="media-content" class="scrollable-list">
@@ -65,7 +67,7 @@
 
         <!-- 观看记录内容区 -->
         <!-- 观看记录内容区 -->
-        <div id="viewing-history-content" class="content-page" style="display:none;">
+        <div id="viewing-history-content" class="content-page" style="display:none;margin-left: 20px;">
             <h2>观看记录</h2>
             <hr class="section-divider">
             <div class="scrollable-list">
@@ -75,15 +77,27 @@
             </div>
         </div> <!-- 正确结束观看记录内容区的div -->
         <!-- 成就区 -->
-        <div id="achievement-content" class="content-page" style="display:none;">
+        <div id="achievement-content" class="content-page" style="display:none;margin-left: 20px;">
             <h2>成就</h2>
             <hr class="section-divider">
             <div class="scrollable-list">
                 <div>建设中......</div>
             </div>
         </div>
+        <!-- 设置区 -->
+        <div id="settings-content" class="content-page" style="display:none;margin-left: 20px;">
+            <h2>设置</h2>
+            <hr class="section-divider">
+            <div class="scrollable-list">
+                <div class="settings-item">背景图像设置</div>
+                <hr class="section-divider">
+                <button id="btn-none-background" class="folder-item">关闭</button>
+                <button id="btn-kanban-background" class="folder-item">看板娘</button>
+                <button id="btn-custom-background" class="folder-item">自定义</button>
+            </div>
+        </div>
         <!-- 关于区 -->
-        <div id="about-menu-content" class="content-page" style="display:none;">
+        <div id="about-menu-content" class="content-page" style="display:none;margin-left: 20px;">
             <h2>关于</h2>
             <hr class="section-divider">
             <div class="scrollable-list">
@@ -102,6 +116,7 @@
     <script src="./history.js"></script>
     <script src="updata_log.js"></script>
     <script src="other.js"></script>
+    <script src="settings.js"></script>
     </div>
 </body>
 

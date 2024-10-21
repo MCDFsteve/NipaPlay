@@ -261,9 +261,9 @@ video::-internal-media-controls-overlay-cast-button {
 }
 
 .control-button {
-    width: 32.4px;
+    width: 25px;
     /* 设置按钮的宽度 */
-    height: 32.4px;
+    height: 25px;
     /* 设置按钮的高度 */
     margin-right: 9.6px;
     /* 设置按钮右边距 */
@@ -419,9 +419,9 @@ video::-internal-media-controls-overlay-cast-button {
     /* 垂直居中 */
     justify-content: center;
     /* 水平居中 */
-    width: 32.4px;
+    width: 25px;
     /* 设置按钮的宽度 */
-    height: 32.4px;
+    height: 25px;
     /* 设置按钮的高度 */
     padding: 0;
     /* 移除按钮内边距 */

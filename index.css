@@ -32,15 +32,18 @@
         --button-bg-color: transparent;
     }
 }
-body{
+
+body {
     transition: width 0.5s, height 0.5s;
     text-shadow: 1px 1px 0 white, -1px -1px 0 white, -1px 1px 0 white, 1px -1px 0 white, 1px 0 0 white, 0 1px 0 white, -1px 0 0 white, 0 -1px 0 white;
 }
+
 @media (prefers-color-scheme: dark) {
-    body{
+    body {
         text-shadow: 1px 1px 0 black, -1px -1px 0 black, -1px 1px 0 black, 1px -1px 0 black, 1px 0 0 black, 0 1px 0 black, -1px 0 0 black, 0 -1px 0 black;
     }
 }
+
 a.normal-link {
     color: inherit;
     /* 继承父元素的文字颜色 */
@@ -115,10 +118,11 @@ body {
     transition: background-color 0.3s, color 0.3s;
     user-select: none;
 }
+
 .sidebar {
-    border-right: 1px solid rgb(172, 172, 172);
+    border-right: 1px solid rgb(172,172, 172);
     width: 20vw;
-    z-index:0;
+    z-index: 0;
     background-color: rgb(224, 224, 224);
     padding: 10px;
     /* 边距调整为更窄 */
@@ -132,6 +136,7 @@ body {
 
 @media (prefers-color-scheme: dark) {
     .sidebar {
+        border-right: 1px solid rgb(0, 0, 0);
         background-color: rgb(42, 42, 42);
     }
 }
@@ -140,14 +145,14 @@ body {
     margin-bottom: 10px;
     margin-top: 20px;
     border: none;
-    padding: 5px 30px;
+    padding: 5px 30px; /* 保持一致的内边距 */
     background-color: rgba(233, 233, 233, 0.3);
     font-size: 16px;
     box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
     color: #000000;
     cursor: pointer;
     backdrop-filter: blur(20px);
-    border-radius: 5px;
+    border-radius: 5px; /* 一致的圆角 */
 }
 
 .folder-item:hover {
@@ -155,6 +160,22 @@ body {
     color: #ffffff;
 }
 
+.folder-item:active, .folder-item.active { /* active 类的样式，确保一致性 */
+    background-color: rgba(0, 0, 0); /* 保持背景颜色 */
+    color: #ffffff;
+    border-radius: 5px; /* 保持圆角一致 */
+    padding: 5px 30px; /* 保持内边距一致 */
+    box-shadow: none; /* 去除阴影，以避免按钮按下后有不同的效果 */
+}
+@media (prefers-color-scheme: dark) {
+    .folder-item:active, .folder-item.active { /* active 类的样式，确保一致性 */
+        background-color: rgb(255, 255, 255); /* 保持背景颜色 */
+        color: #000000;
+        border-radius: 5px; /* 保持圆角一致 */
+        padding: 5px 30px; /* 保持内边距一致 */
+        box-shadow: none; /* 去除阴影，以避免按钮按下后有不同的效果 */
+    }
+}
 @media (prefers-color-scheme: dark) {
     .folder-item {
         background-color: #3737373f;
@@ -239,13 +260,15 @@ li.sidebar-button:hover {
     padding-left: 25px;
     cursor: pointer;
     /* 设置鼠标指针样式为手型 */
-    text-shadow:none;
+    text-shadow: none;
 }
+
 @media (prefers-color-scheme: dark) {
     li.sidebar-button:hover {
         background-color: rgba(255, 255, 255, 0.3);
     }
 }
+
 li.sidebar-button {
     position: relative;
     /* 设置为相对定位，以便为::before伪元素定位 */
@@ -347,9 +370,7 @@ li.sidebar-button::before {
     align-items: center;
     transition: background-color 0.3s;
 }
-
 .content-area {
-    margin-left: var(--sidebar-width);
     /* 将内容偏移侧边栏宽度 */
     width: 80%;
     height: 100%;
@@ -357,39 +378,40 @@ li.sidebar-button::before {
     /* 启用垂直滚动 */
     margin: 0;
     /* 移除外边距 */
-    padding-left: 20px;
-    z-index:0;
+    z-index: 0;
 }
+
 .content-area0 {
     position: fixed;
-    margin-left: var(--sidebar-width);
-    /* 将内容偏移侧边栏宽度 */
-    width: 80%;
-    height: 100%; 
-    margin: 0;
-    right:0;
-    left:22%;
-    padding-left: 20px;
-    background-color: #fff;
-    z-index:-2;
-}
-.content-area2 {
-    position: fixed;
-    overflow:hidden;
     /* 将内容偏移侧边栏宽度 */
     width: 80%;
     height: 100%;
-    background-image: url('./others/back.png');
-    background-size: contain;
+    background-color: #fff;
+    z-index: -2;
+}
+
+.content-area2 {
+    border-left: 1px solid rgb(172, 172, 172);
+    position: fixed;
+    overflow: hidden;
+    /* 将内容偏移侧边栏宽度 */
+    width: 80%;
+    height: 100%;
+    background-image: url('./images/none.png');
+    background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
     opacity: 0.5;
-    z-index:-1;
+    z-index: -1;
     pointer-events: none;
 }
+
 @media (prefers-color-scheme: dark) {
     .content-area0 {
         background-color: #222;
+    }
+    .content-area2 {
+        border-left: 1px solid rgb(0, 0, 0);
     }
 }
 
@@ -397,7 +419,7 @@ li.sidebar-button::before {
     height: calc(100vh - 100px);
     margin-left: calc(1.5% - 5px);
     /* 根据您的页面设计调整高度 */
-    overflow-y:auto;
+    overflow-y: auto;
     overflow-x: hidden;
 }
 
@@ -424,6 +446,7 @@ li.sidebar-button::before {
     /* 修改：同时在X和Y方向居中 */
     -webkit-app-region: no-drag;
 }
+
 .upload-button:hover {
     background-color: rgba(0, 0, 0, 0.3);
     color: #fff;
@@ -431,16 +454,19 @@ li.sidebar-button::before {
     border-radius: 20px;
     /* 修复悬停时的弧度 */
 }
+
 @media (prefers-color-scheme: dark) {
     .upload-button {
         background-color: rgba(51, 51, 51, 0.75);
     }
 }
+
 @media (prefers-color-scheme: dark) {
     .upload-button:hover {
         background-color: rgba(91, 91, 91, 0.3);
     }
 }
+
 /* 新增的激活状态样式 */
 .active {
     background-color: var(--button-hover-bg-color);
@@ -505,20 +531,25 @@ h2 {
         color: #ffffff;
     }
 }
+
 #import-video {
     margin-top: calc(17vh + 20%);
 }
+
 .title-text {
     position: fixed;
     top: 7vh;
     left: 2vw;
     width: 18vw;
-  }
+}
 
-  .title-text img {
-    width: 100%; /* 确保图片适应容器宽度 */
-    height: auto; /* 保持图片的原始比例 */
-  }
+.title-text img {
+    width: 100%;
+    /* 确保图片适应容器宽度 */
+    height: auto;
+    /* 保持图片的原始比例 */
+}
+
 .section-divider {
     border: none;
     border-top: 1px solid rgb(0, 0, 0);
@@ -529,7 +560,7 @@ h2 {
 }
 @media (prefers-color-scheme: dark) {
     .section-divider {
-        border-top: 1px solid rgb(255, 255, 255);
+        border-top: 1px solid rgb(70, 70, 70);
     }
 }
 .upload-icon {
@@ -553,41 +584,44 @@ h2 {
     margin-top: 20px;
     margin-right: 25px;
     margin-bottom: -15px;
-    text-align:left;
+    text-align: left;
     box-sizing: border-box;
 }
 
 .anime-image {
-    width: 133.33px;
+    width: auto;
     height: 200px;
     max-height: 200px;
     /* 根据需要调整图片的最大高度 */
     border-radius: 2px;
-    box-shadow: 7px 10px 10px rgba(0, 0, 0, 0.3);
     /* 添加圆角 */
 }
-
 .anime-image img {
     border-radius: 2px;
     /* 添加圆角 */
-    width: 133.33px;
+    width: auto;
     height: 200px;
     max-height: 200px;
     /* 根据需要调整图片的最大高度 */
     cursor: pointer;
+    box-shadow: 7px 10px 10px rgba(0, 0, 0, 0.3);
+    opacity: 1;
 }
-
+.anime-image img:hover {
+    opacity: 0.7;
+}
 .anime-title {
     flex: 0 0 auto;
     font-size: 13px;
     margin-top: 15px;
     /* 增加与图片的距离 */
-    width:133.33px;
+    width: 133.33px;
     height: 3em;
     /* 固定高度以显示两行文本 */
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
+    line-clamp: 2;
     -webkit-line-clamp: 2;
     /* 显示两行 */
     -webkit-box-orient: vertical;
@@ -595,7 +629,7 @@ h2 {
     color: #000000;
 }
 
-.day-section h2 {
+.day-section h2,.settings-item {
     margin-top: 20px;
     /* 减少顶部的空白 */
     margin-bottom: 5px;
@@ -615,7 +649,7 @@ h2 {
 }
 
 @media (prefers-color-scheme: dark) {
-    .day-section h2 {
+    .day-section h2,.settings-item {
         color: #ffffff;
     }
 }
@@ -646,15 +680,16 @@ h2 {
 }
 
 .anime-detail-image {
-    flex: 0 0 30%;
-    width: 200px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    width: auto;
     height: 300px;
     max-height: auto;
     border-radius: 2px;
 }
 
 .anime-detail-image img {
-    width: 200px;
+    width: auto;
     height: 300px;
     max-height: auto;
     border-radius: 2px;
@@ -662,7 +697,8 @@ h2 {
 }
 
 .anime-detail-text {
-    flex: 1;
+    margin-top: 10px;
+    margin-bottom: 10px;
     max-height: 250px;
     /* 让其默认高度适应图像 */
     overflow-y: auto;
@@ -707,7 +743,6 @@ h2 {
 
 .anime-summary2 li:hover {
     background-color: var(--button-hover-bg-color);
-    color: #ffffff;
     cursor: pointer;
 }
 

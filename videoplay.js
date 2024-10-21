@@ -7,9 +7,6 @@ ipcRenderer.on('platform-info', (event, { isMac }) => {
             background-color: initial !important;
             border-right: initial !important;
 }
-.content-area0 {
-    border-left: 1px solid rgb(172, 172, 172);;
-}
 @media (prefers-color-scheme: dark) {
     .sidebar {
         background-color: initial !important;

@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.about-version').forEach(function (element) {
         element.innerHTML = `NipaPlay.Ver${nipaplayVersion}<br>咪啪～☆<br>作者：戴夫邻居史蒂夫 ©️copyright2024 Aimes Soft.<br>项目地址：<br> <a href="https://github.com/MCDFsteve/NipaPlay" class="normal-link">https://github.com/MCDFsteve/NipaPlay</a>`;
     });
-
 });
 // 导入 shell 模块，注意这行代码需要在 Electron 环境中运行
 const { shell } = require('electron');
@@ -185,16 +184,13 @@ function changeContent(content) {
 document.addEventListener('DOMContentLoaded', function () {
     loadNewSeries();
 });
-
+// 使用 Bangumi API 获取每日放送信息
 function loadNewSeries() {
-    fetch('https://api.dandanplay.net/api/v2/bangumi/shin?filterAdultContent=false')
+    fetch('https://api.bgm.tv/calendar') // 调用 Bangumi 的日历 API
         .then(response => response.json())
         .then(data => {
-            const bangumiList = data.bangumiList;
+            // Bangumi API 返回的是按星期几分组的数组，每个元素代表一天
             const daysOfWeek = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-
-            // 按 airDay 排序
-            bangumiList.sort((a, b) => a.airDay - b.airDay);
 
             // 获取当前的星期几
             const today = new Date().getDay();
@@ -202,23 +198,34 @@ function loadNewSeries() {
             // 重新排序 daysOfWeek 数组，使今天排在最前面
             const reorderedDays = daysOfWeek.slice(today).concat(daysOfWeek.slice(0, today));
 
-            // 创建按天分组的 HTML 内容
+            // 根据 Bangumi API 数据创建按天分组的 HTML 内容
             const content = reorderedDays.map((day, index) => {
-                const realIndex = (today + index) % 7;
-                const dayItems = bangumiList.filter(item => item.airDay === realIndex);
+                // 找到与今天对应的 Bangumi 数据
+                const currentDayData = data.find(dayData => {
+                    // 获取 Bangumi API 中的 weekday.id，1 为星期一，依次类推
+                    return (dayData.weekday.id - 1) === (today + index) % 7;
+                });
 
-                if (dayItems.length === 0) {
+                // 如果该天没有数据则跳过
+                if (!currentDayData || !currentDayData.items || currentDayData.items.length === 0) {
                     return '';
                 }
 
-                const itemsHtml = dayItems.map(item => `
-                    <div class="anime-item" data-anime-id="${item.animeId}">
-                        <div class="anime-image">
-                            <img src="${item.imageUrl}" alt="${item.animeTitle}">
+                // 每天的番剧列表
+                const dayItems = currentDayData.items;
+
+                const itemsHtml = dayItems.map(item => {
+                    // 如果没有图片，则使用默认图片
+                    const imageUrl = item.images?.large || 'icons/default.png';
+                    return `
+                        <div class="anime-item" data-anime-id="${item.id}">
+                            <div class="anime-image">
+                                <img src="${imageUrl}" alt="${item.name_cn || item.name}">
+                            </div>
+                            <p class="anime-title">${item.name_cn || item.name}</p>
                         </div>
-                        <p class="anime-title">${item.animeTitle}</p>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
 
                 return `
                     <div class="day-section">
@@ -227,7 +234,7 @@ function loadNewSeries() {
                         <div class="anime-list">
                             ${itemsHtml}
                         </div>
-                        <hr class="section-divider"> <!-- 添加分割线 -->
+                        <hr class="section-divider">
                     </div>
                 `;
             }).join('');
@@ -237,7 +244,7 @@ function loadNewSeries() {
 
             // 为每个 anime-item 添加点击事件
             document.querySelectorAll('.anime-item').forEach(item => {
-                item.addEventListener('click', function() {
+                item.addEventListener('click', function () {
                     const animeId = this.getAttribute('data-anime-id');
                     fetchAnimeDetail(animeId);
                 });
@@ -246,72 +253,156 @@ function loadNewSeries() {
         .catch(error => console.error('Error fetching bangumi data:', error));
 }
 
-// 获取动画详细信息并显示
 function fetchAnimeDetail(animeId) {
-    fetch(`https://api.dandanplay.net/api/v2/bangumi/${animeId}`)
+    fetch(`https://api.bgm.tv/v0/subjects/${animeId}`) // 使用 Bangumi API 获取动画详情
         .then(response => response.json())
         .then(data => {
-            displayAnimeDetail(data.bangumi);
+            displayAnimeDetail(data); // 调用 displayAnimeDetail 函数显示动画详情
         })
         .catch(error => console.error('Error fetching anime detail:', error));
 }
-
 function displayAnimeDetail(bangumi) {
+    const summaryText = bangumi.summary || '暂无简介';
+
+    // 获取 animeId
+    const animeId = bangumi.id;
+
+    // 先显示加载中的提示
+    document.getElementById('anime-detail-content').innerHTML = `
+        <div id="anime-lib">
+            <p>加载中...</p>
+        </div>
+    `;
+
+    // 检查 localStorage 中是否有缓存的翻译
+    const cachedTranslation = localStorage.getItem(`anime_${animeId}_translation`);
+
+    if (cachedTranslation) {
+        // 如果有缓存的翻译，直接使用它来显示详细信息
+        renderAnimeDetail(bangumi, cachedTranslation + '（翻译：ChatGPT4omini）');
+    } else if (summaryText === '暂无简介') {
+        // 如果是 "暂无简介"，则不需要翻译，直接显示
+        renderAnimeDetail(bangumi, summaryText);
+    } else {
+        // 否则，发送请求进行翻译
+        translateToChinese(summaryText).then(translatedSummary => {
+            // 保存翻译结果到 localStorage
+            localStorage.setItem(`anime_${animeId}_translation`, translatedSummary);
+
+            // 使用翻译后的内容显示详细信息
+            renderAnimeDetail(bangumi, translatedSummary + '（翻译：ChatGPT4omini）');
+        }).catch(error => {
+            console.error('翻译简介时发生错误:', error);
+            // 如果翻译失败，显示原始简介
+            renderAnimeDetail(bangumi, summaryText);
+        });
+    }
+}
+
+// 渲染番剧详细信息的函数
+function renderAnimeDetail(bangumi, translatedSummary) {
     const detailContent = `
-    <div id="anime-lib">
-    <button id="return-anime-library" class="folder-item" onclick="returnToanime()">返回新番界面</button>
-    <div class="anime-deta">
-        <h2>${bangumi.titles.find(title => title.language === '主标题').title}</h2>
-        </div>
-        <hr class="section-divider">
-        <p>${bangumi.typeDescription}</p>
-        <div class="anime-detail-container">
-            <div class="anime-detail-image">
-                <img src="${bangumi.relateds[0].imageUrl}" alt="${bangumi.titles.find(title => title.language === '主标题').title}">
+        <div id="anime-lib">
+            <button id="return-anime-library" class="folder-item" onclick="returnToanime()">返回新番界面</button>
+            <div class="anime-deta">
+                <h2>${bangumi.name_cn || bangumi.name}</h2>
             </div>
-            <div class="anime-detail-text">
-                <p class="anime-summary">${bangumi.summary}</p>
+            <hr class="section-divider">
+            <div class="anime-detail-container">
+                <div class="anime-detail-image">
+                    <img src="${bangumi.images?.large || 'icons/default.png'}" alt="${bangumi.name_cn || bangumi.name}">
+                </div>
+                <div class="anime-detail-text">
+                    <p class="anime-summary">${translatedSummary}</p>
+                </div>
             </div>
-        </div>
-        <hr class="section-divider">
-            <p><strong>评分:</strong></p>
+            <hr class="section-divider">
+            <p><strong>评分:</strong> ${bangumi.rating?.score || '暂无评分'}</p>
+            <hr class="section-divider">
+            <p><strong>相关信息:</strong></p>
             <ul class="anime-summary">
-                ${Object.entries(bangumi.ratingDetails).map(([key, value]) => `<li>${key}: ${value}</li>`).join('')}
+                <li><strong>放送日期:</strong> ${bangumi.date || '未知'}</li>
+                <li><strong>平台:</strong> ${bangumi.platform || '未知'}</li>
             </ul>
             <hr class="section-divider">
-            <p><strong>相关作品:</strong></p>
+            <p><strong>制作人员:</strong></p>
             <ul class="anime-summary">
-            ${bangumi.relateds.map(related => `<li class="related-anime-item" data-anime-id="${related.animeId}">${related.animeTitle}</li>`).join('')}
+                ${bangumi.infobox?.map(info => {
+        if (info.key !== "中文名" && info.key !== "别名" && info.key !== "话数" && info.key !== "放送开始") {
+            return `<li><strong>${info.key}:</strong> ${Array.isArray(info.value) ? info.value.map(v => v.v || v).join(", ") : info.value}</li>`;
+        }
+        return '';
+    }).join('') || '<li>暂无制作人员信息</li>'}
             </ul>
             <hr class="section-divider">
             <p><strong>标签:</strong></p>
             <ul class="anime-summary2">
-                ${bangumi.tags.map(tag => `<li>${tag.name}</li>`).join('')}
+                ${bangumi.tags?.map(tag => `<li>${tag.name}</li>`).join('') || '无标签'}
             </ul>
-        <hr class="section-divider">
-        <div class="anime-detail-info">
-            <p><strong>放送信息:</strong></p>
-            <ul class="anime-summary">
-                ${bangumi.metadata.map(info => `<li>${info}</li>`).join('')}
-            </ul>
-        </div>
         </div>
     `;
 
     document.getElementById('anime-detail-content').innerHTML = detailContent;
     document.getElementById('new-series-container').style.display = 'none';
     document.getElementById('anime-detail-content').style.display = 'block';
-    // 滚动到顶部
+}
+// 模拟翻译API调用函数
+function translateToChinese(text) {
+    return new Promise((resolve, reject) => {
+        // 咒语：你是一个翻译机器人，将我发送给你的文本翻译为简体中文之后返回给我。
+        const content = `你是一个翻译机器人，将我发送给你的文本翻译为简体中文之后返回给我。`;
 
-    // 为每个 related-anime-item 添加点击事件
-    document.querySelectorAll('.related-anime-item').forEach(item => {
-        item.addEventListener('click', function() {
-            const relatedAnimeId = this.getAttribute('data-anime-id');
-            fetchAnimeDetail(relatedAnimeId);
+        const postData = JSON.stringify({
+            model: "gpt-4o-mini",
+            temperature: 0.5,
+            messages: [{
+                role: "user",
+                content: `${content}\n\n${text}` // 咒语和需要翻译的文本一同传入
+            }]
         });
+
+        const options = {
+            hostname: 'ffmpeg.dfsteve.top',
+            path: '/ffmpeg.php',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Content-Length': Buffer.byteLength(postData)
+            }
+        };
+
+        console.log('准备发送翻译请求...');  // 请求前打印日志
+
+        const req = require('https').request(options, res => {
+            let data = '';
+            res.on('data', chunk => {
+                data += chunk;
+            });
+
+            res.on('end', () => {
+                try {
+                    const responseData = JSON.parse(data);
+                    console.log('翻译后的内容:', responseData.choices[0].message.content);
+
+                    resolve(responseData.choices[0].message.content); // 处理翻译结果
+                } catch (error) {
+                    console.error('解析返回数据时发生错误:', error);
+                    reject(error);
+                }
+            });
+        });
+
+        req.on('error', error => {
+            console.error('请求 API 时发生错误:', error);
+            reject(error);
+        });
+
+        req.write(postData);
+        req.end();
+
+        console.log('请求已结束发送');  // 请求结束发送后打印日志
     });
 }
-
 // 回到新番更新界面
 function returnToNewSeries() {
     console.log('returnToNewSeries');
