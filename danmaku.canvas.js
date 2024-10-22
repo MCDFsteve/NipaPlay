@@ -1,10 +1,11 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-  typeof define === 'function' && define.amd ? define(factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Danmaku = factory());
-}(this, (function () { 'use strict';
+    typeof define === 'function' && define.amd ? define(factory) :
+      (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Danmaku = factory());
+}(this, (function () {
+  'use strict';
 
-  var transform = (function() {
+  var transform = (function () {
     /* istanbul ignore next */
     if (typeof document === 'undefined') return 'transform';
     var properties = [
@@ -143,12 +144,36 @@
   function setup(stage, comments) {
     for (var i = 0; i < comments.length; i++) {
       var cmt = comments[i];
-      cmt.canvas = createCommentCanvas(cmt, danmakufsBase*10);
+      cmt.canvas = createCommentCanvas(cmt, danmakufsBase * 10);
     }
   }
 
   function render(stage, cmt) {
-    stage.context.drawImage(cmt.canvas, cmt.x * dpr, cmt.y * dpr);
+    if (DanmakuOff === 0) {
+      return; // 直接跳过，不渲染
+    }
+
+    // 如果是底部弹幕且 BottomAlpha 为 0，则不渲染
+    if (cmt.mode === 'bottom' && BottomAlpha === 0) {
+      return; // 直接跳过，不渲染
+    }
+
+    // 如果是顶部弹幕且 TopAlpha 为 0，则不渲染
+    if (cmt.mode === 'top' && TopAlpha === 0) {
+      return; // 直接跳过，不渲染
+    }
+
+    // 如果是右到左的弹幕且 RtlAlpha 为 0，则不渲染
+    if (cmt.mode === 'rtl' && RtlAlpha === 0) {
+      return; // 直接跳过，不渲染
+    }
+
+
+
+    // 正常渲染其他弹幕
+    if (cmt.canvas) {
+      stage.context.drawImage(cmt.canvas, cmt.x * dpr, cmt.y * dpr);
+    }
   }
 
   function remove(stage, cmt) {
@@ -209,6 +234,14 @@
       }
     }
     var channel = crs[last].range;
+    // 计算最终分配的 y 坐标
+    var finalY = channel % (this._.height - cmt.height);
+
+    // 限制 y 坐标在屏幕前 1/4 的范围内
+    var maxAllowedHeight = this._.height / 4*RenderRegion;  // 屏幕的1/4高度
+    if (finalY > maxAllowedHeight) {
+      return -1;  // 超过1/4屏幕高度，停止进一步操作
+    }
     var crObj = {
       range: channel + cmt.height,
       time: this.media ? cmt.time : cmt._utc,
@@ -225,7 +258,7 @@
 
   /* eslint no-invalid-this: 0 */
   function createEngine(framing, setup, render, remove) {
-    return function() {
+    return function () {
       framing(this._.stage);
       var dn = Date.now() / 1000;
       var ct = this.media ? this.media.currentTime : dn;
@@ -290,7 +323,7 @@
         window.webkitRequestAnimationFrame
       )
     ) ||
-    function(cb) {
+    function (cb) {
       return setTimeout(cb, 50 / 3);
     };
 
@@ -438,7 +471,7 @@
     this._.duration = 4;
 
     this.comments = opt.comments || [];
-    this.comments.sort(function(a, b) {
+    this.comments.sort(function (a, b) {
       return a.time - b.time;
     });
     for (var i = 0; i < this.comments.length; i++) {
@@ -566,10 +599,10 @@
   }
 
   var speed = {
-    get: function() {
+    get: function () {
       return this._.speed;
     },
-    set: function(s) {
+    set: function (s) {
       if (typeof s !== 'number' ||
         isNaN(s) ||
         !isFinite(s) ||
@@ -587,22 +620,22 @@
   function Danmaku(opt) {
     opt && init$1.call(this, opt);
   }
-  Danmaku.prototype.destroy = function() {
+  Danmaku.prototype.destroy = function () {
     return destroy.call(this);
   };
-  Danmaku.prototype.emit = function(cmt) {
+  Danmaku.prototype.emit = function (cmt) {
     return emit.call(this, cmt);
   };
-  Danmaku.prototype.show = function() {
+  Danmaku.prototype.show = function () {
     return show.call(this);
   };
-  Danmaku.prototype.hide = function() {
+  Danmaku.prototype.hide = function () {
     return hide.call(this);
   };
-  Danmaku.prototype.clear = function() {
+  Danmaku.prototype.clear = function () {
     return clear$1.call(this);
   };
-  Danmaku.prototype.resize = function() {
+  Danmaku.prototype.resize = function () {
     return resize$1.call(this);
   };
   Object.defineProperty(Danmaku.prototype, 'speed', speed);

@@ -17,6 +17,12 @@ const audionull = document.getElementById('audio-button-null');
 const progressBar = document.getElementById('controls-container');
 const sidecontrols = document.getElementById('side-controls');
 const reloadDanmaku = document.getElementById('reload-danmaku');
+const toggleTopDanmaku = document.getElementById('toggle-top-danmaku');
+const toggleTopDanmakuOn = document.getElementById('toggle-top-danmaku-on');
+const toggleBottomDanmaku = document.getElementById('toggle-bottom-danmaku');
+const toggleBottomDanmakuOn = document.getElementById('toggle-bottom-danmaku-on');
+const toggleRtlDanmaku = document.getElementById('toggle-rtl-danmaku');
+const toggleRtlDanmakuOn = document.getElementById('toggle-rtl-danmaku-on');
 const followDiv = document.getElementById('pop-bar');
 const popBar2 = document.getElementById('pop-bar2');
 const popAudio = document.getElementById('pop-audio');
@@ -37,9 +43,11 @@ const popSpeed = document.getElementById('pop-speed');
 const popLight = document.getElementById('pop-light');
 const popLine = document.getElementById('pop-line');
 const popFont = document.getElementById('pop-font');
+const popHeight = document.getElementById('pop-height');
 const popAlphabar = document.getElementById('pop-alphabar');
 const popLinebar = document.getElementById('pop-linebar');
 const popFontbar = document.getElementById('pop-fontbar');
+const popHeightbar = document.getElementById('pop-heightbar');
 const popSpeedbar = document.getElementById('pop-speedbar');
 const popLightbar = document.getElementById('pop-lightbar');
 const Alphaimage = document.getElementById('alpha-image');
@@ -47,6 +55,7 @@ const Speedimage = document.getElementById('speed-image');
 const Lightimage = document.getElementById('light-image');
 const Lineimage = document.getElementById('line-image');
 const Fontimage = document.getElementById('font-image');
+const Heightimage = document.getElementById('height-image');
 // 获取弹幕按钮和新的弹幕透明度控制面板元素
 const commentButton = document.getElementById('comment-button');
 const danmakuOpacityControl = document.getElementById('danmaku-opacity-control');
@@ -59,6 +68,7 @@ const lightSlider = document.getElementById('light-slider');
 const speedSlider = document.getElementById('speed-slider');
 const lineSlider = document.getElementById('line-width-slider');
 const fontSlider = document.getElementById('font-size-slider');
+const heightSlider = document.getElementById('view-height-slider');
 const audioSlider = document.getElementById('audio-slider');
 const danmakuContainer = document.getElementById('danmaku-container');
 const originalLog = console.log; // 保存原始的console.log函数，以便还可以在渲染器中本地打印日志
@@ -185,13 +195,34 @@ document.addEventListener('DOMContentLoaded', function () {
     const saveddanmuku = localStorage.getItem('danmakuswitch');
     console.log('saveddanmuku:', saveddanmuku);
     if (saveddanmuku == 1) {
-        danmakuContainer.style.zIndex = -2;
+        DanmakuOff = 0;
         danmakuswitch1.style.display = 'none';
         danmakuswitch2.style.display = 'block';
     } else {
-        danmakuContainer.style.zIndex = 9;
+        DanmakuOff = 1;
         danmakuswitch1.style.display = 'block';
         danmakuswitch2.style.display = 'none';
+    }
+    const savedAlpha = localStorage.getItem('BottomAlpha');
+    const savedAlpha2 = localStorage.getItem('TopAlpha');
+    const savedAlpha3 = localStorage.getItem('RtlAlpha');
+    BottomAlpha = savedAlpha;
+    TopAlpha = savedAlpha2;
+    RtlAlpha = savedAlpha3;
+    if (BottomAlpha == 0) {
+        toggleBottomDanmakuOn.style.display = 'block';
+        toggleBottomDanmaku.style.display = 'none';
+        BottomAlpha = 0;
+    }
+    if (TopAlpha == 0) {
+        toggleTopDanmakuOn.style.display = 'block';
+        toggleTopDanmaku.style.display = 'none';
+        TopAlpha = 0;
+    }
+    if (RtlAlpha == 0) {
+        toggleRtlDanmakuOn.style.display = 'block';
+        toggleRtlDanmaku.style.display = 'none';
+        RtlAlpha = 0;
     }
     // 当视频元数据已加载，自动开始播放
     videoPlayer.addEventListener('loadedmetadata', function () {
@@ -201,25 +232,21 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     const savedVolume = localStorage.getItem('videoVolume');
     if (savedVolume <= 1 && savedVolume > 0.6) {
-        console.log('full');
         audioFull.style.display = 'block';
         audio50.style.display = 'none';
         audio0.style.display = 'none';
         audionull.style.display = 'none';
     } else if (savedVolume <= 0.6 && savedVolume > 0.3) {
-        console.log('50');
         audioFull.style.display = 'none';
         audio50.style.display = 'block';
         audio0.style.display = 'none';
         audionull.style.display = 'none';
     } else if (savedVolume <= 0.3 && savedVolume > 0) {
-        console.log('0');
         audioFull.style.display = 'none';
         audio50.style.display = 'none';
         audio0.style.display = 'block';
         audionull.style.display = 'none';
     } else if (savedVolume <= 0.1) {
-        console.log('null');
         audioFull.style.display = 'none';
         audio50.style.display = 'none';
         audio0.style.display = 'none';
@@ -228,6 +255,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const savedOpacity = localStorage.getItem('danmaku-opacity');
     const savedSpeed = localStorage.getItem('video-speed');
     const savedLight = localStorage.getItem('video-light');
+    const savedHeight = localStorage.getItem('view-height');
     const savedaudioOpacity = localStorage.getItem('videoVolume');
     if (savedOpacity) {
         opacitySlider.value = savedOpacity;
@@ -237,9 +265,12 @@ document.addEventListener('DOMContentLoaded', function () {
         lightSlider.value = savedLight;
         BlackMask.style.opacity = (100 - lightSlider.value) / 100;
     }
+    if (savedHeight) {
+        heightSlider.value = savedHeight;
+        RenderRegion = savedHeight;
+    }
     if (savedSpeed) {
         speedSlider.value = savedSpeed;
-        console.log('speed:', savedSpeed);
         videoPlayer.playbackRate = savedSpeed;
     } else {
         videoPlayer.playbackRate = 1;
@@ -255,6 +286,7 @@ document.addEventListener('DOMContentLoaded', function () {
     updateSliderBackground4(fontSlider, danmakufsBase);
     updateSliderBackground5(speedSlider, speedSlider.value);
     updateSliderBackground6(lightSlider, lightSlider.value);
+    updateSliderBackground7(heightSlider, heightSlider.value);
     audioSlider.addEventListener('input', function () {
         const volumeDisplay = document.getElementById('volume-display');
         volumeDisplay.innerText = `音量: ${Math.round(audioSlider.value)}%`;
@@ -320,9 +352,14 @@ function updateSliderBackground3(slider, value) {
     popLinebar.textContent = `${lineWidth}`;
 }
 function updateSliderBackground4(slider, value) {
-    const percentage = value; // 直接使用value作为百分比
-    slider.style.background = `linear-gradient(to right, rgba(255, 255, 255, 0.5) ${percentage}%, rgba(216, 216, 216, 0.3) ${100 - percentage}%)`;
-    popFontbar.textContent = `${danmakufsBase * 10}px`;
+    // 将 1-6 范围转换为 0-100 的百分比
+    const percentage = ((value - 1) / 5) * 100;
+
+    // 设置进度条的背景，前半部分为半透明白色，后半部分为浅灰色
+    slider.style.background = `linear-gradient(to right, rgba(255, 255, 255, 0.5) ${percentage}%, rgba(216, 216, 216, 0.3) ${percentage}%)`;
+
+    // 更新字体大小显示，假设每个单位是10px
+    popFontbar.textContent = `${value * 10}px`;
 }
 function updateSliderBackground5(slider, value) {
     const percentage = ((value - 0.1) * 100) / 4.9; // 转换为百分比
@@ -334,6 +371,21 @@ function updateSliderBackground6(slider, value) {
     const percentage = value;
     slider.style.background = `linear-gradient(to right, rgba(255, 255, 255, 0.5) ${percentage}%, rgba(216, 216, 216, 0.3) ${100 - percentage}%)`;
     popLightbar.textContent = `${value}%`;
+}
+function updateSliderBackground7(slider, value) {
+    let percentage;
+    if (value == 1) {
+        percentage = 0;
+    } else if (value == 4) {
+        percentage = 100;
+    } else if (value == 2) {
+        percentage = 33;
+    }
+    else if (value == 3) {
+        percentage = 66;
+    }
+    slider.style.background = `linear-gradient(to right, rgba(255, 255, 255, 0.5) ${percentage}%, rgba(216, 216, 216, 0.3) ${100 - percentage}%)`;
+    popHeightbar.textContent = `${value}/4高度`;
 }
 function updateSliderBackground2(value) {
     const percentage = value;
@@ -405,15 +457,55 @@ reloadDanmaku.addEventListener('click', () => {
         ipcRenderer.send('reload-player-danmaku');
     }
 });
+//////下面三个是控制屏蔽弹幕的
+toggleTopDanmaku.addEventListener('click', () => {
+    TopAlpha = 0;
+    localStorage.setItem('TopAlpha', TopAlpha);
+    toggleTopDanmaku.style.display = 'none';
+    toggleTopDanmakuOn.style.display = 'block';
+});
+toggleTopDanmakuOn.addEventListener('click', () => {
+    TopAlpha = 1;
+    localStorage.setItem('TopAlpha', TopAlpha);
+    toggleTopDanmaku.style.display = 'block';
+    toggleTopDanmakuOn.style.display = 'none';
+});
+///
+toggleBottomDanmaku.addEventListener('click', () => {
+    BottomAlpha = 0;
+    localStorage.setItem('BottomAlpha', BottomAlpha);
+    toggleBottomDanmaku.style.display = 'none';
+    toggleBottomDanmakuOn.style.display = 'block';
+});
+toggleBottomDanmakuOn.addEventListener('click', () => {
+    BottomAlpha = 1;
+    localStorage.setItem('BottomAlpha', BottomAlpha);
+    toggleBottomDanmaku.style.display = 'block';
+    toggleBottomDanmakuOn.style.display = 'none';
+});
+///
+toggleRtlDanmaku.addEventListener('click', () => {
+    RtlAlpha = 0;
+    localStorage.setItem('RtlAlpha', RtlAlpha);
+    toggleRtlDanmaku.style.display = 'none';
+    toggleRtlDanmakuOn.style.display = 'block';
+});
+toggleRtlDanmakuOn.addEventListener('click', () => {
+    RtlAlpha = 1;
+    localStorage.setItem('RtlAlpha', RtlAlpha);
+    toggleRtlDanmaku.style.display = 'block';
+    toggleRtlDanmakuOn.style.display = 'none';
+});
+/////////
 danmakuswitch1.addEventListener('click', () => {
     localStorage.setItem('danmakuswitch', 1);
-    danmakuContainer.style.zIndex = -2;
+    DanmakuOff = 0;
     danmakuswitch1.style.display = 'none';
     danmakuswitch2.style.display = 'block';
 });
 danmakuswitch2.addEventListener('click', () => {
     localStorage.setItem('danmakuswitch', 0);
-    danmakuContainer.style.zIndex = 9;
+    DanmakuOff = 1;
     danmakuswitch1.style.display = 'block';
     danmakuswitch2.style.display = 'none';
 });
@@ -449,6 +541,11 @@ lightSlider.addEventListener('input', function () {
     updateSliderBackground6(lightSlider, lightSlider.value);
     BlackMask.style.opacity = (100 - lightSlider.value) / 100;
     localStorage.setItem('video-light', lightSlider.value);
+});
+heightSlider.addEventListener('input', function () {
+    updateSliderBackground7(heightSlider, heightSlider.value);
+    RenderRegion = heightSlider.value;
+    localStorage.setItem('view-height', heightSlider.value);
 });
 document.addEventListener('DOMContentLoaded', function () {
     // 更新按钮状态的函数
@@ -823,6 +920,7 @@ progressBar.addEventListener('mousemove', (event) => {
 subButton.addEventListener('mouseenter', () => {
     const subButtonRect = subButton.getBoundingClientRect();
     popSub.style.marginTop = `calc(${subButtonRect.y}px)`;
+    popSub.style.marginLeft = `calc(${subButtonRect.x}px - 40px)`;
     popSub.showPopover()
 });
 subButton.addEventListener('mouseleave', () => {
@@ -832,6 +930,7 @@ subButton.addEventListener('mouseleave', () => {
 comButton.addEventListener('mouseenter', () => {
     const comButtonRect = comButton.getBoundingClientRect();
     popCom.style.marginTop = `calc(${comButtonRect.y}px)`;
+    popCom.style.marginLeft = `calc(${comButtonRect.x}px - 40px)`;
     popCom.showPopover()
 });
 comButton.addEventListener('mouseleave', () => {
@@ -841,6 +940,7 @@ comButton.addEventListener('mouseleave', () => {
 danmakuswitch1.addEventListener('mouseenter', () => {
     const danmakuswitch1Rect = danmakuswitch1.getBoundingClientRect();
     popSwitch1.style.marginTop = `calc(${danmakuswitch1Rect.y}px)`;
+    popSwitch1.style.marginLeft = `calc(${danmakuswitch1Rect.x}px - 40px)`;
     popSwitch1.showPopover()
 });
 danmakuswitch1.addEventListener('mouseleave', () => {
@@ -850,6 +950,7 @@ danmakuswitch1.addEventListener('mouseleave', () => {
 danmakuswitch2.addEventListener('mouseenter', () => {
     const danmakuswitch2Rect = danmakuswitch2.getBoundingClientRect();
     popSwitch2.style.marginTop = `calc(${danmakuswitch2Rect.y}px)`;
+    popSwitch2.style.marginLeft = `calc(${danmakuswitch2Rect.x}px - 40px)`;
     popSwitch2.showPopover()
 });
 danmakuswitch2.addEventListener('mouseleave', () => {
@@ -859,6 +960,7 @@ danmakuswitch2.addEventListener('mouseleave', () => {
 setButton.addEventListener('mouseenter', () => {
     const setButtonRect = setButton.getBoundingClientRect();
     popSet.style.marginTop = `calc(${setButtonRect.y}px)`;
+    popSet.style.marginLeft = `calc(${setButtonRect.x}px - 40px)`;
     popSet.showPopover()
 });
 setButton.addEventListener('mouseleave', () => {
@@ -867,7 +969,7 @@ setButton.addEventListener('mouseleave', () => {
 Alphaimage.addEventListener('mouseenter', () => {
     const AlphaimageRect = Alphaimage.getBoundingClientRect();
     popAlpha.style.marginTop = `calc(${AlphaimageRect.y}px)`;
-    popAlpha.style.marginLeft = `calc(${AlphaimageRect.left}px - 50px)`;
+    popAlpha.style.marginLeft = `calc(${AlphaimageRect.left}px - 40px)`;
     popAlpha.showPopover()
 });
 Alphaimage.addEventListener('mouseleave', () => {
@@ -876,7 +978,7 @@ Alphaimage.addEventListener('mouseleave', () => {
 Speedimage.addEventListener('mouseenter', () => {
     const SpeedimageRect = Speedimage.getBoundingClientRect();
     popSpeed.style.marginTop = `calc(${SpeedimageRect.y}px)`;
-    popSpeed.style.marginLeft = `calc(${SpeedimageRect.left}px - 50px)`;
+    popSpeed.style.marginLeft = `calc(${SpeedimageRect.left}px - 40px)`;
     popSpeed.showPopover()
 });
 Speedimage.addEventListener('mouseleave', () => {
@@ -885,7 +987,7 @@ Speedimage.addEventListener('mouseleave', () => {
 Lightimage.addEventListener('mouseenter', () => {
     const LightimageRect = Lightimage.getBoundingClientRect();
     popLight.style.marginTop = `calc(${LightimageRect.y}px)`;
-    popLight.style.marginLeft = `calc(${LightimageRect.left}px - 50px)`;
+    popLight.style.marginLeft = `calc(${LightimageRect.left}px - 40px)`;
     popLight.showPopover()
 });
 Lightimage.addEventListener('mouseleave', () => {
@@ -894,7 +996,7 @@ Lightimage.addEventListener('mouseleave', () => {
 Lineimage.addEventListener('mouseenter', () => {
     const LineimageRect = Lineimage.getBoundingClientRect();
     popLine.style.marginTop = `calc(${LineimageRect.y}px)`;
-    popLine.style.marginLeft = `calc(${LineimageRect.left}px - 50px)`;
+    popLine.style.marginLeft = `calc(${LineimageRect.left}px - 40px)`;
     popLine.showPopover()
 });
 Lineimage.addEventListener('mouseleave', () => {
@@ -903,15 +1005,24 @@ Lineimage.addEventListener('mouseleave', () => {
 Fontimage.addEventListener('mouseenter', () => {
     const FontimageRect = Fontimage.getBoundingClientRect();
     popFont.style.marginTop = `calc(${FontimageRect.y}px)`;
-    popFont.style.marginLeft = `calc(${FontimageRect.left}px - 50px)`;
+    popFont.style.marginLeft = `calc(${FontimageRect.left}px - 40px)`;
     popFont.showPopover()
 });
 Fontimage.addEventListener('mouseleave', () => {
     popFont.hidePopover()
 });
+Heightimage.addEventListener('mouseenter', () => {
+    const HeightimageRect = Heightimage.getBoundingClientRect();
+    popHeight.style.marginTop = `calc(${HeightimageRect.y}px)`;
+    popHeight.style.marginLeft = `calc(${HeightimageRect.left}px - 40px)`;
+    popHeight.showPopover()
+});
+Heightimage.addEventListener('mouseleave', () => {
+    popHeight.hidePopover()
+});
 opacitySlider.addEventListener('mouseenter', (event) => {
     const AlphaimageRect = Alphaimage.getBoundingClientRect();
-    popAlphabar.style.marginLeft = `calc(${AlphaimageRect.left}px - 50px)`;
+    popAlphabar.style.marginLeft = `calc(${AlphaimageRect.left}px - 40px)`;
     popAlphabar.style.marginTop = `calc(${AlphaimageRect.y}px + 12px)`;
     popAlphabar.showPopover()
 });
@@ -920,7 +1031,7 @@ opacitySlider.addEventListener('mouseleave', () => {
 });
 lightSlider.addEventListener('mouseenter', (event) => {
     const lightSliderRect = Lightimage.getBoundingClientRect();
-    popLightbar.style.marginLeft = `calc(${lightSliderRect.left}px - 50px)`;
+    popLightbar.style.marginLeft = `calc(${lightSliderRect.left}px - 40px)`;
     popLightbar.style.marginTop = `calc(${lightSliderRect.y}px + 12px)`;
     popLightbar.showPopover()
 });
@@ -930,7 +1041,7 @@ lightSlider.addEventListener('mouseleave', () => {
 lineSlider.addEventListener('mouseenter', (event) => {
     const LineimageRect = Lineimage.getBoundingClientRect();
     popLinebar.style.marginTop = `calc(${LineimageRect.y}px + 12px)`;
-    popLinebar.style.marginLeft = `calc(${LineimageRect.left}px - 50px)`;
+    popLinebar.style.marginLeft = `calc(${LineimageRect.left}px - 40px)`;
     popLinebar.showPopover()
 });
 lineSlider.addEventListener('mouseleave', () => {
@@ -939,16 +1050,25 @@ lineSlider.addEventListener('mouseleave', () => {
 fontSlider.addEventListener('mouseenter', (event) => {
     const FontimageRect = Fontimage.getBoundingClientRect();
     popFontbar.style.marginTop = `calc(${FontimageRect.y}px + 12px)`;
-    popFontbar.style.marginLeft = `calc(${FontimageRect.left}px - 50px)`;
+    popFontbar.style.marginLeft = `calc(${FontimageRect.left}px - 40px)`;
     popFontbar.showPopover()
 });
 fontSlider.addEventListener('mouseleave', () => {
     popFontbar.hidePopover()
 });
+heightSlider.addEventListener('mouseenter', (event) => {
+    const HeightimageRect = Heightimage.getBoundingClientRect();
+    popHeightbar.style.marginTop = `calc(${HeightimageRect.y}px + 12px)`;
+    popHeightbar.style.marginLeft = `calc(${HeightimageRect.left}px - 50px)`;
+    popHeightbar.showPopover()
+});
+heightSlider.addEventListener('mouseleave', () => {
+    popHeightbar.hidePopover()
+});
 speedSlider.addEventListener('mouseenter', (event) => {
     const SpeedimageRect = Speedimage.getBoundingClientRect();
     popSpeedbar.style.marginTop = `calc(${SpeedimageRect.y}px + 12px)`;
-    popSpeedbar.style.marginLeft = `calc(${SpeedimageRect.left}px - 50px)`;
+    popSpeedbar.style.marginLeft = `calc(${SpeedimageRect.left}px - 40px)`;
     popSpeedbar.showPopover()
 });
 speedSlider.addEventListener('mouseleave', () => {

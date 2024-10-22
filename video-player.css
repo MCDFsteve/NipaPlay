@@ -328,6 +328,7 @@ video::-internal-media-controls-overlay-cast-button {
 #pop-alphabar,
 #pop-linebar,
 #pop-fontbar,
+#pop-heightbar,
 #pop-lightbar,
 #pop-speedbar {
     position: fixed;
@@ -346,9 +347,10 @@ video::-internal-media-controls-overlay-cast-button {
 #pop-alpha,
 #pop-line,
 #pop-font,
+#pop-height,
 #pop-light,
 #pop-speed {
-    margin-right: 48.6px;
+    margin-right: 60px;
     position: fixed;
     transform: translate(-50%, -37%);
     width: 12px;
@@ -622,7 +624,9 @@ video::-webkit-media-text-track-container {
     display: flex;
     justify-content: center;  /* 水平居中 */
 }
-
+#canvas{
+    background-color: transparent;
+}
 #send-button {
     position: absolute;
     bottom: 100px;
@@ -674,7 +678,7 @@ video::-webkit-media-text-track-container {
     /* 确保在弹幕按钮之上 */
     transition: opacity 0.5s ease;
 }
-#reload-danmaku:hover {
+.danmaku-button:hover {
     opacity: 1;
     transition: opacity 0.5s ease;
 }
@@ -701,7 +705,7 @@ video::-webkit-media-text-track-container {
     opacity: 1.0;
     transition: opacity 0.5s ease;
 }
-#reload-danmaku {
+.danmaku-button {
     width: 100%;
     padding: 10px;
     background-color: rgba(122, 122, 122, 0.5);
@@ -716,6 +720,7 @@ video::-webkit-media-text-track-container {
 #opacity-slider,
 #line-width-slider,
 #font-size-slider,
+#view-height-slider,
 #light-slider,
 #speed-slider {
     width: 90%;
@@ -729,6 +734,7 @@ video::-webkit-media-text-track-container {
 #alpha-image,
 #line-image,
 #font-image,
+#height-image,
 .option-image,
 #speed-image {
     width: 25px;
@@ -755,6 +761,9 @@ video::-webkit-media-text-track-container {
 #font-image {
     background-image: url('icons/font.png');
 }
+#height-image {
+    background-image: url('icons/height.png');
+}
 #light-image {
     background-image: url('icons/light.png');
 }
@@ -779,6 +788,7 @@ video::-webkit-media-text-track-container {
 #opacity-slider-container,
 #line-width-slider-container,
 #speed-slider-container,
+#view-height-slider-container,
 .option-class,
 #font-size-slider-container {
     display: flex;
@@ -791,6 +801,7 @@ video::-webkit-media-text-track-container {
 #speed-slider::-webkit-slider-thumb,
 #line-width-slider::-webkit-slider-thumb,
 #light-slider::-webkit-slider-thumb,
+#view-height-slider::-webkit-slider-thumb,
 #font-size-slider::-webkit-slider-thumb {
     width: 4px;
     /* 滑块宽度 */
@@ -813,6 +824,7 @@ video::-webkit-media-text-track-container {
 #alpha-image:hover,
 #line-image:hover,
 #font-image:hover,
+#height-image:hover,
 .option-image:hover,
 #speed-image:hover {
     opacity: 1.0;
@@ -825,6 +837,7 @@ video::-webkit-media-text-track-container {
 #speed-slider::-webkit-slider-thumb:hover,
 #line-width-slider::-webkit-slider-thumb:hover,
 #light-slider::-webkit-slider-thumb:hover,
+#view-height-slider::-webkit-slider-thumb:hover,
 #font-size-slider::-webkit-slider-thumb:hover {
     cursor: pointer;
     opacity: 1.0;

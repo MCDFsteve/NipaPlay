@@ -63,6 +63,7 @@
         <div id="pop-speedbar" popover="auto" class="pop">播放速度</div>
         <div id="pop-linebar" popover="auto" class="pop">描边粗细</div>
         <div id="pop-fontbar" popover="auto" class="pop">字体大小</div>
+        <div id="pop-heightbar" popover="auto" class="pop">显示区域</div>
         <div id="pop-lightbar" popover="auto" class="pop">视频亮度</div>
         <div id="pop-full" popover="auto" class="pop">全屏</div>
         <div id="pop-win" popover="auto" class="pop">窗口化</div>
@@ -104,7 +105,19 @@
                 <div id="pop-font" popover="auto" class="pop">字体大小</div>
                 <input type="range" id="font-size-slider" min="1" max="6" step="0.5" value="3">
             </div>
-            <button id="reload-danmaku">弹幕不正确？点此手动选择</button>
+            <div id="view-height-slider-container">
+                <div id="height-image"></div>
+                <div id="pop-height" popover="auto" class="pop">显示区域</div>
+                <input type="range" id="view-height-slider" min="1" max="4" step="1" value="4">
+            </div>
+            <!-- 新增按钮，控制是否屏蔽底部弹幕 -->
+            <button id="toggle-top-danmaku" class="danmaku-button">屏蔽顶部弹幕</button>
+            <button id="toggle-top-danmaku-on" class="danmaku-button" style="display: none;">显示顶部弹幕</button>
+            <button id="toggle-bottom-danmaku" class="danmaku-button">屏蔽底部弹幕</button>
+            <button id="toggle-bottom-danmaku-on" class="danmaku-button" style="display: none;">显示底部弹幕</button>
+            <button id="toggle-rtl-danmaku" class="danmaku-button">屏蔽滚动弹幕</button>
+            <button id="toggle-rtl-danmaku-on" class="danmaku-button" style="display: none;">显示滚动弹幕</button>
+            <button id="reload-danmaku" class="danmaku-button">弹幕不正确？点此手动选择</button>
         </div>
     </div>
     <!-- 设置面板 -->
@@ -149,6 +162,11 @@
         const { ipcRenderer } = require('electron');
         let lineWidth = 3;
         let danmakufsBase = 3;
+        let BottomAlpha = 1;
+        let TopAlpha = 1;
+        let RtlAlpha = 1;
+        let DanmakuOff = 1;
+        let RenderRegion = 4;
         videoElement.src = path;
         videoElement.load();
         // 尝试从 URL 参数中获取提供的新标题
