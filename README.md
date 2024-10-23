@@ -14,6 +14,7 @@
 - 支持在播放器内调整视频亮度。
 - 播放器窗口和主窗口分离，可以同时播放多个视频（谁会需要这玩意）。
 - 如果你登录了steam，你的好友列表会显示你正在观看的番剧的名字。
+- 支持Windows on arm（如果你需要这个版本，请提issue联系我编译）。
 ### 下载
 - 直接在右侧[Releases](https://github.com/MCDFsteve/NipaPlay/releases)下载最新包即可使用。目前支持Windows版和macOS版，Linux版。
 ### 软件持续维护和更新中...
