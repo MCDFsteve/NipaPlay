@@ -56,6 +56,8 @@ const Lightimage = document.getElementById('light-image');
 const Lineimage = document.getElementById('line-image');
 const Fontimage = document.getElementById('font-image');
 const Heightimage = document.getElementById('height-image');
+const workerUrl = `file://${__dirname}/libass/subtitles-octopus-worker.js`;  // 检查 Worker 文件路径
+const legacyWorkerUrl = `file://${__dirname}/libass/libassjs-worker-legacy.js`;
 // 获取弹幕按钮和新的弹幕透明度控制面板元素
 const commentButton = document.getElementById('comment-button');
 const danmakuOpacityControl = document.getElementById('danmaku-opacity-control');
@@ -157,32 +159,16 @@ function danmakufont() {
     // 初始化时设置描边宽度
     updatedanmakufsBase(danmakufsBase);
 }
-function onWindowResize() {
-    const videoPlayer = document.getElementById('videoPlayer');
-    const videoPlayerRect = videoPlayer.getBoundingClientRect();
-    // 创建新的样式
-    const styleSheet = document.createElement('style');
-    styleSheet.textContent = `
-        video::-webkit-media-text-track-container {
-            bottom: ${videoPlayerRect.top}px;
-        }
-    `;
-    document.head.appendChild(styleSheet);
-}
-window.addEventListener('resize', onWindowResize);
 ipcRenderer.on('full', (event, center) => {
     fullorwin = center;
-    console.log('fullorwin', fullorwin);
     const closeButton = document.getElementById('close-button');
     const miniButton = document.getElementById('minimize-button');
     if (fullorwin == 'true') {
-        console.log('Successfully entered full screen mode.');
         winscreenButton.style.display = 'block';
         fullscreenButton.style.display = 'none';
         closeButton.style.display = 'none';
         miniButton.style.display = 'none';
     } else if (fullorwin == 'false') {
-        console.log('Exited full screen mode.');
         winscreenButton.style.display = 'none';
         fullscreenButton.style.display = 'block';
         closeButton.style.display = 'block';
@@ -193,12 +179,13 @@ document.addEventListener('DOMContentLoaded', function () {
     danmakuline();
     danmakufont();
     const saveddanmuku = localStorage.getItem('danmakuswitch');
-    console.log('saveddanmuku:', saveddanmuku);
     if (saveddanmuku == 1) {
+        danmakuContainer.style.zIndex = -2;
         DanmakuOff = 0;
         danmakuswitch1.style.display = 'none';
         danmakuswitch2.style.display = 'block';
     } else {
+        danmakuContainer.style.zIndex = 9;
         DanmakuOff = 1;
         danmakuswitch1.style.display = 'block';
         danmakuswitch2.style.display = 'none';
@@ -363,7 +350,7 @@ function updateSliderBackground4(slider, value) {
 }
 function updateSliderBackground5(slider, value) {
     const percentage = ((value - 0.1) * 100) / 4.9; // 转换为百分比
-    //console.log('percentage:',percentage.toFixed(2));
+    ////console.log('percentage:',percentage.toFixed(2));
     slider.style.background = `linear-gradient(to right, rgba(255, 255, 255, 0.5) ${percentage}%, rgba(216, 216, 216, 0.3) ${100 - percentage}%)`;
     popSpeedbar.textContent = `${value}倍`;
 }
@@ -394,7 +381,7 @@ function updateSliderBackground2(value) {
 }
 ipcRenderer.on('files-path', (event, videoFiles) => {
     if (videoFiles.length === 1) {
-        console.log('Only one video file in the directory. No action needed.');
+        //console.log('Only one video file in the directory. No action needed.');
     } else {
         videoElement.addEventListener('ended', () => {
             let countdown = 10;
@@ -499,12 +486,14 @@ toggleRtlDanmakuOn.addEventListener('click', () => {
 /////////
 danmakuswitch1.addEventListener('click', () => {
     localStorage.setItem('danmakuswitch', 1);
+    danmakuContainer.style.zIndex = -2;
     DanmakuOff = 0;
     danmakuswitch1.style.display = 'none';
     danmakuswitch2.style.display = 'block';
 });
 danmakuswitch2.addEventListener('click', () => {
     localStorage.setItem('danmakuswitch', 0);
+    danmakuContainer.style.zIndex = 9;
     DanmakuOff = 1;
     danmakuswitch1.style.display = 'block';
     danmakuswitch2.style.display = 'none';
@@ -1196,7 +1185,7 @@ function handleassPath(title, assPath) {
     const nipaPath = path.join(assPath, 'nipaplay');
     const subPath = path.join(nipaPath, 'sub');
     const assFilePath = path.join(subPath, title + '.ass');
-    //console.log('ass路径:', assFilePath);
+    ////console.log('ass路径:', assFilePath);
     loadASSSubtitles(assFilePath);
 }
 function vttSubtitles(filePath) {
@@ -1204,7 +1193,7 @@ function vttSubtitles(filePath) {
     // 在主进程中定义并发送下载路径
     ipcRenderer.send('get-downloads-path');
     ipcRenderer.on('downloads-path', (event, downloadsPath) => {
-        //console.log('Downloads path:', downloadsPath);
+        ////console.log('Downloads path:', downloadsPath);
         // 这里你可以根据获取到的下载路径进行后续操作
         handlevtt2Path(filePath, downloadsPath);
     });
@@ -1215,14 +1204,14 @@ function handlevtt2Path(filePath, downloadsPath) {
     const nipaPath = path.join(downloadsPath, 'nipaplay');
     const subPath = path.join(nipaPath, 'sub');
     const newFilePath = path.join(subPath, title + '.vtt');
-    //console.log('newFilePath:', newFilePath);
+    ////console.log('newFilePath:', newFilePath);
     // 拷贝文件到新位置
     fs.copyFile(filePath, newFilePath, (err) => {
         if (err) {
             console.error('Failed to copy subtitle file:', err);
             return;
         }
-        //console.log('Subtitle file copied to:', newFilePath);
+        ////console.log('Subtitle file copied to:', newFilePath);
 
         // 文件拷贝成功后加载字幕
         loadVTTSubtitles(newFilePath);
@@ -1233,7 +1222,7 @@ function prepareSubtitles(filePath) {
     // 在主进程中定义并发送下载路径
     ipcRenderer.send('get-downloads-path2');
     ipcRenderer.on('downloads-path2', (event, downloadsPath) => {
-        //console.log('Downloads path by ass:', downloadsPath);
+        ////console.log('Downloads path by ass:', downloadsPath);
         // 这里你可以根据获取到的下载路径进行后续操作
         handlessaPath(filePath, downloadsPath);
     });
@@ -1244,130 +1233,117 @@ function handlessaPath(filePath, downloadsPath) {
     const nipaPath = path.join(downloadsPath, 'nipaplay');
     const subPath = path.join(nipaPath, 'sub');
     const newFilePath = path.join(subPath, title + '.ass');
-    //console.log('newFilePath:', newFilePath);
+    ////console.log('newFilePath:', newFilePath);
     // 拷贝文件到新位置
     fs.copyFile(filePath, newFilePath, (err) => {
         if (err) {
             console.error('Failed to copy subtitle file:', err);
             return;
         }
-        //console.log('Subtitle file copied to:', newFilePath);
+        ////console.log('Subtitle file copied to:', newFilePath);
 
         // 文件拷贝成功后加载字幕
         loadASSSubtitles(newFilePath);
     });
 }
 function handleDownloadsPath(filePath, downloadsPath) {
-    //console.log("downloadsPath:", downloadsPath);
-    //console.log("filePath:", filePath);
-    //console.log("title name:", title);
     const fs = require('fs');
     const path = require('path');
     const nipaPath = path.join(downloadsPath, 'nipaplay');
     const subPath = path.join(nipaPath, 'sub');
-    //console.log('I am lain.');
-    const vttFilePath = path.join(subPath, title + '.vtt');
-    //console.log('vtt路径:', vttFilePath);
+    const assFilePath = path.join(subPath, title + '.ass');
+
     fs.readFile(filePath, 'utf8', (err, data) => {
         if (err) {
             console.error('Error reading SRT file:', err);
             return;
         }
-        let styles = {};
-        let vttData = 'WEBVTT\n\nSTYLE\n::cue {\nline-height: 50px;\n    background-color: transparent;\n}\n';
+
+        let assData = `[Script Info]
+Title: Converted Subtitle
+Original Script: SRT to ASS Converter
+ScriptType: v4.00+
+Collisions: Normal
+PlayDepth: 0
+Timer: 100.0000
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,ChillRoundM,20,&H00FFFFFF,&H000000FF,&H00000000,&H64000000,-1,0,0,0,100,100,0,0,1,0.8,0,2,10,10,10,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+`;
+
         let subtitles = [];
 
-        // 解析字幕并存储
+        // 解析SRT字幕
         const subtitleBlocks = data.split(/\n\n/);
         subtitleBlocks.forEach(block => {
-            let match = block.match(/(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})\n(.+)/s);
+            let match = block.match(/(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})\n([\s\S]+)/);
             if (match) {
                 subtitles.push({
                     index: parseInt(match[1]),
                     start: match[2].replace(',', '.'),
                     end: match[3].replace(',', '.'),
-                    text: match[4].replace(/<font face="([^"]+)" size="(\d+)">(<b>)?/g, (m, font, size, bold) => {
-                        size = size ? Math.round(size * 0.8) : 40;  // Reduce size by 20% or use default 40px
-                        const className = `font${font.replace(/\s+/g, '')}size${size}${bold ? 'bold' : ''}`;
-                        styles[className] = `    font-family: '${font}';\n    font-size: ${size}px;${bold ? '\n    font-weight: bold;' : ''}`;
-                        return `<c.${className}>`;
-                    })
+                    text: match[4].replace(/\n/g, '\\N') // 替换换行为 \N（ASS 格式中的换行符）
                 });
             }
         });
 
-        // 添加自定义样式到VTT
-        for (let className in styles) {
-            vttData += `::cue(.${className}) {\n${styles[className]}\n}\n`;
-        }
-        // 默认样式
-        vttData += '::cue {\n    color: white;\n    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000,\n               -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000,\n               0px -2px 0 #000, 0px 2px 0 #000, -2px 0px 0 #000, 2px 0px 0 #000;\n}\n\n';
-
-        // 按照时间轴排序字幕
+        // 按时间排序字幕
         subtitles.sort((a, b) => parseFloat(a.start) - parseFloat(b.start));
 
-        // 交换同一时间轴上的两条字幕的顺序
-        for (let i = 0; i < subtitles.length - 1; i++) {
-            if (subtitles[i].start === subtitles[i + 1].start) {
-                [subtitles[i].text, subtitles[i + 1].text] = [subtitles[i + 1].text, subtitles[i].text];
-            }
-        }
+        // 将字幕添加到ASS文件中
         subtitles.forEach(sub => {
-            vttData += `${sub.index}\n${sub.start} --> ${sub.end}\n${sub.text.trim().replace(/<c>$/, '')}\n\n`;
+            assData += `Dialogue: 0,${convertTimeToASS(sub.start)},${convertTimeToASS(sub.end)},Default,,0,0,0,,${sub.text}\n`;
         });
 
-        // 保存 VTT 文件到指定目录
-        fs.writeFile(vttFilePath, vttData, 'utf8', (err) => {
+        // 写入 ASS 文件
+        fs.writeFile(assFilePath, assData, 'utf8', (err) => {
             if (err) {
-                console.error('Error writing VTT file:', err);
+                console.error('Error writing ASS file:', err);
             } else {
-                //console.log('VTT file saved:', vttFilePath);
-                loadVTTSubtitles(vttFilePath); // 加载转换后的 VTT 字幕
+                console.log('ASS file saved:', assFilePath);
+                loadASSSubtitles(assFilePath); // 加载转换后的 ASS 字幕
             }
         });
     });
+}
+
+// 将 SRT 的时间格式（hh:mm:ss,ms）转换为 ASS 的时间格式（h:mm:ss.cs）
+function convertTimeToASS(time) {
+    let [hours, minutes, seconds] = time.split(':');
+    let [secs, millis] = seconds.split('.');
+    let centisecs = Math.round(parseInt(millis) / 10);  // 毫秒转换为百分之一秒
+    return `${parseInt(hours)}:${minutes}:${secs}.${centisecs < 10 ? '0' + centisecs : centisecs}`;
 }
 function loadASSSubtitles(filePath) {
     if (currentAssInstance) {
         currentAssInstance.destroy();
         currentAssInstance = null;
     }
-
-    fetch(filePath)
-        .then(response => response.text())
-        .then(subtitles => {
-            const videoElement = document.getElementById('video-player');
-            initializeSubtitles(subtitles, videoElement);
-            showSubtitleAlert();
-            observeVideoResize(videoElement, subtitles);
-        })
-        .catch(error => {
-            console.error('Failed to load subtitles:', error);
-        });
+    // 这里不需要 fetch 加载字幕文本，因为你需要的是文件路径
+    const videoElement = document.getElementById('video-player');
+    //console.log("Video Element in loadASSSubtitles:", videoElement);
+    // 直接传入文件路径，而不是字幕文本
+    initializeSubtitles(filePath, videoElement);
+    showSubtitleAlert();
 }
-
-function initializeSubtitles(subtitles, videoElement) {
-    // 创建新的 ASS 实例并保存引用
-    if (currentAssInstance) {
-        currentAssInstance.destroy();
-    }
-    currentAssInstance = new ASS(subtitles, videoElement, {
-        videoWidth: videoElement.clientWidth,
-        videoHeight: videoElement.clientHeight
-    });
+function initializeSubtitles(subUrl, videoElement) {
+    const subtitleContainer = document.querySelector('.subtitle-container');
+    const fullSubUrl = `file://${subUrl}`;  // 确保文件路径正确
+    var options = {
+        video: videoElement,
+        canvas: subtitleContainer,
+        subUrl: fullSubUrl,
+        workerUrl: workerUrl,
+        legacyWorkerUrl: legacyWorkerUrl
+    };
+    // 初始化 SubtitlesOctopus 实例
+    currentAssInstance = new SubtitlesOctopus(options);
 }
-
-function observeVideoResize(videoElement, subtitles) {
-    const resizeObserver = new ResizeObserver(entries => {
-        for (let entry of entries) {
-            if (entry.target === videoElement) {
-                initializeSubtitles(subtitles, videoElement);
-            }
-        }
-    });
-    resizeObserver.observe(videoElement);
-}
-
 function loadVTTSubtitles(filePath) {
     const videoElement = document.getElementById('video-player');
     // 移除所有现有的字幕轨道
@@ -1375,7 +1351,6 @@ function loadVTTSubtitles(filePath) {
     while (tracks.length > 0) {
         videoElement.removeChild(tracks[0]);
     }
-
     // 添加新的字幕轨道
     const trackElement = document.createElement('track');
     trackElement.kind = 'subtitles';
@@ -1502,11 +1477,11 @@ const steamworks = require('steamworks.js');
 const client = steamworks.init(2520710);
 const mess = "#helloworld";
 function setRichPresence(key, value) {
-    //console.log(`Trying to set Rich Presence with key: ${key}, value: ${value}`);
+    ////console.log(`Trying to set Rich Presence with key: ${key}, value: ${value}`);
     if (client && client.localplayer) {
         client.localplayer.setRichPresence(key, value);
-        //console.log('Rich Presence set successfully.');
-        //console.log(client.localplayer.setRichPresence(key, value));
+        ////console.log('Rich Presence set successfully.');
+        ////console.log(client.localplayer.setRichPresence(key, value));
     } else {
         console.error(`Could not set the rich presence, steamworks was not properly loaded!`);
     }

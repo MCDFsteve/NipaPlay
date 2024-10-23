@@ -17,7 +17,7 @@ video::-internal-media-controls-overlay-cast-button {
 }
 /* 父容器，统一管理side-controls和danmakucon */
 #side-container {
-    position: absolute;
+    position: fixed;
     right: 1%;  /* 控制整个容器距离右侧的距离 */
     top: 50%;   /* 控制容器在页面垂直位置 */
     transform: translateY(-50%); /* 垂直居中 */
@@ -164,6 +164,12 @@ video::-internal-media-controls-overlay-cast-button {
     pointer-events: none;
     /* 确保字幕不会干扰到视频的点击事件 */
 }
+@font-face {
+    font-family: 'ChillRoundM';
+    src: url('libass/ChillRoundM.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
 #video-player {
     position: fixed;
     z-index: 0;
@@ -188,7 +194,7 @@ video::-internal-media-controls-overlay-cast-button {
     pointer-events: none;  /* 使鼠标事件穿透遮罩层 */
 }
 #controls-container {
-    position: absolute;
+    position: fixed;
     bottom: 10px;
     width: 90%;
     height: 32.4px;
@@ -334,7 +340,6 @@ video::-internal-media-controls-overlay-cast-button {
     position: fixed;
     transform: translate(-50%, -50%);
 }
-
 #pop-subtitle,
 #pop-comment,
 #pop-settings {
@@ -467,7 +472,7 @@ video::-webkit-media-text-track-container {
 }
 
 #video-title {
-    position: absolute;
+    position: fixed;
     top: 54px;
     left: 0px;
     border: none;

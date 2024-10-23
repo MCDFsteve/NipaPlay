@@ -68,7 +68,7 @@
     var ctx = canvas.getContext('2d');
     var style = cmt.style || {};
     style.font = `${danmakufsBase * 10}px sans-serif`;
-    //console.log('style.font:',style.font);
+    ////console.log('style.font:',style.font);
     style.textBaseline = style.textBaseline || 'bottom';
     style.lineWidth = lineWidth;
     var strokeWidth = style.lineWidth * 1;

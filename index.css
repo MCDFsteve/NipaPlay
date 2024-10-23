@@ -145,14 +145,14 @@ body {
     margin-bottom: 10px;
     margin-top: 20px;
     border: none;
-    padding: 5px 30px; /* 保持一致的内边距 */
+    padding: 5px 30px;
     background-color: rgba(233, 233, 233, 0.3);
     font-size: 16px;
     box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
     color: #000000;
     cursor: pointer;
     backdrop-filter: blur(20px);
-    border-radius: 5px; /* 一致的圆角 */
+    border-radius: 5px;
 }
 
 .folder-item:hover {

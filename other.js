@@ -43,7 +43,7 @@ console.log = function (...args) {
     ipcRenderer.send('log-message', args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : arg)).join(' '));
     originalLog.apply(console, args); // 保持渲染进程的控制台也可以输出日志
 };
-console.log('I\'m lain.2');
+//console.log('I\'m lain.2');
 document.getElementById('import-media-library').addEventListener('click', () => {
     ipcRenderer.send('import-folder');
 });
@@ -73,10 +73,9 @@ function updateMediaLibraryFromConfig() {
 }
 ipcRenderer.on('config-loaded', (event, selectedFolders) => {
     if (selectedFolders && Array.isArray(selectedFolders)) {
-        console.log('Loaded folders:', selectedFolders);
         updateMediaLibrary(selectedFolders);
     } else {
-        console.log('No folders loaded or the data format is incorrect');
+        //console.log('No folders loaded or the data format is incorrect');
     }
 });
 
@@ -92,7 +91,7 @@ function updateMediaLibrary(folders) {
         item.style.cursor = 'pointer'; // 设置鼠标为指针形状
         item.style.position = 'relative'; // 设置相对定位
         item.onclick = () => {
-            console.log('Folder clicked:', folderPath); // 打印被点击的文件夹路径
+            //console.log('Folder clicked:', folderPath); // 打印被点击的文件夹路径
             ipcRenderer.send('load-folder-contents', (folderPath));
         };
         const deleteIcon = document.createElement('img');
@@ -142,7 +141,7 @@ ipcRenderer.on('folder-contents-loaded', (event, files) => {
 });
 
 function playVideo(filePath) {
-    console.log('Playing video:', filePath);
+    //console.log('Playing video:', filePath);
     // 可以在这里调用播放视频的逻辑或发送IPC消息到主进程打开视频播放窗口
     ipcRenderer.send('open-video-file', filePath);
 }
@@ -371,7 +370,7 @@ function translateToChinese(text) {
             }
         };
 
-        console.log('准备发送翻译请求...');  // 请求前打印日志
+        //console.log('准备发送翻译请求...');  // 请求前打印日志
 
         const req = require('https').request(options, res => {
             let data = '';
@@ -382,7 +381,7 @@ function translateToChinese(text) {
             res.on('end', () => {
                 try {
                     const responseData = JSON.parse(data);
-                    console.log('翻译后的内容:', responseData.choices[0].message.content);
+                    //console.log('翻译后的内容:', responseData.choices[0].message.content);
 
                     resolve(responseData.choices[0].message.content); // 处理翻译结果
                 } catch (error) {
@@ -400,18 +399,18 @@ function translateToChinese(text) {
         req.write(postData);
         req.end();
 
-        console.log('请求已结束发送');  // 请求结束发送后打印日志
+        //console.log('请求已结束发送');  // 请求结束发送后打印日志
     });
 }
 // 回到新番更新界面
 function returnToNewSeries() {
-    console.log('returnToNewSeries');
+    //console.log('returnToNewSeries');
     document.getElementById('anime-detail-content').style.display = 'none';
     document.getElementById('new-series-container').style.display = 'block';
     loadNewSeries();  // 重新加载新番更新内容
 }
 function returnToanime() {
-    console.log('return-anime-library');
+    //console.log('return-anime-library');
     document.getElementById('anime-detail-content').style.display = 'none';
     document.getElementById('new-series-container').style.display = 'block';
     loadNewSeries();  // 重新加载新番更新内容
@@ -420,7 +419,7 @@ function isMacOS() {
     return navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 }
 if (isMacOS()) {
-    console.log('mac');
+    //console.log('mac');
 } else {
     const closeButton = document.getElementById('close-button');
     const miniButton = document.getElementById('minimize-button');
@@ -429,20 +428,20 @@ if (isMacOS()) {
     closeButton.classList.add('close-button-other');
     closeButton.style.display = 'block';
     closeButton.addEventListener('click', () => {
-        console.log('nipa');
+        //console.log('nipa');
         ipcRenderer.send('close-main-window');
     });
     fullscreenButton.classList.add('fullscreen-button-other');
     fullscreenButton.style.display = 'block';
     fullscreenButton.addEventListener('click', () => {
-        console.log('nipa');
+        //console.log('nipa');
         fullscreenButton.style.display = 'none';
         restoreButton.style.display = 'block';
         ipcRenderer.send('fullscreen-window');
     });
     restoreButton.classList.add('restore-button-other');
     restoreButton.addEventListener('click', () => {
-        console.log('nipa');
+        //console.log('nipa');
         fullscreenButton.style.display = 'block';
         restoreButton.style.display = 'none';
         ipcRenderer.send('restore-window');
@@ -450,7 +449,7 @@ if (isMacOS()) {
     miniButton.classList.add('minimize-button-other');
     miniButton.style.display = 'block';
     miniButton.addEventListener('click', () => {
-        console.log('nipa');
+        //console.log('nipa');
         ipcRenderer.send('minimize-window');
     });
 }

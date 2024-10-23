@@ -1,8 +1,47 @@
+let windowMode;
+// 获取按钮元素
+const buttons = {
+    mini: document.getElementById('window-mini'),
+    win: document.getElementById('window-win'),
+    full: document.getElementById('window-full'),
+    screen: document.getElementById('window-screen')
+};
+// 给每个按钮添加事件监听器，发送不同的 windowMode 值给主进程
+buttons.mini.addEventListener('click', () => {
+    ipcRenderer.send('set-window-mode', 'mini');
+    buttons.win.classList.remove('active');
+    buttons.full.classList.remove('active');
+    buttons.screen.classList.remove('active');
+    buttons.mini.classList.add('active');
+});
+
+buttons.win.addEventListener('click', () => {
+    ipcRenderer.send('set-window-mode', 'win');
+    buttons.win.classList.add('active');
+    buttons.full.classList.remove('active');
+    buttons.screen.classList.remove('active');
+    buttons.mini.classList.remove('active');
+});
+
+buttons.full.addEventListener('click', () => {
+    ipcRenderer.send('set-window-mode', 'full');
+    buttons.win.classList.remove('active');
+    buttons.full.classList.add('active');
+    buttons.screen.classList.remove('active');
+    buttons.mini.classList.remove('active');
+});
+
+buttons.screen.addEventListener('click', () => {
+    ipcRenderer.send('set-window-mode', 'screen');
+    buttons.win.classList.remove('active');
+    buttons.full.classList.remove('active');
+    buttons.screen.classList.add('active');
+    buttons.mini.classList.remove('active');
+});
 // 页面加载时，检查是否有已保存的背景图像
 window.addEventListener('load', function () {
     const savedBackground = localStorage.getItem('backgroundImage');
     const contentArea = document.querySelector('.content-area2');
-
     if (savedBackground) {
         contentArea.style.backgroundImage = savedBackground;
         updateActiveButton(savedBackground); // 更新按钮状态
@@ -72,7 +111,7 @@ function updateActiveButton(currentBackground) {
 function adjustContentAreaPosition() {
     // 获取 .sidebar 元素
     const sidebar = document.querySelector('.sidebar');
-    
+
     // 确认 sidebar 存在
     if (!sidebar) {
         console.error("Error: .sidebar element not found!");
@@ -81,7 +120,7 @@ function adjustContentAreaPosition() {
 
     // 获取 .sidebar 的边界信息
     const sidebarRect = sidebar.getBoundingClientRect();
-    
+
     // 获取 .content-area2 元素
     const contentArea = document.querySelector('.content-area2');
     const contentArea2 = document.querySelector('.content-area');
@@ -93,19 +132,48 @@ function adjustContentAreaPosition() {
 
     // 将 .content-area2 的 left 设置为 sidebar 的宽度（右侧 x 坐标）
     contentArea.style.left = `${sidebarRect.right}px`;
-    
+
     // 同时设置宽度为窗口总宽度 - sidebar 的右侧 x 坐标
     contentArea.style.width = `${window.innerWidth - sidebarRect.right}px`;
     contentArea2.style.left = `${sidebarRect.right}px`;
-    
+
     // 同时设置宽度为窗口总宽度 - sidebar 的右侧 x 坐标
     contentArea2.style.width = `${window.innerWidth - sidebarRect.right}px`;
     contentArea0.style.left = `${sidebarRect.right}px`;
-    
+
     // 同时设置宽度为窗口总宽度 - sidebar 的右侧 x 坐标
     contentArea0.style.width = `${window.innerWidth - sidebarRect.right}px`;
-    }
-
+}
+document.addEventListener('DOMContentLoaded', (event) => {
+    ipcRenderer.send('get-window-mode-url');
+    // 监听从主进程返回的结果
+    ipcRenderer.on('return-window-mode-url', (event, mode) => {
+        console.log("windowMode: " + mode);
+        if (mode == "mini") {
+            buttons.win.classList.remove('active');
+            buttons.full.classList.remove('active');
+            buttons.screen.classList.remove('active');
+            buttons.mini.classList.add('active');
+        } else if (mode == "win") {
+            buttons.win.classList.add('active');
+            buttons.full.classList.remove('active');
+            buttons.screen.classList.remove('active');
+            buttons.mini.classList.remove('active');
+        }
+        else if (mode == "full") {
+            buttons.win.classList.remove('active');
+            buttons.full.classList.add('active');
+            buttons.screen.classList.remove('active');
+            buttons.mini.classList.remove('active');
+        }
+        else if (mode == "screen") {
+            buttons.win.classList.remove('active');
+            buttons.full.classList.remove('active');
+            buttons.screen.classList.add('active');
+            buttons.mini.classList.remove('active');
+        }
+    });
+});
 // 在页面加载完成时和窗口调整大小时调用
 document.addEventListener('DOMContentLoaded', adjustContentAreaPosition);
 window.addEventListener('resize', adjustContentAreaPosition);

@@ -61,7 +61,7 @@ function processComments(jsonFilePath, outputDir, callback) {
         });
 
         const formattedComments = comments.map(formatComment).join(',\n');
-        const template = `var danmaku = new Danmaku({\n    container: document.getElementById('danmaku-container'),\n    media: document.getElementById('video-player'),\n    comments: [\n${formattedComments}\n],\ engine: 'canvas'});`;
+        const template = `danmaku = new Danmaku({\n    container: document.getElementById('danmaku-container'),\n    media: document.getElementById('video-player'),\n    comments: [\n${formattedComments}\n],\ engine: 'canvas'});`;
         const outputFilePath = path.join(outputDir, path.basename(jsonFilePath, '.json') + '.js');
         fs.writeFile(outputFilePath, template, 'utf8', (err) => {
             if (err) {
