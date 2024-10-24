@@ -36,13 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, true); // 使用捕获模式以确保在链接默认行为之前处理点击事件
 });
-
-const originalLog = console.log;
-const path = require('path');
-console.log = function (...args) {
-    ipcRenderer.send('log-message', args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : arg)).join(' '));
-    originalLog.apply(console, args); // 保持渲染进程的控制台也可以输出日志
-};
 //console.log('I\'m lain.2');
 document.getElementById('import-media-library').addEventListener('click', () => {
     ipcRenderer.send('import-folder');

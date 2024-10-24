@@ -130,7 +130,7 @@ video::-internal-media-controls-overlay-cast-button {
     top: 0;
     left: 0;
     z-index: 2;  /* 提高z-index确保在视频上方 */
-    opacity: 1;  /* 完全不透明 */
+    opacity: 0;  /* 完全不透明 */
     width: 100%;
     height: 100%;
     display: flex;  /* 使用flexbox布局来居中内容 */

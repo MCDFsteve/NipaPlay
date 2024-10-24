@@ -417,7 +417,9 @@ ipcMain.handle('read-file', async (event, filePath) => {
 });
 // 在main.js中添加一个新的IPC事件监听器来处理从渲染进程发来的请求
 ipcMain.on('open-video-file', (event, filePath) => {
+    console.log("Received file path:", filePath);
     if (filePath) {
+        console.log("Received file path:", filePath);
         ffmpegif(filePath); // 使用接收到的文件路径打开视频窗口
     } else {
         console.error('No file path provided');
@@ -1527,13 +1529,13 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
     }
     if (windowMode == "mini"){
         WindowWidth = 400;
-        WindowHeight = 300;
+        WindowHeight = 225;
         WindowX = (width - WindowWidth) / 2;
         WindowY = (height - WindowHeight) / 2;
     }
     else if (windowMode == "win"){
         WindowWidth = 800;
-        WindowHeight = 600;
+        WindowHeight = 450;
         WindowX = (width - WindowWidth) / 2;
         WindowY = (height - WindowHeight) / 2;
     }
@@ -1804,7 +1806,8 @@ function createMainWindow() {
         vibrancy: 'sidebar',
         webPreferences: {
             nodeIntegration: true,
-            contextIsolation: false
+            contextIsolation: false,
+            enableRemoteModule: true
         },
         autoHideMenuBar: !isMac,
         titleBarStyle: isMac ? 'hiddenInset' : undefined,

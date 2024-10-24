@@ -75,5 +75,5 @@ ipcRenderer.on('downloads-path2', (event, vttPath) => {
 });
 ipcRenderer.on('downloads-path3', (event, vttPath) => {
     // 这里你可以根据获取到的下载路径进行后续操作
-    handleassPath(title, vttPath);
+    handlessaPath(title, vttPath);
 });

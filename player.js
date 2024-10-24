@@ -251,6 +251,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (savedLight) {
         lightSlider.value = savedLight;
         BlackMask.style.opacity = (100 - lightSlider.value) / 100;
+    }else{
+        BlackMask.style.opacity = 0;
     }
     if (savedHeight) {
         heightSlider.value = savedHeight;
@@ -1179,15 +1181,6 @@ function handlesrtPath(title, vttPath) {
     const srtFilePath = path.join(subPath, title + '.srt');
     handleDownloadsPath(srtFilePath, vttPath);
 }
-function handleassPath(title, assPath) {
-    const fs = require('fs');
-    const path = require('path');
-    const nipaPath = path.join(assPath, 'nipaplay');
-    const subPath = path.join(nipaPath, 'sub');
-    const assFilePath = path.join(subPath, title + '.ass');
-    ////console.log('ass路径:', assFilePath);
-    loadASSSubtitles(assFilePath);
-}
 function vttSubtitles(filePath) {
     let downloadsPath;
     // 在主进程中定义并发送下载路径
@@ -1222,7 +1215,7 @@ function prepareSubtitles(filePath) {
     // 在主进程中定义并发送下载路径
     ipcRenderer.send('get-downloads-path2');
     ipcRenderer.on('downloads-path2', (event, downloadsPath) => {
-        ////console.log('Downloads path by ass:', downloadsPath);
+        //console.log('Downloads path by ass:', downloadsPath);
         // 这里你可以根据获取到的下载路径进行后续操作
         handlessaPath(filePath, downloadsPath);
     });
@@ -1233,14 +1226,14 @@ function handlessaPath(filePath, downloadsPath) {
     const nipaPath = path.join(downloadsPath, 'nipaplay');
     const subPath = path.join(nipaPath, 'sub');
     const newFilePath = path.join(subPath, title + '.ass');
-    ////console.log('newFilePath:', newFilePath);
+    //console.log('newFilePath:', newFilePath);
     // 拷贝文件到新位置
     fs.copyFile(filePath, newFilePath, (err) => {
         if (err) {
             console.error('Failed to copy subtitle file:', err);
             return;
         }
-        ////console.log('Subtitle file copied to:', newFilePath);
+        //console.log('Subtitle file copied to:', newFilePath);
 
         // 文件拷贝成功后加载字幕
         loadASSSubtitles(newFilePath);
@@ -1324,6 +1317,7 @@ function loadASSSubtitles(filePath) {
         currentAssInstance.destroy();
         currentAssInstance = null;
     }
+    console.log('Loading ASS subtitles:', filePath);
     // 这里不需要 fetch 加载字幕文本，因为你需要的是文件路径
     const videoElement = document.getElementById('video-player');
     //console.log("Video Element in loadASSSubtitles:", videoElement);
@@ -1343,6 +1337,7 @@ function initializeSubtitles(subUrl, videoElement) {
     };
     // 初始化 SubtitlesOctopus 实例
     currentAssInstance = new SubtitlesOctopus(options);
+    //currentAssInstance.setTrackByUrl(fullSubUrl);
 }
 function loadVTTSubtitles(filePath) {
     const videoElement = document.getElementById('video-player');
