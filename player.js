@@ -1220,24 +1220,53 @@ function prepareSubtitles(filePath) {
         handlessaPath(filePath, downloadsPath);
     });
 }
-function handlessaPath(filePath, downloadsPath) {
+function handlessaPath(filePath, downloadsPath) {//这个函数被两处地方调用，传入的filePath有可能是字幕路径，也有可能只是视频名字。
+    ////////////当filePath无法找到字幕时，检测视频路径下的同名字幕
     const fs = require('fs');
     const path = require('path');
+    // 假设视频路径通过 URL 参数获取
+    const urlParams = new URLSearchParams(window.location.search);
+    const videoPath = urlParams.get('videopath');
+    if (!videoPath) {
+        console.error('Video path not provided.');
+        return;
+    }
+    // 获取视频文件名（不含扩展名）
+    const videoFileName = path.basename(videoPath, path.extname(videoPath));
+    // 构造可能的字幕文件路径
+    const possibleSubtitleExtensions = ['.ass', '.ssa', '.srt'];
+    let existingSubtitlePath = null;
+    // 遍历可能的字幕扩展名，检查文件是否存在
+    for (const ext of possibleSubtitleExtensions) {
+        const subtitlePath = path.join(path.dirname(videoPath), videoFileName + ext);
+        if (fs.existsSync(subtitlePath)) {
+            existingSubtitlePath = subtitlePath;
+            break; // 找到第一个匹配的字幕文件就跳出循环
+        }
+    }
+    // 如果找到与视频同名的字幕文件，直接加载字幕
+    if (existingSubtitlePath) {
+        console.log('Found existing subtitle file:', existingSubtitlePath);
+        loadASSSubtitles(existingSubtitlePath); // 加载已存在的字幕文件
+        return;
+    }
+    //////////////当filePath为视频名字时，拼凑视频名字同名的，在主进程提取出来的字幕文件
+    // 如果没有找到同名字幕文件，则执行原有的逻辑
     const nipaPath = path.join(downloadsPath, 'nipaplay');
     const subPath = path.join(nipaPath, 'sub');
-    const newFilePath = path.join(subPath, title + '.ass');
-    //console.log('newFilePath:', newFilePath);
-    // 拷贝文件到新位置
-    fs.copyFile(filePath, newFilePath, (err) => {
-        if (err) {
-            console.error('Failed to copy subtitle file:', err);
-            return;
-        }
-        //console.log('Subtitle file copied to:', newFilePath);
-
-        // 文件拷贝成功后加载字幕
-        loadASSSubtitles(newFilePath);
-    });
+    const newFilePath = path.join(subPath, filePath + '.ass');
+    // 检查 newFilePath 是否已经存在
+    if (fs.existsSync(newFilePath)) {
+        console.log('Subtitle file already exists. Loading subtitles directly.');
+        loadASSSubtitles(newFilePath); // 文件已经存在，直接加载字幕
+        return; // 跳过后续的拷贝操作
+    }
+    //////////////当filePath为字幕路径的时候，直接加载那个路径的字幕
+    if (fs.existsSync(filePath)) {
+        console.log('Subtitle file already exists. Loading subtitles directly.');
+        loadASSSubtitles(filePath); // 文件已经存在，直接加载字幕
+        return; // 跳过后续的拷贝操作
+    }
 }
 function handleDownloadsPath(filePath, downloadsPath) {
     const fs = require('fs');

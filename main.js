@@ -200,7 +200,7 @@ ipcMain.on('set-window-mode', (event, windowMode) => {
             console.error('Error reading JSON file:', err);
             return;
         }
-        
+
         let windowConfig;
         try {
             windowConfig = JSON.parse(data);
@@ -218,9 +218,9 @@ ipcMain.on('set-window-mode', (event, windowMode) => {
                 console.error('Error writing JSON file:', err);
                 return;
             }
-            console.log('windowMode:',windowMode);
+            console.log('windowMode:', windowMode);
             // 向渲染进程发送确认消息
-            event.sender.send('window-mode-updated', windowMode,windowModePath);
+            event.sender.send('window-mode-updated', windowMode, windowModePath);
         });
     });
 });
@@ -774,7 +774,7 @@ async function handleDownloadURL(url) {
         }
         // Step 3: Extract selected subtitle
         const subtitlePath = await extractSubtitles(url, selectedTrack, subPath);
-    } 
+    }
     // 调用 recognizeVideo2 识别视频
     ////console.log("post结果:", response.isMatched, response.animeTitle, response.episodeId, response.animeId);
     if (response.isMatched) {
@@ -1527,19 +1527,19 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
     if (loadWindow && !loadWindow.isDestroyed()) {
         loadWindow.close();
     }
-    if (windowMode == "mini"){
-        WindowWidth = 400;
-        WindowHeight = 225;
+    if (windowMode == "mini") {
+        WindowWidth = 533;
+        WindowHeight = 300;
+        WindowX = 0;
+        WindowY = 0;
+    }
+    else if (windowMode == "win") {
+        WindowWidth = 1067;
+        WindowHeight = 600;
         WindowX = (width - WindowWidth) / 2;
         WindowY = (height - WindowHeight) / 2;
     }
-    else if (windowMode == "win"){
-        WindowWidth = 800;
-        WindowHeight = 450;
-        WindowX = (width - WindowWidth) / 2;
-        WindowY = (height - WindowHeight) / 2;
-    }
-    else{
+    else {
         WindowWidth = width;
         WindowHeight = height;
         WindowX = 0;
@@ -1550,6 +1550,8 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
     const videoWindow = new BrowserWindow({
         width: WindowWidth,
         height: WindowHeight,
+        minWidth:533,
+        minHeight:300,
         show: false,
         x: WindowX,
         y: WindowY,
@@ -1566,8 +1568,8 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
         frame: isMac ? undefined : false,
         //resizable: process.platform === 'darwin' ? false : true // MacOS不允许调整窗口大小，Windows允许
     });
-    if (windowMode == "screen"){
-        videoWindow.setFullScreen(true);
+    if (windowMode == "screen") {
+        videoWindow.setFullScreen(!videoWindow.isFullScreen());
     }
     videoWindow.on('enter-full-screen', () => {
         //console.log('进入全屏模式');
@@ -1698,13 +1700,20 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
         window.setFullScreen(!window.isFullScreen());
     });
     ipcMain.on('reload-player-danmaku', (event, fullscreen) => {
-        //console.log('reload!!');
-        isFullScreen = fullscreen;
-        if (isFullScreen == 'nanami') {
-            window.setFullScreen(!window.isFullScreen());
+        // 获取窗口实例
+        let window = BrowserWindow.fromWebContents(event.sender);
+    
+        // 如果 fullscreen 变量为 'nanami'，则切换全屏状态
+        if (fullscreen === 'nanami') {
+            if (window) {
+                window.setFullScreen(!window.isFullScreen());
+            } else {
+                console.error('window is undefined');
+            }
         }
-        //console.log('isFullScreen:', isFullScreen);
-        window = BrowserWindow.fromWebContents(event.sender);
+    
+        // 你的其他逻辑
+        isFullScreen = fullscreen;
         openVideoAndFetchDetails(videoPath, 'lain', 'lain', true);
     });
     ipcMain.on('minimize-player-window', (event) => {

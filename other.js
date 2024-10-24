@@ -9,6 +9,12 @@ document.addEventListener('DOMContentLoaded', function () {
         `).join('');
     }
 });
+const originalLog = console.log;
+const path = require('path');
+console.log = function (...args) {
+    ipcRenderer.send('log-message', args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : arg)).join(' '));
+    originalLog.apply(console, args); // 保持渲染进程的控制台也可以输出日志
+};
 const packageJson = require('./package.json'); // 确保路径正确
 const nipaplayVersion = packageJson.version;
 document.addEventListener('DOMContentLoaded', function () {
@@ -73,6 +79,7 @@ ipcRenderer.on('config-loaded', (event, selectedFolders) => {
 });
 
 function updateMediaLibrary(folders) {
+    console.log('Loading media library:', folders);
     const library = document.getElementById('folder-list');
     library.innerHTML = ''; // 清空现有列表，避免重复添加
     folders.forEach(folderPath => {
