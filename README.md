@@ -15,6 +15,7 @@
 - 播放器窗口和主窗口分离，可以同时播放多个视频（谁会需要这玩意）。
 - 如果你登录了steam，你的好友列表会显示你正在观看的番剧的名字。
 - 支持Windows on arm（如果你需要这个版本，请提issue联系我编译）。
+- 支持播放器默认以小窗口顶格左上角播放视频，设置置顶之后可以一边看番一边做其他的事情。
 ### 下载
 - 直接在右侧[Releases](https://github.com/MCDFsteve/NipaPlay/releases)下载最新包即可使用。目前支持Windows版和macOS版，Linux版。
 ### 软件持续维护和更新中...
@@ -37,6 +38,8 @@
 
 <img width="800" alt="image" src="https://github.com/user-attachments/assets/923c2a41-018b-45e8-902f-2e49f9c6e4e5">
 
+#### 摸鱼模式（小窗口模式置顶）
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/a434600f-b959-41e8-9576-4d6f781cab3c">
 
 
 
