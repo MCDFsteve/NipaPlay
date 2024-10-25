@@ -1550,8 +1550,8 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
     const videoWindow = new BrowserWindow({
         width: WindowWidth,
         height: WindowHeight,
-        minWidth:533,
-        minHeight:300,
+        minWidth: 533,
+        minHeight: 300,
         show: false,
         x: WindowX,
         y: WindowY,
@@ -1605,6 +1605,22 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
             //videoWindow.webContents.openDevTools({mode:'detach'});
         });
     }
+    ipcMain.on('toggle-always-on-top', (event, isAlwaysOnTop) => {
+        const focusedWindow = event.sender.getOwnerBrowserWindow(); // 获取当前发送事件的窗口
+        if (focusedWindow && !focusedWindow.isDestroyed()) {
+            // 切换当前窗口的置顶状态
+            focusedWindow.setAlwaysOnTop(isAlwaysOnTop, "floating");
+
+            // 根据置顶状态，设置是否在所有工作空间显示
+            if (isAlwaysOnTop) {
+                focusedWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+            } else {
+                focusedWindow.setVisibleOnAllWorkspaces(false);
+            }
+        } else {
+            console.log('当前窗口已被销毁，无法切换置顶状态');
+        }
+    });
     // 在注册监听器之前移除之前的监听器
     ipcMain.removeAllListeners('down-player-window');
     ipcMain.removeAllListeners('windowed-window');
@@ -1702,7 +1718,7 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
     ipcMain.on('reload-player-danmaku', (event, fullscreen) => {
         // 获取窗口实例
         let window = BrowserWindow.fromWebContents(event.sender);
-    
+
         // 如果 fullscreen 变量为 'nanami'，则切换全屏状态
         if (fullscreen === 'nanami') {
             if (window) {
@@ -1711,7 +1727,7 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
                 console.error('window is undefined');
             }
         }
-    
+
         // 你的其他逻辑
         isFullScreen = fullscreen;
         openVideoAndFetchDetails(videoPath, 'lain', 'lain', true);

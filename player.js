@@ -16,6 +16,8 @@ const audio0 = document.getElementById('audio-button-0');
 const audionull = document.getElementById('audio-button-null');
 const progressBar = document.getElementById('controls-container');
 const sidecontrols = document.getElementById('side-controls');
+const TopButton = document.getElementById('top-button');
+const TopButtonOff = document.getElementById('top-button-off');
 const reloadDanmaku = document.getElementById('reload-danmaku');
 const toggleTopDanmaku = document.getElementById('toggle-top-danmaku');
 const toggleTopDanmakuOn = document.getElementById('toggle-top-danmaku-on');
@@ -31,6 +33,8 @@ const popCom = document.getElementById('pop-comment');
 const popSet = document.getElementById('pop-settings');
 const popSwitch1 = document.getElementById('pop-danmakuswitch1');
 const popSwitch2 = document.getElementById('pop-danmakuswitch2');
+const popTop = document.getElementById('pop-top');
+const popTopOff = document.getElementById('pop-top-off');
 const subButton = document.getElementById('subtitle-button');
 const comButton = document.getElementById('comment-button');
 const optionButton = document.getElementById('settings-button');
@@ -164,11 +168,13 @@ ipcRenderer.on('full', (event, center) => {
     const closeButton = document.getElementById('close-button');
     const miniButton = document.getElementById('minimize-button');
     if (fullorwin == 'true') {
+        hideTopButton();
         winscreenButton.style.display = 'block';
         fullscreenButton.style.display = 'none';
         closeButton.style.display = 'none';
         miniButton.style.display = 'none';
     } else if (fullorwin == 'false') {
+        ShowTopButton();
         winscreenButton.style.display = 'none';
         fullscreenButton.style.display = 'block';
         closeButton.style.display = 'block';
@@ -251,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (savedLight) {
         lightSlider.value = savedLight;
         BlackMask.style.opacity = (100 - lightSlider.value) / 100;
-    }else{
+    } else {
         BlackMask.style.opacity = 0;
     }
     if (savedHeight) {
@@ -677,12 +683,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const rightMenu = document.getElementById('side-controls');
     const closeButton = document.getElementById('close-button');
     const miniButton = document.getElementById('minimize-button');
+    const topButtonContainer = document.getElementById('top-button-container');
     let hideControlsTimeout;
     function showControlsAndTitle() {
         // 显示控制UI和视频标题
         controlsContainer.style.opacity = '1';
         videoTitle.style.opacity = '1';
         rightMenu.style.opacity = '1';
+        topButtonContainer.style.opacity = '1';
         danmakuSwitch.style.display = 'block';
         if (fullorwin == 'false') {
             closeButton.style.display = 'block';
@@ -695,6 +703,7 @@ document.addEventListener('DOMContentLoaded', function () {
             controlsContainer.style.opacity = '0';
             videoTitle.style.opacity = '0';
             rightMenu.style.opacity = '0';
+            topButtonContainer.style.opacity = '0';
             danmakuOpacityControl.style.display = 'none';
             optionsControl.style.display = 'none';
             audioControl.style.display = 'none';
@@ -745,9 +754,25 @@ document.addEventListener('DOMContentLoaded', function () {
     hideui.addEventListener('mouseenter', function () {
         clearTimeout(hideControlsTimeout);
     });
+    topButtonContainer.addEventListener('mouseenter', function () {
+        clearTimeout(hideControlsTimeout);
+    });
     danmakuSwitch.addEventListener('mouseenter', function () {
         clearTimeout(hideControlsTimeout);
     });
+    window.onblur = () => {
+        console.log('窗口失去了焦点');
+        controlsContainer.style.opacity = '0';
+        videoTitle.style.opacity = '0';
+        rightMenu.style.opacity = '0';
+        topButtonContainer.style.opacity = '0';
+        danmakuOpacityControl.style.display = 'none';
+        optionsControl.style.display = 'none';
+        audioControl.style.display = 'none';
+        closeButton.style.display = 'none';
+        miniButton.style.display = 'none';
+        danmakuSwitch.style.display = 'none';
+    };
 });
 videoPlayer.addEventListener('click', () => {
     // 检查视频是否正在播放
@@ -946,6 +971,34 @@ danmakuswitch2.addEventListener('mouseenter', () => {
 });
 danmakuswitch2.addEventListener('mouseleave', () => {
     popSwitch2.hidePopover()
+});
+//////
+TopButton.addEventListener('mouseenter', () => {
+    const TopButtonRect = TopButton.getBoundingClientRect();
+    popTop.style.marginTop = `calc(${TopButtonRect.bottom}px + 40px)`;
+    if (isMacOS()) {
+        popTop.style.marginRight = `-8px`;
+    } else {
+        popTop.style.marginLeft = `28px`;
+    }
+    popTop.showPopover()
+});
+TopButton.addEventListener('mouseleave', () => {
+    popTop.hidePopover()
+});
+//////
+TopButtonOff.addEventListener('mouseenter', () => {
+    const TopButtonOffRect = TopButtonOff.getBoundingClientRect();
+    popTopOff.style.marginTop = `calc(${TopButtonOffRect.bottom}px + 40px)`;
+    if (isMacOS()) {
+        popTopOff.style.marginRight = `-8px`;
+    } else {
+        popTopOff.style.marginLeft = `28px`;
+    }
+    popTopOff.showPopover()
+});
+TopButtonOff.addEventListener('mouseleave', () => {
+    popTopOff.hidePopover()
 });
 //////
 setButton.addEventListener('mouseenter', () => {

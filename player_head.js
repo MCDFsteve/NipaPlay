@@ -20,6 +20,7 @@ videoElement.load();
 // 尝试从 URL 参数中获取提供的新标题
 const newTitle = urlParams.get('title');
 document.addEventListener('DOMContentLoaded', async () => {
+    ShowTopButton();
     loadDanmakuFile(danmakuPath2);
     const savedTime = parseFloat(localStorage.getItem(videoElement.src)) || 0;
     if (savedTime > 0) {

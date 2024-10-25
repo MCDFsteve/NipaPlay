@@ -15,22 +15,51 @@ html {
 video::-internal-media-controls-overlay-cast-button {
     display: none;
 }
+
 /* 父容器，统一管理side-controls和danmakucon */
 #side-container {
     position: fixed;
-    right: 1%;  /* 控制整个容器距离右侧的距离 */
-    top: 50%;   /* 控制容器在页面垂直位置 */
-    transform: translateY(-50%); /* 垂直居中 */
+    right: 1%;
+    /* 控制整个容器距离右侧的距离 */
+    top: 50%;
+    /* 控制容器在页面垂直位置 */
+    transform: translateY(-50%);
+    /* 垂直居中 */
     display: flex;
-    flex-direction: column;  /* 垂直排列side-controls和danmakucon */
-    align-items: center;  /* 居中对齐 */
-    z-index: 100;  /* 确保其在页面其他元素之上 */
-    gap: 20px;  /* 控制side-controls和danmakucon之间的间距 */
+    flex-direction: column;
+    /* 垂直排列side-controls和danmakucon */
+    align-items: center;
+    /* 居中对齐 */
+    z-index: 100;
+    /* 确保其在页面其他元素之上 */
+    gap: 20px;
+    /* 控制side-controls和danmakucon之间的间距 */
+}
+
+#top-button-container {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(15px);
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 10px;
+    top:10px;
+    z-index:-5;
+}
+#top-button {
+    background-image: url('icons/top.png');
+}
+#top-button-off {
+    background-image: url('icons/topOff.png');
 }
 /* 弹幕开关容器样式 */
 #danmakucon {
     display: flex;
-    flex-direction: column;  /* 如果有多个开关，可以垂直排列 */
+    flex-direction: column;
+    /* 如果有多个开关，可以垂直排列 */
     align-items: center;
     background-color: rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(15px);
@@ -49,7 +78,7 @@ video::-internal-media-controls-overlay-cast-button {
     display: none;
 }
 
-.danmaku-switch {
+.danmaku-switch,#top-button,#top-button-off {
     z-index: 10;
     opacity: 0.5;
     margin: 2px;
@@ -59,7 +88,7 @@ video::-internal-media-controls-overlay-cast-button {
     transition: opacity 0.5s ease;
 }
 
-.danmaku-switch:hover {
+.danmaku-switch:hover,#top-button:hover,#top-button-off:hover {
     opacity: 1;
     transition: opacity 0.5s ease;
 }
@@ -125,34 +154,49 @@ video::-internal-media-controls-overlay-cast-button {
     justify-content: center;
     align-items: center;
 }
+
 #black-mask {
-    position: absolute;  /* 让黑色遮罩层绝对定位 */
+    position: absolute;
+    /* 让黑色遮罩层绝对定位 */
     top: 0;
     left: 0;
-    z-index: 2;  /* 提高z-index确保在视频上方 */
-    opacity: 0;  /* 完全不透明 */
+    z-index: 2;
+    /* 提高z-index确保在视频上方 */
+    opacity: 0;
+    /* 完全不透明 */
     width: 100%;
     height: 100%;
-    display: flex;  /* 使用flexbox布局来居中内容 */
+    display: flex;
+    /* 使用flexbox布局来居中内容 */
     justify-content: center;
     align-items: center;
-    background-color: black;  /* 背景设为黑色 */
-    pointer-events: none;  /* 使鼠标事件穿透遮罩层 */
+    background-color: black;
+    /* 背景设为黑色 */
+    pointer-events: none;
+    /* 使鼠标事件穿透遮罩层 */
 }
+
 #black-background {
-    position: absolute;  /* 让黑色遮罩层绝对定位 */
+    position: absolute;
+    /* 让黑色遮罩层绝对定位 */
     top: 0;
     left: 0;
-    z-index: -1;  /* 提高z-index确保在视频上方 */
-    opacity: 1;  /* 完全不透明 */
+    z-index: -1;
+    /* 提高z-index确保在视频上方 */
+    opacity: 1;
+    /* 完全不透明 */
     width: 100%;
     height: 100%;
-    display: flex;  /* 使用flexbox布局来居中内容 */
+    display: flex;
+    /* 使用flexbox布局来居中内容 */
     justify-content: center;
     align-items: center;
-    background-color: black;  /* 背景设为黑色 */
-    pointer-events: none;  /* 使鼠标事件穿透遮罩层 */
+    background-color: black;
+    /* 背景设为黑色 */
+    pointer-events: none;
+    /* 使鼠标事件穿透遮罩层 */
 }
+
 #subtitle-container {
     z-index: 3;
     bottom: 50px;
@@ -164,12 +208,14 @@ video::-internal-media-controls-overlay-cast-button {
     pointer-events: none;
     /* 确保字幕不会干扰到视频的点击事件 */
 }
+
 @font-face {
     font-family: 'ChillRoundM';
     src: url('libass/ChillRoundM.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
+
 #video-player {
     position: fixed;
     z-index: 0;
@@ -180,6 +226,7 @@ video::-internal-media-controls-overlay-cast-button {
     /* 或者根据实际需求调整高度 */
     width: 100%;
 }
+
 .drag-area {
     position: fixed;
     top: 0;
@@ -191,8 +238,10 @@ video::-internal-media-controls-overlay-cast-button {
     /* Electron的拖动区域 */
     z-index: 100;
     /* 确保这个区域位于其他内容上方 */
-    pointer-events: none;  /* 使鼠标事件穿透遮罩层 */
+    pointer-events: none;
+    /* 使鼠标事件穿透遮罩层 */
 }
+
 #controls-container {
     position: fixed;
     bottom: 10px;
@@ -200,7 +249,8 @@ video::-internal-media-controls-overlay-cast-button {
     height: 32.4px;
     display: flex;
     justify-content: space-between;
-    align-items: center;  /* 确保所有元素垂直居中 */
+    align-items: center;
+    /* 确保所有元素垂直居中 */
     background-color: rgba(0, 0, 0, 0.2);
     padding: 5px 10px;
     border-radius: 8px;
@@ -212,28 +262,36 @@ video::-internal-media-controls-overlay-cast-button {
     box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
     z-index: 10;
 }
+
 #left-controls,
 #right-controls {
     display: flex;
     flex-direction: row;
-    align-items: center;  /* 确保控件垂直居中 */
+    align-items: center;
+    /* 确保控件垂直居中 */
 }
+
 #center-controls {
-    flex-grow: 1;  /* 中间控件扩展以适应剩余空间 */
+    flex-grow: 1;
+    /* 中间控件扩展以适应剩余空间 */
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 0 10px;  /* 控制进度条与左右控件的间距 */
+    margin: 0 10px;
+    /* 控制进度条与左右控件的间距 */
 }
 
 #seek-bar {
-    width: 100%;  /* 进度条占据 #center-controls 的全部空间 */
+    width: 100%;
+    /* 进度条占据 #center-controls 的全部空间 */
     height: 4px;
     border-radius: 3px;
     appearance: none;
-    margin: 0;  /* 确保进度条没有多余的间距 */
+    margin: 0;
+    /* 确保进度条没有多余的间距 */
     backdrop-filter: blur(10px);
 }
+
 #seek-bar::-webkit-slider-thumb {
     width: 3px;
     /* 滑块宽度 */
@@ -310,6 +368,8 @@ video::-internal-media-controls-overlay-cast-button {
 #pop-down,
 #pop-full,
 #pop-win,
+#pop-top,
+#pop-top-off,
 #pop-audio {
     margin-bottom: 48.6px;
     position: fixed;
@@ -340,6 +400,7 @@ video::-internal-media-controls-overlay-cast-button {
     position: fixed;
     transform: translate(-50%, -50%);
 }
+
 #pop-subtitle,
 #pop-comment,
 #pop-settings {
@@ -382,7 +443,8 @@ video::-internal-media-controls-overlay-cast-button {
 
 #volume-display {
     position: fixed;
-    top: 108px;
+    top: 140px;
+    font-size: 15px;
     left: 0;
     border-radius: 5px;
     background-color: rgba(0, 0, 0, 0.2);
@@ -391,7 +453,7 @@ video::-internal-media-controls-overlay-cast-button {
     box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
     user-select: none;
     border: none;
-    padding: 10px;
+    padding: 5px 10px;
     z-index: 100;
     display: none;
 }
@@ -473,7 +535,7 @@ video::-webkit-media-text-track-container {
 
 #video-title {
     position: fixed;
-    top: 54px;
+    top: 104px;
     left: 0px;
     border: none;
     color: rgba(255, 255, 255, 0.5);
@@ -493,7 +555,8 @@ video::-webkit-media-text-track-container {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 50%; /* 设置文本显示区域为50% */
+    max-width: 50%;
+    /* 设置文本显示区域为50% */
 }
 
 #video-title:hover {
@@ -586,14 +649,21 @@ video::-webkit-media-text-track-container {
 /* 侧边控制按钮的样式 */
 #side-controls {
     display: flex;
-    flex-direction: column;  /* 按钮垂直排列 */
+    flex-direction: column;
+    /* 按钮垂直排列 */
     align-items: center;
-    gap: 10px;  /* 按钮之间的间距 */
-    background-color: rgba(0, 0, 0, 0.2);  /* 圆角矩形的背景颜色 */
-    backdrop-filter: blur(15px);  /* 毛玻璃效果 */
-    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);  /* 阴影效果 */
-    border-radius: 10px;  /* 圆角半径 */
-    padding: 10px;  /* 内边距，确保按钮不会紧贴边框 */
+    gap: 10px;
+    /* 按钮之间的间距 */
+    background-color: rgba(0, 0, 0, 0.2);
+    /* 圆角矩形的背景颜色 */
+    backdrop-filter: blur(15px);
+    /* 毛玻璃效果 */
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+    /* 阴影效果 */
+    border-radius: 10px;
+    /* 圆角半径 */
+    padding: 10px;
+    /* 内边距，确保按钮不会紧贴边框 */
 }
 
 .side-button {
@@ -628,11 +698,14 @@ video::-webkit-media-text-track-container {
     /* 确保不会阻挡视频控件的交互 */
     overflow: hidden;
     display: flex;
-    justify-content: center;  /* 水平居中 */
+    justify-content: center;
+    /* 水平居中 */
 }
-#canvas{
+
+#canvas {
     background-color: transparent;
 }
+
 #send-button {
     position: absolute;
     bottom: 100px;
@@ -683,33 +756,40 @@ video::-webkit-media-text-track-container {
     z-index: 100;
     /* 确保在弹幕按钮之上 */
     transition: opacity 0.5s ease;
-    overflow-y: auto; 
+    overflow-y: auto;
 }
+
 /* 伪元素控制滚动条样式 */
 /* 滚动条宽度 */
 #danmaku-opacity-control::-webkit-scrollbar,
 #options-control::-webkit-scrollbar {
-    width: 4px; /* 设置滚动条的宽度 */
+    width: 4px;
+    /* 设置滚动条的宽度 */
 }
 
 /* 滚动条背景（轨道部分），设置为透明 */
 #danmaku-opacity-control::-webkit-scrollbar-track,
 #options-control::-webkit-scrollbar-track {
-    background: transparent; /* 滚动条轨道背景透明 */
+    background: transparent;
+    /* 滚动条轨道背景透明 */
 }
 
 /* 滚动条本身 */
 #danmaku-opacity-control::-webkit-scrollbar-thumb,
 #options-control::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.3); /* 滚动条颜色 */
-    border-radius: 10px; /* 滚动条的圆角 */
+    background-color: rgba(255, 255, 255, 0.3);
+    /* 滚动条颜色 */
+    border-radius: 10px;
+    /* 滚动条的圆角 */
 }
 
 /* 可选：滚动条悬停时的样式 */
 #danmaku-opacity-control::-webkit-scrollbar-thumb:hover,
 #options-control::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(126, 126, 126, 0.5); /* 鼠标悬停时滚动条颜色加深 */
+    background-color: rgba(126, 126, 126, 0.5);
+    /* 鼠标悬停时滚动条颜色加深 */
 }
+
 .danmaku-button:hover {
     opacity: 1;
     transition: opacity 0.5s ease;
@@ -737,6 +817,7 @@ video::-webkit-media-text-track-container {
     opacity: 1.0;
     transition: opacity 0.5s ease;
 }
+
 .danmaku-button {
     width: 100%;
     padding: 10px;
@@ -793,12 +874,15 @@ video::-webkit-media-text-track-container {
 #font-image {
     background-image: url('icons/font.png');
 }
+
 #height-image {
     background-image: url('icons/height.png');
 }
+
 #light-image {
     background-image: url('icons/light.png');
 }
+
 #opacity-value {
     margin-left: 65%;
     font-size: 0.4em;
@@ -806,16 +890,23 @@ video::-webkit-media-text-track-container {
 }
 
 /* 外部容器 */
-#alphamenu,#optionsmenu {
-    margin-top:20px;
+#alphamenu,
+#optionsmenu {
+    margin-top: 20px;
     display: flex;
-    flex-direction: column;  /* 子元素垂直排列 */
-    gap: 10px;  /* 设置上下间距 */
-    padding: 10px;  /* 设置内边距 */
-    background-color: transparent;  /* 半透明背景 */
-    border-radius: 10px;  /* 圆角效果 */
-    box-shadow: none; 
+    flex-direction: column;
+    /* 子元素垂直排列 */
+    gap: 10px;
+    /* 设置上下间距 */
+    padding: 10px;
+    /* 设置内边距 */
+    background-color: transparent;
+    /* 半透明背景 */
+    border-radius: 10px;
+    /* 圆角效果 */
+    box-shadow: none;
 }
+
 /* 单个控制容器，所有控制项都是横向排列 */
 #opacity-slider-container,
 #line-width-slider-container,
@@ -824,10 +915,14 @@ video::-webkit-media-text-track-container {
 .option-class,
 #font-size-slider-container {
     display: flex;
-    flex-direction: row;  /* 子元素横向排列 */
-    align-items: center;  /* 垂直居中对齐 */
-    gap: 5px;  /* 设置左右间距 */
+    flex-direction: row;
+    /* 子元素横向排列 */
+    align-items: center;
+    /* 垂直居中对齐 */
+    gap: 5px;
+    /* 设置左右间距 */
 }
+
 /* 滑块控制样式，统一设置滑块拇指样式 */
 #opacity-slider::-webkit-slider-thumb,
 #speed-slider::-webkit-slider-thumb,

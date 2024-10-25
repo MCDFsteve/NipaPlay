@@ -41,3 +41,36 @@ if (isMacOS()) {
     });
 }
 //var myVideoPlayer = videojs('video-player');
+function ShowTopButton() {
+    const topButtonContainer = document.getElementById('top-button-container');
+    topButtonContainer.style.zIndex = 90;
+    if (isMacOS()) {
+        topButtonContainer.style.right = '1%';
+    } else {
+        topButtonContainer.style.left = '1%';
+    }
+}
+function hideTopButton() {
+    const topButtonContainer = document.getElementById('top-button-container');
+    topButtonContainer.style.zIndex = -5;
+}
+function toggleAlwaysOnTop(isAlwaysOnTop) {
+    ipcRenderer.send('toggle-always-on-top', isAlwaysOnTop);
+}
+
+document.getElementById('top-button').addEventListener('click', () => {
+    const topButton = document.getElementById('top-button');
+    const topButtonOff = document.getElementById('top-button-off');
+    topButton.style.display = 'none';
+    topButtonOff.style.display = 'block';
+    const isAlwaysOnTop = true;
+    toggleAlwaysOnTop(isAlwaysOnTop);
+});
+document.getElementById('top-button-off').addEventListener('click', () => {
+    const topButton = document.getElementById('top-button');
+    const topButtonOff = document.getElementById('top-button-off');
+    topButton.style.display = 'block';
+    topButtonOff.style.display = 'none';
+    const isAlwaysOnTop = false;
+    toggleAlwaysOnTop(isAlwaysOnTop);
+});
