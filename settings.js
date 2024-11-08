@@ -1,4 +1,5 @@
 let windowMode;
+adjustContentAreaPosition();
 // 获取按钮元素
 const buttons = {
     mini: document.getElementById('window-mini'),

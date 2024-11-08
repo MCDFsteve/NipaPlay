@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录弹弹Play</title>
+    <link rel="stylesheet" href="other.css">
+    <link rel="stylesheet" href="close.css">
+    <style>
+        body {
+            /* 垂直居中 */
+            height: 100vh;
+            /* 使 body 高度占满视口 */
+            margin: 0;
+            /* 去除默认边距 */
+            background-color: #f0f0f0;
+            /* 背景颜色 */
+            overflow-y: hidden;
+        }
+
+        /* 禁止文本拖拽 */
+        * {
+            user-select: none;
+            /* 禁止文本选中 */
+        }
+
+        /* 禁止输入框的聚焦框 */
+        input:focus {
+            outline: none;
+            /* 去掉输入框的聚焦轮廓 */
+        }
+
+        #loading {
+            display: none;
+        }
+
+        #load-success {
+            display: none;
+        }
+
+        .load {
+            /* 初始隐藏 */
+            font-size: 18px;
+            /* 字体大小 */
+            text-align: center;
+            /* 文本居中 */
+            color: #000;
+            position: fixed;
+            /* 绝对定位 */
+            top: 50%;
+            /* 垂直居中 */
+            left: 50%;
+            /* 水平居中 */
+            transform: translate(-50%, -50%);
+        }
+
+        #login-container {
+            position: fixed;
+            /* 绝对定位 */
+            top: 50%;
+            /* 垂直居中 */
+            left: 50%;
+            /* 水平居中 */
+            transform: translate(-50%, -50%);
+            /* 使中心对齐 */
+            text-align: center;
+            /* 文本居中 */
+            background-color: transparent;
+            /* 背景颜色 */
+            border-radius: 8px;
+            /* 圆角边框 */
+            /* 其他样式... */
+        }
+
+        input {
+            flex: 1;
+            /* 输入框占据多余空间 */
+            /* 右侧间距 */
+            width: auto;
+            /* 调整输入框宽度为容器宽度减去右侧间隔 */
+            border: 10px;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            color: #3f3f3f;
+            box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.4);
+            font-size: 15px;
+            top: 5px;
+            left: 10px;
+            margin-bottom: 15px;
+            /* 距离父元素顶部的距离 */
+            /* 距离父元素左侧的距离 */
+            text-indent: 7px !important;
+            /* 文本左对齐 */
+            vertical-align: top;
+            outline: none;
+            padding: 10px 0;
+            /* 确保有空间显示进度条 */
+            resize: none;
+            z-index: 2;
+            /* 确保输入框在进度条之上 */
+        }
+
+        @media (prefers-color-scheme: dark) {
+            input {
+                background-color: rgba(54, 54, 54, 0.8);
+                box-shadow: 0px 1px 1px rgba(255, 255, 255, 0.4);
+                color: #dfdfdf;
+            }
+
+            #loading {
+                color: #fff;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #3f3f3f;
+            }
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            background-color: #131313;
+            color: #fff;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.4);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: #484848;
+        }
+
+        @media (prefers-color-scheme: dark) {
+
+            button {
+                background-color: #444444;
+                color: #b8b8b8;
+                box-shadow: 0px 1px 1px rgba(255, 255, 255, 0.4);
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+
+            button:hover {
+                background-color: #2e2e2e;
+                color: #fff;
+            }
+        }
+        #load-failed {
+            display: none;
+            font-size:10px;
+            color:red;
+            position: fixed;
+            left:2px;
+            bottom:2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="close-button"></div>
+    <div class="drag-area"></div>
+    <div id="login-container">
+        <input type="text" placeholder="用户名" id="username" required>
+        <input type="password" placeholder="密码" id="password" required>
+        <button id="login-button">登录</button>
+    </div>
+    <div id="loading" class="load">登录中...</div>
+    <div id="load-success" class="load">登录成功</div>
+    <div id="load-failed">登录失败，请重试</div>
+    <script src="close.js"></script>
+    <script>
+        let userName;
+        const { ipcRenderer } = require('electron'); // 引入 ipcRenderer
+        ipcRenderer.on('login-success', (event, loginuserName) => {
+            userName = loginuserName;
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('load-success').style.display = 'block';
+
+            // 使用 setTimeout 延迟执行关闭窗口的操作
+            setTimeout(() => {
+                ipcRenderer.send('close-login-window');
+            }, 500); // 延迟 500 毫秒
+        });
+        ipcRenderer.on('login-failed', (event) => {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('login-container').style.display = 'block';
+            document.getElementById('load-failed').style.display = 'block';
+            const closeButton = document.getElementById('close-button');
+            closeButton.style.display = 'block';
+        });
+        document.getElementById('login-button').addEventListener('click', () => {
+            const closeButton = document.getElementById('close-button');
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // 发送用户名和密码到主进程
+            ipcRenderer.send('login-client', { username, password });
+
+            // 隐藏登录容器
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('load-failed').style.display = 'none';
+            closeButton.style.display = 'none';
+            // 显示“登录中”提示
+            document.getElementById('loading').style.display = 'block';
+        });
+        if (isMacOS()) {
+            document.body.style.backgroundColor = "transparent";
+        }
+        // 关闭按钮点击事件
+        closeButton.addEventListener('click', () => {
+            ipcRenderer.send('close-login-window');
+        });
+        const history = {
+            username: [],
+            password: []
+        };
+
+        function handleKeyDown(event) {
+            const target = event.target;
+
+            if ((event.ctrlKey || event.metaKey) && ['x', 'c', 'v', 'a', 'z'].includes(event.key.toLowerCase())) {
+                switch (event.key.toLowerCase()) {
+                    case 'x':
+                        document.execCommand('cut');
+                        saveToHistory(target);
+                        break;
+                    case 'c':
+                        document.execCommand('copy');
+                        break;
+                    case 'v':
+                        document.execCommand('paste');
+                        break;
+                    case 'a':
+                        target.select(); // 全选
+                        break;
+                    case 'z':
+                        if (history[target.id].length > 0) {
+                            const lastValue = history[target.id].pop(); // 移除并获取最后一个值
+                            target.value = lastValue; // 设置输入框为上一个值
+                        }
+                        break;
+                }
+                event.preventDefault();
+            } else if (target.tagName === 'INPUT') {
+                saveToHistory(target); // 保存当前值到历史
+            }
+        }
+
+        function saveToHistory(input) {
+            const currentId = input.id;
+            if (!history[currentId]) {
+                history[currentId] = [];
+            }
+            history[currentId].push(input.value); // 保存当前值到历史数组
+        }
+
+        document.getElementById('username').addEventListener('keydown', handleKeyDown);
+        document.getElementById('password').addEventListener('keydown', handleKeyDown);
+    </script>
+</body>
+
+</html>

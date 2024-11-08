@@ -392,13 +392,12 @@ li.sidebar-button::before {
 }
 
 .content-area2 {
-    border-left: 1px solid rgb(172, 172, 172);
     position: fixed;
     overflow: hidden;
     /* 将内容偏移侧边栏宽度 */
     width: 80%;
     height: 100%;
-    background-image: url('./images/none.png');
+    background-image: url('./others/back.png');
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
@@ -410,9 +409,6 @@ li.sidebar-button::before {
 @media (prefers-color-scheme: dark) {
     .content-area0 {
         background-color: #222;
-    }
-    .content-area2 {
-        border-left: 1px solid rgb(0, 0, 0);
     }
 }
 

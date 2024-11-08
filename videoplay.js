@@ -1,16 +1,15 @@
 const { ipcRenderer } = require('electron');
+let userName;
 ipcRenderer.on('platform-info', (event, { isMac }) => {
     if (isMac) {
         const styleSheet = document.createElement('style');
         styleSheet.textContent = `
         .sidebar {
             background-color: initial !important;
-            border-right: initial !important;
 }
 @media (prefers-color-scheme: dark) {
     .sidebar {
         background-color: initial !important;
-        border-right: initial !important;
 }
 }
 `;

@@ -38,7 +38,7 @@
                 <button id="down-button" class="control-button"
                     style="background-image: url('icons/down.png'); display: block;"></button>
                 <button id="audio-button-full" class="control-button"
-                    style="background-image: url('icons/audio_full.png'); display: none;"></button>
+                    style="background-image: url('icons/audio_full.png'); display: block;"></button>
                 <button id="audio-button-50" class="control-button"
                     style="background-image: url('icons/audio_50.png'); display: none;"></button>
                 <button id="audio-button-0" class="control-button"
@@ -149,7 +149,11 @@
     </div>
     <div id="volume-display" style="display: none;">音量: 50%</div>
     <div id="subtitle-alert" class="hide">字幕加载成功</div>
-    <button id="video-title"></button>
+    <div class="danmu-container" id="danmu-shoot-container">
+        <button class="danmu-button" onclick="sendDanmaku()">发送弹幕</button>
+        <input type="text" id="danmuInput" class="danmu-input" spellcheck="false" placeholder="输入弹幕内容...">
+    </div>
+    <button id="video-title">未知视频</button>
     <button id="files-title"></button>
     <div id="pop-danmakuswitch1" popover="auto" class="pop">关闭弹幕</div>
     <div id="pop-danmakuswitch2" popover="auto" class="pop">打开弹幕</div>

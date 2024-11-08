@@ -12,6 +12,7 @@ const fullscreenButton = document.getElementById('fullscreen-button');
 const winscreenButton = document.getElementById('windowed-button');
 const audioFull = document.getElementById('audio-button-full');
 const audio50 = document.getElementById('audio-button-50');
+const danmuInput = document.getElementById("danmuInput");
 const audio0 = document.getElementById('audio-button-0');
 const audionull = document.getElementById('audio-button-null');
 const progressBar = document.getElementById('controls-container');
@@ -60,6 +61,7 @@ const Lightimage = document.getElementById('light-image');
 const Lineimage = document.getElementById('line-image');
 const Fontimage = document.getElementById('font-image');
 const Heightimage = document.getElementById('height-image');
+const DanmuShootContainer = document.getElementById('danmu-shoot-container');
 const workerUrl = `file://${__dirname}/libass/subtitles-octopus-worker.js`;  // 检查 Worker 文件路径
 const legacyWorkerUrl = `file://${__dirname}/libass/libassjs-worker-legacy.js`;
 // 获取弹幕按钮和新的弹幕透明度控制面板元素
@@ -628,62 +630,16 @@ document.addEventListener('DOMContentLoaded', function () {
         updateSeekBar();
     });
 });
-////////////
-document.addEventListener('keydown', (event) => {
-    if (event.key === 'd' || event.key === 'D') { // 检查按下的是否是 'D' 键
-        if (danmakuswitch1.style.display === 'block') {
-            danmakuswitch1.click();
-        } else if (danmakuswitch2.style.display === 'block') {
-            danmakuswitch2.click();
-        }
-    }
-    if (event.key === 'Enter') {
-        // 切换到全屏
-        if (fullorwin != 'true') {
-            ipcRenderer.send('windowed-window');
-        }
-    } else if (event.key === 'Escape') {
-        // 退出全屏
-        if (fullorwin == 'true') {
-            ipcRenderer.send('windowed-window');
-        }
-    }
-});
-document.addEventListener('DOMContentLoaded', function () {
-    const videoPlayer = document.getElementById('video-player');
-
-    videoPlayer.addEventListener('dblclick', () => {
-        if (fullorwin != 'true') {
-            ipcRenderer.send('windowed-window');
-        } else {
-            // 已在全屏模式，退出全屏
-            ipcRenderer.send('windowed-window');
-        }
-    });
-});
-document.addEventListener('keydown', (event) => {
-    if (event.key === ' ') { // 空格键
-        event.preventDefault(); // 防止触发其它不需要的默认行为（如滚动页面）
-        const videoPlayer = document.getElementById('video-player');
-        if (videoPlayer) {
-            if (videoPlayer.paused) {
-                videoPlayer.play();
-            } else {
-                videoPlayer.pause();
-            }
-        }
-    }
-});
-////////
 document.addEventListener('DOMContentLoaded', function () {
     const videoContainer = document.getElementById('player-container'); // 确保这是包含视频和控制UI的容器的ID
     const controlsContainer = document.getElementById('controls-container'); // 控制UI的容器
     const videoTitle = document.getElementById('video-title');
     const timeDisplay = document.getElementById('time-display');
-    const rightMenu = document.getElementById('side-controls');
+    const rightMenu = document.getElementById('side-container');
     const closeButton = document.getElementById('close-button');
     const miniButton = document.getElementById('minimize-button');
     const topButtonContainer = document.getElementById('top-button-container');
+    const DanmuShootContainer = document.getElementById('danmu-shoot-container');
     let hideControlsTimeout;
     function showControlsAndTitle() {
         // 显示控制UI和视频标题
@@ -691,7 +647,7 @@ document.addEventListener('DOMContentLoaded', function () {
         videoTitle.style.opacity = '1';
         rightMenu.style.opacity = '1';
         topButtonContainer.style.opacity = '1';
-        danmakuSwitch.style.display = 'block';
+        DanmuShootContainer.style.opacity = '1';
         if (fullorwin == 'false') {
             closeButton.style.display = 'block';
             miniButton.style.display = 'block';
@@ -703,13 +659,13 @@ document.addEventListener('DOMContentLoaded', function () {
             controlsContainer.style.opacity = '0';
             videoTitle.style.opacity = '0';
             rightMenu.style.opacity = '0';
+            DanmuShootContainer.style.opacity = '0';
             topButtonContainer.style.opacity = '0';
             danmakuOpacityControl.style.display = 'none';
             optionsControl.style.display = 'none';
             audioControl.style.display = 'none';
             closeButton.style.display = 'none';
             miniButton.style.display = 'none';
-            danmakuSwitch.style.display = 'none';
         }, 2000); // 3秒无交互后隐藏
     }
     videoContainer.addEventListener('mousemove', showControlsAndTitle);
@@ -760,18 +716,21 @@ document.addEventListener('DOMContentLoaded', function () {
     danmakuSwitch.addEventListener('mouseenter', function () {
         clearTimeout(hideControlsTimeout);
     });
+    DanmuShootContainer.addEventListener('mouseenter', function () {
+        clearTimeout(hideControlsTimeout);
+    });
     window.onblur = () => {
         console.log('窗口失去了焦点');
         controlsContainer.style.opacity = '0';
         videoTitle.style.opacity = '0';
         rightMenu.style.opacity = '0';
+        DanmuShootContainer.style.opacity = '0';
         topButtonContainer.style.opacity = '0';
         danmakuOpacityControl.style.display = 'none';
         optionsControl.style.display = 'none';
         audioControl.style.display = 'none';
         closeButton.style.display = 'none';
         miniButton.style.display = 'none';
-        danmakuSwitch.style.display = 'none';
     };
 });
 videoPlayer.addEventListener('click', () => {
@@ -1460,13 +1419,47 @@ function showSubtitleAlert() {
 document.addEventListener('DOMContentLoaded', () => {
     const video = document.getElementById('video-player');
     let volumeDisplay = document.getElementById('volume-display');
-
     // 从 localStorage 中获取音量值并设置
     const savedVolume = localStorage.getItem('videoVolume');
     if (savedVolume !== null) {
         video.volume = parseFloat(savedVolume);
     }
+    ////////////
     document.addEventListener('keydown', (event) => {
+        // 检查当前活动元素是否为输入框
+        if (document.activeElement === danmuInput) {
+            DanmuKey();
+            return; // 如果是输入框，则不处理视频快捷键
+        }
+        if (event.key === 'd' || event.key === 'D') { // 检查按下的是否是 'D' 键
+            if (danmakuswitch1.style.display === 'block') {
+                danmakuswitch1.click();
+            } else if (danmakuswitch2.style.display === 'block') {
+                danmakuswitch2.click();
+            }
+        }
+        if (event.key === ' ') { // 空格键
+            event.preventDefault(); // 防止触发其它不需要的默认行为（如滚动页面）
+            const videoPlayer = document.getElementById('video-player');
+            if (videoPlayer) {
+                if (videoPlayer.paused) {
+                    videoPlayer.play();
+                } else {
+                    videoPlayer.pause();
+                }
+            }
+        }
+        if (event.key === 'Enter') {
+            // 切换到全屏
+            if (fullorwin != 'true') {
+                ipcRenderer.send('windowed-window');
+            }
+        } else if (event.key === 'Escape') {
+            // 退出全屏
+            if (fullorwin == 'true') {
+                ipcRenderer.send('windowed-window');
+            }
+        }
         switch (event.key) {
             case 'ArrowUp': // 增大音量
                 if (video.volume < 1) {
@@ -1548,6 +1541,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 2000); // 2秒后隐藏音量显示
         }
     });
+    const videoPlayer = document.getElementById('video-player');
+    videoPlayer.addEventListener('dblclick', () => {
+        if (fullorwin != 'true') {
+            ipcRenderer.send('windowed-window');
+        } else {
+            // 已在全屏模式，退出全屏
+            ipcRenderer.send('windowed-window');
+        }
+    });
+    ////////
 });
 
 const steamworks = require('steamworks.js');
@@ -1572,6 +1575,92 @@ if (newTitle) {
     setRichPresence("steam_display", `${mess}`);
     setRichPresence("bangumi", `${bangumi}`);
 }
+function DanmakuShoot(danmu) {
+    console.log("发送弹幕内容:", danmu);
+    danmaku.emit({ text: `${danmu}`, style: { fillStyle: '#ffffff', strokeStyle: '#000' } })
+    // 在此添加发送弹幕的逻辑
+}
 
+// 发送弹幕函数，将输入框内容传递给 DanmakuShoot
+function sendDanmaku() {
+    const input = document.getElementById("danmuInput");
+    const text = input.value;
 
+    if (text.trim()) { // 确保内容非空
+        const videoPlayer = document.getElementById("video-player");
+        const currentTime = videoPlayer.currentTime; // 获取当前播放时间
+        const formattedTime = currentTime.toFixed(2); // 转换为两位小数的秒
 
+        const mode = 0; // 默认为 0
+        const color = 16777215; // 白色的 RGB 值（16777215是白色的十进制值）
+
+        DanmakuShoot(text);
+        ipcRenderer.send('danmaku-shoot', text, formattedTime, mode, color,episodeId);
+        input.value = ""; // 发送后清空输入框
+    }
+}
+async function DanmuKey() {
+
+    // 检测是否按下 Ctrl 或 Cmd（Mac 上）
+    const isCtrlCmdPressed = event.ctrlKey || event.metaKey;
+
+    // 按键操作
+    switch (event.key.toLowerCase()) {
+        case 'a': // 全选
+            if (isCtrlCmdPressed && document.activeElement === danmuInput) {
+                danmuInput.select();
+                console.log('全选成功！');
+                event.preventDefault();  // 阻止默认的全选事件
+            }
+            break;
+        case 'c': // 复制
+            if (isCtrlCmdPressed && document.activeElement === danmuInput) {
+                try {
+                    await navigator.clipboard.writeText(danmuInput.value.substring(danmuInput.selectionStart, danmuInput.selectionEnd));
+                    console.log('复制成功！');
+                } catch (err) {
+                    console.error('复制失败：', err);
+                }
+                event.preventDefault();  // 阻止默认的复制事件
+            }
+            break;
+        case 'x': // 剪切
+            if (isCtrlCmdPressed && document.activeElement === danmuInput) {
+                try {
+                    await navigator.clipboard.writeText(danmuInput.value.substring(danmuInput.selectionStart, danmuInput.selectionEnd));
+                    danmuInput.setRangeText(''); // 删除选中的内容
+                    console.log('剪切成功！');
+                } catch (err) {
+                    console.error('剪切失败：', err);
+                }
+                event.preventDefault();  // 阻止默认的剪切事件
+            }
+            break;
+        case 'v': // 粘贴
+            if (isCtrlCmdPressed && document.activeElement === danmuInput) {
+                try {
+                    const text = await navigator.clipboard.readText();
+                    danmuInput.setRangeText(text, danmuInput.selectionStart, danmuInput.selectionEnd, 'end');
+                    console.log('粘贴成功！');
+                } catch (err) {
+                    console.error('粘贴失败：', err);
+                }
+                event.preventDefault();  // 阻止默认的粘贴事件
+            }
+            break;
+        case 'z': // 撤回
+            if (isCtrlCmdPressed && document.activeElement === danmuInput) {
+                document.execCommand('undo');
+                console.log('撤回成功！');
+                event.preventDefault();  // 阻止默认的撤回事件
+            }
+            break;
+        case 'y': // 重做
+            if (isCtrlCmdPressed && document.activeElement === danmuInput) {
+                document.execCommand('redo');
+                console.log('重做成功！');
+                event.preventDefault();  // 阻止默认的重做事件
+            }
+            break;
+    }
+}

@@ -1,7 +1,7 @@
 {
   "name": "nipaplay",
   "productName": "NipaPlay",
-  "version": "1.6.8",
+  "version": "1.6.10",
   "description": "咪啪～☆",
   "main": "main.js",
   "author": "DFsteve",
@@ -98,7 +98,7 @@
     },
     "linux": {
       "target": [
-        "AppImage"
+        "zip"
       ],
       "category": "Utility",
       "icon": "icon.png",

@@ -9,6 +9,8 @@ const os = require('os');
 const { processComments } = require('./danmaku_tran.js');
 const downloadsPath = app.getPath('userData');
 const nipaPath = path.join(downloadsPath, 'nipaplay');
+const tokenFilePath = path.join(nipaPath, 'token.json');
+const binaryFilePath = path.join(nipaPath,'loginData.bin'); 
 const video_commentPath = path.join(nipaPath, 'video_comment');
 const danmakuPath = path.join(nipaPath, 'danmaku');
 const subPath = path.join(nipaPath, 'sub');
@@ -26,6 +28,12 @@ const logFilePath = path.join(downloadsPath, 'app.log');
 const windowModePath = path.join(nipaPath, 'windowMode.json');
 // 获取应用的用户数据目录
 const userDataPath = app.getPath('userData');
+const userName = 'f23ui499dfij1mf9';
+const password = 'g54hu53t4ty45w';
+let loginUserName;
+let loginPassword;
+const appId = "nipaplayv1";
+let token = null;
 log(`User Data Path: ${userDataPath}`);
 function log(message) {
     fs.appendFileSync(logFilePath, `${new Date().toISOString()} - ${message}\n`);
@@ -36,6 +44,7 @@ function log(message) {
 // 创建主窗口实例
 let mainWindow;
 let urlWindow;
+let loginWindow;
 let window;
 // 创建关于窗口实例
 let videoWindow; // 假设这是创建视频播放窗口时的引用
@@ -140,6 +149,7 @@ app.on('ready', () => {
     });
     // 创建主窗口
     createMainWindow();
+    loginAndGetToken();
     initializeWindowModeFile();
     autoUpdater.checkForUpdatesAndNotify();
 
@@ -193,6 +203,92 @@ app.on('ready', () => {
 });
 ipcMain.on('log-message', (event, message) => {
     console.log(message);
+});
+ipcMain.on('login-dandanplay', (event) => {
+    CreateLoginWindow();
+});
+ipcMain.on('login-out-dandanplay', (event) => {
+    try {
+        // 删除 token 文件
+        if (fs.existsSync(tokenFilePath)) {
+            fs.unlinkSync(tokenFilePath);
+            console.log(`Deleted token file: ${tokenFilePath}`);
+        } else {
+            console.log(`Token file does not exist: ${tokenFilePath}`);
+        }
+
+        // 删除二进制文件
+        if (fs.existsSync(binaryFilePath)) {
+            fs.unlinkSync(binaryFilePath);
+            console.log(`Deleted binary file: ${binaryFilePath}`);
+        } else {
+            console.log(`Binary file does not exist: ${binaryFilePath}`);
+        }
+
+        // 可以选择发送响应到渲染进程，表示登出成功
+        event.reply('logout-success', { message: 'Logged out successfully' });
+    } catch (error) {
+        console.error('Error during logout:', error);
+        event.reply('logout-error', { message: 'Logout failed', error: error.message });
+    }
+});
+ipcMain.on('login-client', (event, {username,password}) => {
+    loginUserName = username;
+    loginPassword = password;
+    console.log(loginUserName,loginPassword);
+    loginAndGetToken();
+});
+ipcMain.on('danmaku-shoot', (event, text, formattedTime, mode, color, episodeId) => {
+    // 构建请求数据
+    const requestData = JSON.stringify({
+        time: formattedTime,
+        mode: mode,
+        color: color,
+        comment: text
+    });
+
+    const options = {
+        hostname: 'api.dandanplay.net',
+        path: `/api/v2/comment/${episodeId}`,
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Content-Length': Buffer.byteLength(requestData)
+        }
+    };
+
+    const req = https.request(options, (res) => {
+        let data = '';
+
+        // 接收数据块
+        res.on('data', (chunk) => {
+            data += chunk;
+        });
+
+        // 响应结束
+        res.on('end', () => {
+            try {
+                const responseData = JSON.parse(data);
+                console.log('Response from server:', responseData);
+                // 可以根据需要将响应数据发送回渲染进程
+                event.reply('danmaku-response', responseData);
+            } catch (parseError) {
+                console.error('解析响应数据失败:', parseError);
+                event.reply('danmaku-response', { error: '解析失败' });
+            }
+        });
+    });
+
+    req.on('error', (error) => {
+        console.error('发送请求时发生错误:', error);
+        event.reply('danmaku-response', { error: '请求失败' });
+    });
+
+    // 发送请求数据
+    req.write(requestData);
+    req.end();
 });
 ipcMain.on('set-window-mode', (event, windowMode) => {
     fs.readFile(windowModePath, 'utf8', (err, data) => {
@@ -341,6 +437,13 @@ ipcMain.on('close-url-window', () => {
     if (urlWindow) {
         if (urlWindow && !urlWindow.isDestroyed()) {
             urlWindow.close();
+        }
+    }
+});
+ipcMain.on('close-login-window', () => {
+    if (loginWindow) {
+        if (loginWindow && !loginWindow.isDestroyed()) {
+            loginWindow.close();
         }
     }
 });
@@ -564,7 +667,178 @@ function animateWindowResize(window, targetWidth, targetHeight, duration) {
 
     window.freezeFrame();
 }
+// 从二进制文件提取用户名和密码的函数
+function loadCredentialsFromBinaryFile(filePath) {
+    if (fs.existsSync(filePath)) {
+        const buffer = fs.readFileSync(filePath);
+        
+        // 假设用户名和密码之间用 0 字节分隔
+        const [usernameBuffer, passwordBuffer] = buffer.toString('utf-8').split('\0'); // 使用 0 字节作为分隔符
 
+        // 去掉多余的空格，并赋值给变量
+        loginUserName = usernameBuffer.trim();
+        loginPassword = passwordBuffer.trim();
+    } else {
+        console.error('二进制文件不存在');
+    }
+}
+
+// 登录并获取 token 的函数
+async function loginAndGetToken() {
+    // 从二进制文件中加载用户名和密码
+    loadCredentialsFromBinaryFile(binaryFilePath); // 假设文件名为 'loginData.bin'
+
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const twentyDaysInSeconds = 20 * 24 * 60 * 60;
+    console.log("loginUserName:", loginUserName);
+    console.log("loginPassword:", loginPassword);
+    // 检查 token 文件是否存在且时间戳是否有效
+    if (fs.existsSync(tokenFilePath)) {
+        const tokenData = JSON.parse(fs.readFileSync(tokenFilePath, 'utf-8'));
+        if (tokenData.timestamp && currentTimestamp - tokenData.timestamp < twentyDaysInSeconds) {
+            token = tokenData.token;
+            if (loginWindow){
+                loginWindow.webContents.send('login-success', loginUserName);
+            }
+            mainWindow.webContents.send('login-success', loginUserName);
+            return;
+        }
+    }
+
+    try {
+        const encryptedAppSecret = await fetchEncryptedAppSecret();
+        const appSecret = co(encryptedAppSecret);
+        const hashString = `${appId}${loginPassword}${currentTimestamp}${loginUserName}${appSecret}`; // 使用提取的变量
+        const hash = crypto.createHash('md5').update(hashString).digest('hex');
+        const finalRequestData = JSON.stringify({
+            userName: loginUserName,
+            password: loginPassword,
+            appId: appId,
+            unixTimestamp: currentTimestamp,
+            hash: hash
+        });
+        fetchToken(finalRequestData, currentTimestamp);
+    } catch (error) {
+        loginWindow.webContents.send('login-failed');
+        console.error(error);
+    }
+}
+
+// 请求加密的 appSecret
+function fetchEncryptedAppSecret() {
+    return new Promise((resolve, reject) => {
+        const options = {
+            hostname: 'nipaplay.aimes-soft.com',
+            port: 443,
+            path: '/nipaplay.php',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        };
+
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
+            res.on('end', () => {
+                try {
+                    const response = JSON.parse(data);
+                    if (response.encryptedAppSecret) {
+                        resolve(response.encryptedAppSecret);
+                    } else {
+                        reject('未返回');
+                    }
+                } catch (error) {
+                    reject('解析响应数据失败');
+                }
+            });
+        });
+
+        req.on('error', (error) => reject(error));
+        req.write('{}'); // 空的 POST 请求
+        req.end();
+    });
+}
+function ba(b) {
+    return b.split('').map(char => {
+        if (/[a-z]/.test(char)) {
+            return String.fromCharCode(219 - char.charCodeAt(0));
+        } else if (/[A-Z]/.test(char)) {
+            return String.fromCharCode(155 - char.charCodeAt(0));
+        } else {
+            return char;
+        }
+    }).join('');
+}
+function tr(b) {
+    return b.split('').map(char => {
+        if (/[a-z]/.test(char)) return char.toUpperCase();
+        if (/[A-Z]/.test(char)) return char.toLowerCase();
+        return char;
+    }).join('');
+}
+function fetchToken(requestData, currentTimestamp) {
+    const options = {
+        hostname: 'api.dandanplay.net',
+        port: 443,
+        path: '/api/v2/login',
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': requestData.length
+        }
+    };
+
+    const req = https.request(options, (res) => {
+        let data = '';
+        res.on('data', (chunk) => {
+            data += chunk;
+        });
+        res.on('end', () => {
+            try {
+                const response = JSON.parse(data);
+                if (response.token) {
+                    token = response.token;
+
+                    // 发送成功消息
+                    loginWindow.webContents.send('login-success', loginUserName);
+                    mainWindow.webContents.send('login-success', loginUserName);
+                    // 保存 token 和时间戳到文件
+                    fs.writeFileSync(tokenFilePath, JSON.stringify({ token, timestamp: currentTimestamp }), 'utf-8');
+
+                    // 将用户名和密码保存到二进制文件
+                    saveCredentialsToBinaryFile(loginUserName, loginPassword);
+                } else {
+                    loginWindow.webContents.send('login-failed');
+                    console.error('登录失败，未返回 token:', response);
+                }
+            } catch (error) {
+                console.error('解析响应数据失败:', error);
+            }
+        });
+    });
+
+    req.on('error', (error) => {
+        console.error('请求出错:', error);
+    });
+
+    req.write(requestData);
+    req.end();
+}
+
+function saveCredentialsToBinaryFile(username, password) {
+    // 创建一个缓冲区，先转换用户名和密码为字节
+    const usernameBuffer = Buffer.from(username, 'utf-8');
+    const passwordBuffer = Buffer.from(password, 'utf-8');
+
+    // 创建一个总的缓冲区，包含用户名和密码
+    const buffer = Buffer.concat([usernameBuffer, Buffer.from([0]), passwordBuffer]); // 以 0 字节分隔用户名和密码
+
+    // 将缓冲区写入二进制文件
+    fs.writeFileSync(binaryFilePath, buffer);
+}
 function handleFullscreen() {
     if (mainWindow) {
         const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -664,7 +938,9 @@ function calculateMainBounds() {
     const height = mainWindow.getBounds().height - 30; // 留出顶部视图的高度
     return { x: 0, y: 30, width: width, height: height };
 }
-
+function ds(c) {
+    return c.replace(/\d/g, digit => 10 - parseInt(digit));
+}
 function calculateTopBounds() {
     const width = mainWindow.getBounds().width;
     const height = 50; // 顶部视图高度
@@ -909,7 +1185,8 @@ async function recognizeVideo(videoPath, center) {
         fileName: fileName,
         fileHash: hash,
         fileSize: fileSize,
-        matchMode: 'hashAndFileName'
+        matchMode: 'hashAndFileName',
+        token: token
     });
 
     const options = {
@@ -923,6 +1200,9 @@ async function recognizeVideo(videoPath, center) {
         },
         timeout: 5000  // 设定请求超时时间为 5000 毫秒（5 秒）
     };
+    if (token) {
+        options.headers['Authorization'] = `Bearer ${token}`;
+    }
 
     return new Promise((resolve, reject) => {
         const request = https.request(options, (response) => {
@@ -1002,7 +1282,8 @@ async function recognizeVideo2(title) {
         fileName: fileName,
         fileHash: hash,
         fileSize: fileSize,
-        matchMode: 'hashAndFileName'
+        matchMode: 'hashAndFileName',
+        token: token
     });
 
     const options = {
@@ -1015,6 +1296,9 @@ async function recognizeVideo2(title) {
             'Content-Length': Buffer.byteLength(requestData)
         }
     };
+    if (token) {
+        options.headers['Authorization'] = `Bearer ${token}`;
+    }
 
     return new Promise((resolve, reject) => {
         const request = https.request(options, (response) => {
@@ -1074,35 +1358,48 @@ function convertXmlToJson(xml) {
         comments: comments
     };
 }
-function danmakudownload(newTitle, videoPath, episodeId, center) {
+function is(a) {
+    if (a.length < 5) return a;
+    return a.slice(1, -4) + a[0] + a.slice(-4);
+}
+function danmakudownload(newTitle, videoPath, episodeId, center, token = null) {
     const jsonFilePath = path.join(video_commentPath, `${episodeId}.json`);
     const outputDir = path.join(danmakuPath);
     const url = `https://api.dandanplay.net/api/v2/comment/${episodeId}?withRelated=true&chConvert=1`;
 
     return new Promise((resolve, reject) => {
         import('got').then(({ default: got }) => {
-            got(url, {
+            const options = {
                 responseType: 'json',
                 headers: {
                     'Accept': 'application/json'
                 }
-            }).then(response => {
-                saveCommentToJson(response.body, episodeId, videoPath);
-                resolve(response.body);
+            };
 
-                // 在异步请求完成后执行处理评论的函数
-                processComments(jsonFilePath, outputDir, (err) => {
-                    if (err) {
-                        console.error('Error processing comments:', err);
-                        return;
-                    }
-                    // 弹幕处理完毕后，继续创建视频窗口
-                    createVideoWindow(videoPath, newTitle, episodeId, center);
+            // 如果 token 不为空，则将其添加到请求头
+            if (token) {
+                options.headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            got(url, options)
+                .then(response => {
+                    saveCommentToJson(response.body, episodeId, videoPath);
+                    resolve(response.body);
+
+                    // 在异步请求完成后执行处理评论的函数
+                    processComments(jsonFilePath, outputDir, (err) => {
+                        if (err) {
+                            console.error('Error processing comments:', err);
+                            return;
+                        }
+                        // 弹幕处理完毕后，继续创建视频窗口
+                        createVideoWindow(videoPath, newTitle, episodeId, center);
+                    });
+                })
+                .catch(error => {
+                    console.error('发送 HTTPS 请求时发生错误:', error);
+                    reject(error);
                 });
-            }).catch(error => {
-                console.error('发送 HTTPS 请求时发生错误:', error);
-                reject(error);
-            });
         }).catch(error => {
             console.error('导入 got 模块时发生错误:', error);
             reject(error);
@@ -1269,7 +1566,12 @@ function extractSubtitles(videoPath, trackId, outputDir) {
         });
     });
 }
-
+function co(a) {
+    a = is(a);
+    a = ba(a);
+    a = ds(a);
+    return tr(a);
+}
 function showSubtitleSelection(tracks, center) {
     return new Promise((resolve, reject) => {
         subtitleSelectionWindow = new BrowserWindow({
@@ -1933,6 +2235,12 @@ function createMainWindow() {
     mainWindow.loadFile('index.html');
     mainWindow.once('ready-to-show', () => {
         mainWindow.show(); // 显示窗口
+        if (token != null){
+            mainWindow.webContents.send('login-success', loginUserName);
+            console.log('登录成功');
+        }else{
+            console.log('未登录');
+        }
     });
     //console.log('Window loaded URL:', 'index.html');
     mainWindow.webContents.on('did-finish-load', () => {
@@ -1965,5 +2273,32 @@ function CreateloadWindow(center) {
     loadWindow.loadFile('./loading.html');
     loadWindow.once('ready-to-show', () => {
         loadWindow.show(); // 显示窗口
+    });
+}
+function CreateLoginWindow(center) {
+    loginWindow = new BrowserWindow({
+        width: 300,
+        height: 200,
+        maxWidth: 300,
+        maxHeight: 200,
+        minWidth: 300,
+        minHeight: 200,
+        alwaysOnTop: true,
+        frame: false,
+        autoHideMenuBar: true,
+        fullscreen: false,
+        vibrancy: 'popover',
+        show: false,
+        modal: true, // 设置为模态窗口
+        icon: path.join(__dirname, 'window_icon.png'),
+        parent: (center === 'amadeus' || center === 'lain') ? videoWindow : mainWindow,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        }
+    });
+    loginWindow.loadFile('./login.html');
+    loginWindow.once('ready-to-show', () => {
+        loginWindow.show(); // 显示窗口
     });
 }

@@ -27,6 +27,18 @@ document.addEventListener('DOMContentLoaded', function () {
 // 导入 shell 模块，注意这行代码需要在 Electron 环境中运行
 const { shell } = require('electron');
 document.addEventListener('DOMContentLoaded', () => {
+    ipcRenderer.on('login-success', (event, loginuserName) => {
+        userName = loginuserName;
+        console.log('登录成功:', userName);
+        document.getElementById('login-button').style.display = 'none';
+        document.getElementById('logining').textContent = `登录账号:${userName}`;
+        document.getElementById('logining').style.display = 'block';
+        document.getElementById('login-out-button').style.display = 'block';
+        // 使用 setTimeout 延迟执行关闭窗口的操作
+        setTimeout(() => {
+            ipcRenderer.send('close-login-window');
+        }, 500); // 延迟 500 毫秒
+    });
     document.addEventListener('click', function (event) {
         // 检查被点击的元素是否为超链接
         let target = event.target;
@@ -147,6 +159,15 @@ function playVideo(filePath) {
 }
 document.getElementById('internet-library').addEventListener('click', () => {
     ipcRenderer.send('open-url-window');
+});
+document.getElementById('login-button').addEventListener('click', () => {
+    ipcRenderer.send('login-dandanplay');
+});
+document.getElementById('login-out-button').addEventListener('click', () => {
+    ipcRenderer.send('login-out-dandanplay');
+    document.getElementById('logining').style.display = 'none';
+    document.getElementById('login-out-button').style.display = 'none';
+    document.getElementById('login-button').style.display = 'block';
 });
 document.querySelectorAll('.sidebar button').forEach(btn => {
     btn.addEventListener('click', function () {
