@@ -28,8 +28,8 @@ const logFilePath = path.join(downloadsPath, 'app.log');
 const windowModePath = path.join(nipaPath, 'windowMode.json');
 // 获取应用的用户数据目录
 const userDataPath = app.getPath('userData');
-const userName = 'f23ui499dfij1mf9';
-const password = 'g54hu53t4ty45w';
+const userName = '';
+const password = '';
 let loginUserName;
 let loginPassword;
 const appId = "nipaplayv1";
@@ -690,8 +690,8 @@ async function loginAndGetToken() {
 
     const currentTimestamp = Math.floor(Date.now() / 1000);
     const twentyDaysInSeconds = 20 * 24 * 60 * 60;
-    console.log("loginUserName:", loginUserName);
-    console.log("loginPassword:", loginPassword);
+    //console.log("loginUserName:", loginUserName);
+    //console.log("loginPassword:", loginPassword);
     // 检查 token 文件是否存在且时间戳是否有效
     if (fs.existsSync(tokenFilePath)) {
         const tokenData = JSON.parse(fs.readFileSync(tokenFilePath, 'utf-8'));
@@ -2235,16 +2235,16 @@ function createMainWindow() {
     mainWindow.loadFile('index.html');
     mainWindow.once('ready-to-show', () => {
         mainWindow.show(); // 显示窗口
+    });
+    //console.log('Window loaded URL:', 'index.html');
+    mainWindow.webContents.on('did-finish-load', () => {
+        mainWindow.webContents.send('platform-info', { isMac });
         if (token != null){
             mainWindow.webContents.send('login-success', loginUserName);
             console.log('登录成功');
         }else{
             console.log('未登录');
         }
-    });
-    //console.log('Window loaded URL:', 'index.html');
-    mainWindow.webContents.on('did-finish-load', () => {
-        mainWindow.webContents.send('platform-info', { isMac });
     });
     //mainWindow.resizable = false;
 }

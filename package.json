@@ -1,7 +1,7 @@
 {
   "name": "nipaplay",
   "productName": "NipaPlay",
-  "version": "1.6.10",
+  "version": "1.6.11",
   "description": "咪啪～☆",
   "main": "main.js",
   "author": "DFsteve",
@@ -70,8 +70,9 @@
       "!**/electron-builder.yml",
       "!**/.DS_Store",
       "!**/*.bak",
-      "!**/ffmpeg/ffmpeg_mac",
-      "!**/ffmpeg/ffmpeg_win"
+      "!**/ffmpeg/ffmpeg_win",
+      "!**/ffmpeg/ffmpeg_linux64",
+      "!**/ffmpeg/ffmpeg_linuxarm"
     ],
     "publish": {
       "provider": "github",

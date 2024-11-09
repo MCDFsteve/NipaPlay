@@ -13,7 +13,90 @@
     --sidebar-width: 150px;
     /* 边栏宽度，更窄 */
 }
+.sidebar button img {
+    animation: none;
+}
 
+.sidebar button:hover img {
+    animation: scaleAnimation 0.5s ease forwards;
+}
+
+/* 定义序列动画 */
+@keyframes scaleAnimation {
+    0% {
+        transform: scale(1); /* 初始大小1倍 */
+    }
+    50% {
+        transform: scale(1.2); /* 放大到1.1倍 */
+    }
+    75% {
+        transform: scale(0.9); /* 缩回到1倍 */
+    }
+    88% {
+        transform: scale(1.1); /* 缩回到1倍 */
+    }
+    100% {
+        transform: scale(1.0); /* 缩回到1倍 */
+    }
+}
+
+.upload-button {
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+    width: 200px;
+    height: 200px;
+    color: var(--text-color);
+    background-color: rgba(200, 200, 200, 0.4);
+    border-radius: 20px;
+    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    backdrop-filter: blur(20px);
+    border: none;
+    position: absolute;
+    left: calc(50% + 22vw / 2);
+    top: 50%;
+    /* 新增：设置距顶部的比例 */
+    transform: translate(-50%, -50%);
+    /* 修改：同时在X和Y方向居中 */
+    -webkit-app-region: no-drag;
+}
+
+.upload-button:hover {
+    background-color: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 20px;
+    /* 修复悬停时的弧度 */
+    animation: uploadAnimation 0.5s ease forwards;
+}
+@keyframes uploadAnimation {
+    0% {
+        width:200px; 
+    }
+    50% {
+        width:300px; 
+    }
+    75% {
+        width:180px; 
+    }
+    88% {
+        width:220px; 
+    }
+    100% {
+        width:200px; 
+    }
+}
+
+.upload-icon {
+    width: 150px;
+    height: 150px;
+    background: url('icons/upload.png') no-repeat center;
+    background-size: contain;
+    scale:1;
+}
 @media (prefers-color-scheme: dark) {
     :root {
         --background-color: #222;
@@ -420,38 +503,6 @@ li.sidebar-button::before {
     overflow-x: hidden;
 }
 
-.upload-button {
-    cursor: pointer;
-    transition: background-color 0.3s, color 0.3s;
-    width: 200px;
-    height: 200px;
-    color: var(--text-color);
-    background-color: rgba(200, 200, 200, 0.4);
-    border-radius: 20px;
-    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    backdrop-filter: blur(20px);
-    border: none;
-    position: absolute;
-    left: calc(50% + 22vw / 2);
-    top: 50%;
-    /* 新增：设置距顶部的比例 */
-    transform: translate(-50%, -50%);
-    /* 修改：同时在X和Y方向居中 */
-    -webkit-app-region: no-drag;
-}
-
-.upload-button:hover {
-    background-color: rgba(0, 0, 0, 0.3);
-    color: #fff;
-    text-decoration: none;
-    border-radius: 20px;
-    /* 修复悬停时的弧度 */
-}
-
 @media (prefers-color-scheme: dark) {
     .upload-button {
         background-color: rgba(51, 51, 51, 0.75);
@@ -560,13 +611,6 @@ h2 {
         border-top: 1px solid rgb(70, 70, 70);
     }
 }
-.upload-icon {
-    width: 150px;
-    height: 150px;
-    background: url('icons/upload.png') no-repeat center;
-    background-size: contain;
-
-}
 
 .anime-list {
     display: flex;
@@ -584,7 +628,6 @@ h2 {
     text-align: left;
     box-sizing: border-box;
 }
-
 .anime-image {
     width: auto;
     height: 200px;
@@ -594,7 +637,7 @@ h2 {
     /* 添加圆角 */
 }
 .anime-image img {
-    border-radius: 2px;
+    border-radius: 5px;
     /* 添加圆角 */
     width: auto;
     height: 200px;
@@ -606,6 +649,7 @@ h2 {
 }
 .anime-image img:hover {
     opacity: 0.7;
+
 }
 .anime-title {
     flex: 0 0 auto;
@@ -689,7 +733,7 @@ h2 {
     width: auto;
     height: 300px;
     max-height: auto;
-    border-radius: 2px;
+    border-radius: 5px;
     box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.3);
 }
 
