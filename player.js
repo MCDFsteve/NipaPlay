@@ -1280,19 +1280,18 @@ function handlessaPath(filePath, downloadsPath) {//这个函数被两处地方�
         return; // 跳过后续的拷贝操作
     }
 }
-function handleDownloadsPath(filePath, downloadsPath) {
+async function handleDownloadsPath(filePath, downloadsPath) {
     const fs = require('fs');
     const path = require('path');
-    const nipaPath = path.join(downloadsPath, 'nipaplay');
-    const subPath = path.join(nipaPath, 'sub');
-    const assFilePath = path.join(subPath, title + '.ass');
+    try {
+        const nipaPath = path.join(downloadsPath, 'nipaplay');
+        const subPath = path.join(nipaPath, 'sub');
+        const assFilePath = path.join(subPath, `${title}.ass`);
 
-    fs.readFile(filePath, 'utf8', (err, data) => {
-        if (err) {
-            console.error('Error reading SRT file:', err);
-            return;
-        }
+        // 读取 SRT 文件
+        const data = await fs.promises.readFile(filePath, 'utf8');
 
+        // 初始化 ASS 文件头信息
         let assData = `[Script Info]
 Title: Converted Subtitle
 Original Script: SRT to ASS Converter
@@ -1310,40 +1309,47 @@ Style: Default,ChillRoundM,20,&H00FFFFFF,&H000000FF,&H00000000,&H64000000,-1,0,0
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `;
 
+        // 解析并转换 SRT 字幕
         let subtitles = [];
-
-        // 解析SRT字幕
         const subtitleBlocks = data.split(/\n\n/);
         subtitleBlocks.forEach(block => {
-            let match = block.match(/(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})\n([\s\S]+)/);
+            const match = block.match(/(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})\n([\s\S]+)/);
             if (match) {
                 subtitles.push({
                     index: parseInt(match[1]),
                     start: match[2].replace(',', '.'),
                     end: match[3].replace(',', '.'),
-                    text: match[4].replace(/\n/g, '\\N') // 替换换行为 \N（ASS 格式中的换行符）
+                    text: match[4].replace(/\n/g, '\\N') // 将换行符转换为 \N
                 });
             }
         });
 
-        // 按时间排序字幕
+        // 按开始时间排序
         subtitles.sort((a, b) => parseFloat(a.start) - parseFloat(b.start));
 
-        // 将字幕添加到ASS文件中
+        // 添加字幕内容到 ASS 数据
         subtitles.forEach(sub => {
-            assData += `Dialogue: 0,${convertTimeToASS(sub.start)},${convertTimeToASS(sub.end)},Default,,0,0,0,,${sub.text}\n`;
+            const lines = sub.text.split('\\N');
+            if (lines.length > 1) {
+                // 多行字幕的情况，分成两条对话，第一行稍微上移
+                assData += `Dialogue: 0,${convertTimeToASS(sub.start)},${convertTimeToASS(sub.end)},Default,,0,0,10,,${lines[1]}\n`;
+                assData += `Dialogue: 0,${convertTimeToASS(sub.start)},${convertTimeToASS(sub.end)},Default,,0,0,10,,${lines[0]}\n`;
+            } else {
+                // 单行字幕，默认位置
+                assData += `Dialogue: 0,${convertTimeToASS(sub.start)},${convertTimeToASS(sub.end)},Default,,0,0,10,,${lines[0]}\n`;
+            }
         });
 
         // 写入 ASS 文件
-        fs.writeFile(assFilePath, assData, 'utf8', (err) => {
-            if (err) {
-                console.error('Error writing ASS file:', err);
-            } else {
-                console.log('ASS file saved:', assFilePath);
-                loadASSSubtitles(assFilePath); // 加载转换后的 ASS 字幕
-            }
-        });
-    });
+        await fs.promises.writeFile(assFilePath, assData, 'utf8');
+        console.log('ASS file saved:', assFilePath);
+
+        // 调用加载字幕函数
+        loadASSSubtitles(assFilePath);
+
+    } catch (error) {
+        console.error('Error:', error);
+    }
 }
 
 // 将 SRT 的时间格式（hh:mm:ss,ms）转换为 ASS 的时间格式（h:mm:ss.cs）
@@ -1595,7 +1601,7 @@ function sendDanmaku() {
         const color = 16777215; // 白色的 RGB 值（16777215是白色的十进制值）
 
         DanmakuShoot(text);
-        ipcRenderer.send('danmaku-shoot', text, formattedTime, mode, color,episodeId);
+        ipcRenderer.send('danmaku-shoot', text, formattedTime, mode, color, episodeId);
         input.value = ""; // 发送后清空输入框
     }
 }
@@ -1660,6 +1666,13 @@ async function DanmuKey() {
                 document.execCommand('redo');
                 console.log('重做成功！');
                 event.preventDefault();  // 阻止默认的重做事件
+            }
+            break;
+        case 'enter': // 发送弹幕
+            if (document.activeElement === danmuInput) {
+                sendDanmaku();
+                console.log('弹幕已发送');
+                event.preventDefault();  // 阻止默认的回车行为
             }
             break;
     }
