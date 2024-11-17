@@ -868,7 +868,7 @@ winscreenButton.addEventListener('mouseleave', () => {
     popWin.hidePopover()
 });
 //////
-progressBar.addEventListener('mousemove', (event) => {
+/*progressBar.addEventListener('mousemove', (event) => {
     const seekBarRect = seekBar.getBoundingClientRect();
     const seekBarSon = event.clientX - seekBarRect.left;
     const seekBarWidth = seekBarRect.width;
@@ -890,6 +890,34 @@ progressBar.addEventListener('mousemove', (event) => {
         followDiv.hidePopover()
         popBar2.hidePopover()
     }
+});*/
+//////
+seekBar.addEventListener('mousemove', (event) => {
+    const seekBarRect = seekBar.getBoundingClientRect();
+    const seekBarSon = event.clientX - seekBarRect.left;
+    const seekBarWidth = seekBarRect.width;
+    const seekBar100 = seekBarSon / seekBarWidth;
+    const seekBarTime = videoPlayer.duration * seekBar100;
+    popBar2.textContent = convertToMinutesSeconds(seekBarTime);
+    const relativePosition = ((seekBar.value - seekBar.min) / (seekBar.max - seekBar.min)) * seekBarWidth;
+    // 计算滑块的绝对位置
+    const thumbLeft = seekBarRect.left + relativePosition - 1.5;
+    const thumbtop = seekBarRect.y - 20;
+    const thumbRight = thumbLeft + 3;
+    popBar2.style.marginLeft = `calc(${event.clientX}px)`;
+    if (event.clientX >= thumbLeft && event.clientX <= thumbRight) {
+        followDiv.showPopover()
+    }
+    else if (event.clientX >= seekBarRect.left && event.clientX <= seekBarRect.right) {
+        popBar2.showPopover()
+    } else {
+        followDiv.hidePopover()
+        popBar2.hidePopover()
+    }
+});
+seekBar.addEventListener('mouseleave', () => {
+    followDiv.hidePopover()
+    popBar2.hidePopover()
 });
 //////
 subButton.addEventListener('mouseenter', () => {
@@ -1170,9 +1198,11 @@ document.getElementById('subtitle-button').addEventListener('click', () => {
 let currentAssInstance = null; // 用于存储当前的 ASS 字幕实例
 function convertSRTtoVTT(filePath) {
     let downloadsPath;
-    ipcRenderer.send('get-downloads-path');
+    ipcRenderer.send('get-downloads-path2');
+    console.log("haha")
     // 接收下载路径
-    ipcRenderer.on('downloads-path', (event, downloadsPath) => {
+    ipcRenderer.on('downloads-path2', (event, downloadsPath) => {
+        console.log('filePath and Downloads path:', filePath, downloadsPath);
         // 这里你可以根据获取到的下载路径进行后续操作
         handleDownloadsPath(filePath, downloadsPath);
     });
@@ -1283,10 +1313,23 @@ function handlessaPath(filePath, downloadsPath) {//这个函数被两处地方�
 async function handleDownloadsPath(filePath, downloadsPath) {
     const fs = require('fs');
     const path = require('path');
+    console.log("filepath:", filePath)
     try {
         const nipaPath = path.join(downloadsPath, 'nipaplay');
         const subPath = path.join(nipaPath, 'sub');
+
+        // 确保字幕目录存在
+        await fs.promises.mkdir(subPath, { recursive: true });
+
+        // 获取文件名作为标题（不含扩展名）
+        const title = path.basename(filePath, path.extname(filePath));
+
         const assFilePath = path.join(subPath, `${title}.ass`);
+        const srtFilePath = path.join(subPath, `${title}.srt`);
+        console.log("assFilePath:", assFilePath);
+
+        // 复制 SRT 文件到字幕目录，强制覆盖
+        await fs.promises.copyFile(filePath, srtFilePath);
 
         // 读取 SRT 文件
         const data = await fs.promises.readFile(filePath, 'utf8');
@@ -1340,16 +1383,22 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             }
         });
 
-        // 写入 ASS 文件
+        // 写入 ASS 文件，强制覆盖
         await fs.promises.writeFile(assFilePath, assData, 'utf8');
-        console.log('ASS file saved:', assFilePath);
+        console.log('ASS 文件已保存:', assFilePath);
 
         // 调用加载字幕函数
         loadASSSubtitles(assFilePath);
 
     } catch (error) {
-        console.error('Error:', error);
+        console.error('错误:', error);
     }
+}
+
+// 时间格式转换函数
+function convertTimeToASS(time) {
+    // 将时间格式从 "HH:MM:SS.SSS" 转换为 ASS 时间格式 "H:MM:SS.ss"
+    return time.replace('.', ':');
 }
 
 // 将 SRT 的时间格式（hh:mm:ss,ms）转换为 ASS 的时间格式（h:mm:ss.cs）
@@ -1361,8 +1410,7 @@ function convertTimeToASS(time) {
 }
 function loadASSSubtitles(filePath) {
     if (currentAssInstance) {
-        currentAssInstance.destroy();
-        currentAssInstance = null;
+        currentAssInstance.setTrackByUrl(filePath);
     }
     console.log('Loading ASS subtitles:', filePath);
     // 这里不需要 fetch 加载字幕文本，因为你需要的是文件路径

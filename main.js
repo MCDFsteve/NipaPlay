@@ -6,6 +6,8 @@ const fs2 = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
 const os = require('os');
+const SMB2 = require('smb2');
+let smbClient = null; // SMB 客户端实例
 const { processComments } = require('./danmaku_tran.js');
 const downloadsPath = app.getPath('userData');
 const nipaPath = path.join(downloadsPath, 'nipaplay');
@@ -204,6 +206,62 @@ app.on('ready', () => {
 ipcMain.on('log-message', (event, message) => {
     console.log(message);
 });
+ipcMain.on('load-smb', async (event, smbUrl) => {
+    console.log(`尝试连接到 SMB 地址: ${smbUrl}`);
+
+    try {
+        // 动态解析 SMB URL
+        const { host, port, share } = parseSmbUrl(smbUrl);
+
+        // 初始化 SMB 客户端
+        const smbClient = new SMB2({
+            share: `\\\\${host}\\${share}`, // SMB 格式路径
+            port: port || 445, // 默认端口为 445
+            domain: '', // 根据实际情况填写域
+            username: '', // 初始为空
+            password: ''  // 初始为空
+        });
+
+        // 测试连接
+        await testSmbConnection(smbClient);
+
+        // 如果成功，发送成功消息
+        event.sender.send('smb-connection-success', `成功连接到 SMB 地址: ${smbUrl}`);
+    } catch (error) {
+        if (error.code === 'STATUS_LOGON_FAILURE') {
+            console.log('需要身份验证');
+            event.sender.send('smb-auth-required', {
+                message: '需要输入账号和密码以访问 SMB 地址',
+                smbUrl
+            });
+        } else {
+            console.error('SMB 错误:', error.message);
+            event.sender.send('smb-connection-error', `无法连接到 SMB 地址: ${error.message}`);
+        }
+    }
+});
+
+ipcMain.on('smb-auth-credentials', async (event, credentials) => {
+    const { smbUrl, username, password } = credentials;
+
+    console.log(`尝试重新连接到 SMB 地址: ${smbUrl} 使用用户名: ${username}`);
+
+    smbClient = new SMB2({
+        share: smbUrl,
+        username,
+        password,
+        domain: ''
+    });
+
+    try {
+        await testSmbConnection(smbClient);
+        event.sender.send('smb-connection-success', `成功连接到 SMB 地址: ${smbUrl}`);
+    } catch (error) {
+        console.error('重新连接失败:', error);
+        event.sender.send('smb-connection-error', `无法连接到 SMB 地址: ${error.message}`);
+    }
+});
+
 ipcMain.on('login-dandanplay', (event) => {
     CreateLoginWindow();
 });
@@ -682,7 +740,29 @@ function loadCredentialsFromBinaryFile(filePath) {
         console.error('二进制文件不存在');
     }
 }
+// 解析 SMB URL
+function parseSmbUrl(smbUrl) {
+    const url = new URL(smbUrl);
+    const pathParts = url.pathname.split('/').filter(Boolean); // 去掉空路径片段
+    return {
+        host: url.hostname,
+        port: url.port ? parseInt(url.port, 10) : undefined,
+        share: pathParts[0] || '' // 取第一个路径片段作为共享路径
+    };
+}
 
+// 测试 SMB 连接
+async function testSmbConnection(client) {
+    return new Promise((resolve, reject) => {
+        client.readdir('', (err, files) => {
+            if (err) {
+                return reject(err);
+            }
+            console.log('根目录文件列表:', files);
+            resolve(files);
+        });
+    });
+}
 // 登录并获取 token 的函数
 async function loginAndGetToken() {
     // 从二进制文件中加载用户名和密码
@@ -950,10 +1030,11 @@ function calculateFileHash(filePath, algorithm = 'md5') {
     return new Promise((resolve, reject) => {
         const hash = crypto.createHash(algorithm);
         const stream = fs.createReadStream(filePath);
+        console.log("hash 1");
         let totalBytes = 0;
         const limit = 16 * 1024 * 1024; // 16 MB的限制
         let digestCalled = false; // 添加标志位，防止多次调用digest
-
+        console.log("hash 2");
         stream.on('error', err => reject(err));
         stream.on('data', chunk => {
             totalBytes += chunk.length;
@@ -964,17 +1045,21 @@ function calculateFileHash(filePath, algorithm = 'md5') {
                 stream.close();
             }
         });
+        console.log("hash 3");
         stream.on('end', () => {
             // 仅在正常结束流（未提前关闭）时返回哈希
             if (totalBytes <= limit && !digestCalled) {
                 digestCalled = true;
+                console.log("end")
                 resolve(hash.digest('hex'));
             }
         });
+        console.log("hash 4");
         stream.on('close', () => {
             // 如果流被提前关闭，返回当前哈希状态
             if (!digestCalled) {
                 digestCalled = true;
+                console.log("close")
                 resolve(hash.digest('hex'));
             }
         });
@@ -1172,15 +1257,18 @@ function getRecognitionResult(videoPath) {
     return store.get(hash);
 }
 async function recognizeVideo(videoPath, center) {
+    console.log("vaideopath and center:", videoPath, center);
     const fileName = path.basename(videoPath);
+    console.log("fileName:",fileName);
     let hash;
     if (center === 'lain') {
         hash = 'd41d8cd98f00b204e9800998ecf8427e';
     } else {
         hash = await calculateFileHash(videoPath, 'md5');
     }
+    console.log("hash:",hash);
     const fileSize = getFileSize(videoPath);
-
+    console.log("fileSize:",fileSize);
     const requestData = JSON.stringify({
         fileName: fileName,
         fileHash: hash,
@@ -1203,15 +1291,15 @@ async function recognizeVideo(videoPath, center) {
     if (token) {
         options.headers['Authorization'] = `Bearer ${token}`;
     }
-
+    console.log("is 1");
     return new Promise((resolve, reject) => {
         const request = https.request(options, (response) => {
             let data = '';
-
+            console.log("is 2");
             response.on('data', (chunk) => {
                 data += chunk;
             });
-
+            console.log("is 3");
             response.on('end', () => {
                 try {
                     const responseData = JSON.parse(data);
@@ -1229,7 +1317,6 @@ async function recognizeVideo(videoPath, center) {
                 }
             });
         });
-
         request.on('error', (error) => {
             console.error('发送 HTTPS 请求时发生错误:', error);
             resolve(false);
@@ -2059,7 +2146,7 @@ function isLocalPath(filePath) {
     return !filePath.startsWith('http://') && !filePath.startsWith('https://');
 }
 async function openVideoAndFetchDetails(videoPath, episodeId, center, isDanmukuChoose = false) {
-    //console.log("函数开始执行，视频路径：", videoPath);
+    console.log("函数开始执行，视频路径：", videoPath);
     const outputDir = path.join(danmakuPath);
 
     // 显示加载中窗口
@@ -2088,11 +2175,15 @@ async function openVideoAndFetchDetails(videoPath, episodeId, center, isDanmukuC
         //console.log("未找到存储结果，开始识别:", videoPath);
         let response;
         if (videoPath.startsWith('https')) {
+            console.log("1")
             response = await recognizeVideo2(videoPath);
+            console.log("response:", response);
         } else {
+            console.log("2")
             response = await recognizeVideo(videoPath, center);
+            console.log("response:", response);
         }
-
+        console.log("response:", response);
         // 如果 response 为 false，直接执行 createSelectionWindow
         if (response === false) {
             createSelectionWindow([], videoPath, episodeId, center);
@@ -2186,7 +2277,7 @@ function createMainWindow() {
                     }
                 },
                 {
-                    label: '播放网络媒体库',
+                    label: '播放Url链接',
                     click: () =>
                         createUrlWindow()
                 },

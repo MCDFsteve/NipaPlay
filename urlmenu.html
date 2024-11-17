@@ -130,7 +130,7 @@
     <div class="drag-area"></div>
     <br>
     <input type="text" id="url-input" placeholder="在这里！放入神秘的蓝色链接！！" style="width: 100%;">
-    <button id="submit-url">加载url</button>
+    <button id="submit-url">加载链接</button>
     <script src="close.js"></script>
     <script>
         const { ipcRenderer } = require('electron');
@@ -141,15 +141,59 @@
         closeButton.addEventListener('click', () => {
             ipcRenderer.send('close-url-window');
         });
-        document.getElementById('submit-url').addEventListener('click', () => {
-            const urlinput = document.getElementById('url-input');
-            const submiturl = document.getElementById('submit-url');
+        const urlinput = document.getElementById('url-input');
+        const submiturl = document.getElementById('submit-url');
+
+        submiturl.addEventListener('click', () => {
+            const url = urlinput.value.trim();
+
+            if (!isValidUrl(url) && !isValidSmbUrl(url)) { // 同时校验 SMB 和普通 URL
+                alert("这不对！！请输入有效的URL地址！");
+                return;
+            }
+
+            // 根据不同的地址类型发送不同的事件
+            if (url.startsWith('smb://')) {
+                ipcRenderer.send('load-smb', url); // 如果是 SMB 地址，发送 load-smb 事件
+            } else {
+                ipcRenderer.send('load-url', url); // 普通 URL，发送 load-url 事件
+            }
+
+            // 隐藏输入框和按钮
             urlinput.style.display = 'none';
             submiturl.style.display = 'none';
-            const url = document.getElementById('url-input').value;
-            ipcRenderer.send('load-url', url);
+            document.getElementById('loading-message').style.display = 'block'; // 显示加载提示
+        });
+        ipcRenderer.on('smb-auth-required', (event, data) => {
+            const { smbUrl, message } = data;
+            alert(`${message}\n地址: ${smbUrl}`);
+
+            const username = prompt('请输入用户名:');
+            const password = prompt('请输入密码:');
+            ipcRenderer.send('smb-auth-credentials', { smbUrl, username, password });
         });
 
+        ipcRenderer.on('smb-connection-success', (event, message) => {
+            alert(message);
+        });
+
+        ipcRenderer.on('smb-connection-error', (event, errorMessage) => {
+            alert(`连接失败: ${errorMessage}`);
+        });
+        // URL 校验函数
+        function isValidUrl(url) {
+            try {
+                const parsedUrl = new URL(url);
+                return ['http:', 'https:'].includes(parsedUrl.protocol);
+            } catch (error) {
+                return false;
+            }
+        }
+
+        // SMB 地址校验函数
+        function isValidSmbUrl(url) {
+            return url.startsWith('smb://'); // 只检查是否以 smb:// 开头
+        }
         // Enable shortcuts for Cut, Copy, and Paste
         document.getElementById('url-input').addEventListener('keydown', (event) => {
             if ((event.ctrlKey || event.metaKey) && ['x', 'c', 'v'].includes(event.key.toLowerCase())) {

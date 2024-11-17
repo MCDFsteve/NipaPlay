@@ -1,7 +1,7 @@
 {
   "name": "nipaplay",
   "productName": "NipaPlay",
-  "version": "1.6.12",
+  "version": "1.6.13",
   "description": "咪啪～☆",
   "main": "main.js",
   "author": "DFsteve",
@@ -14,6 +14,7 @@
     "jsdom": "^24.0.0",
     "libass-wasm": "^4.1.0",
     "prebuild-install": "^7.1.2",
+    "smb2": "^0.2.11",
     "steamworks": "^0.0.1",
     "steamworks.js": "^0.3.1",
     "uuid": "^9.0.1",

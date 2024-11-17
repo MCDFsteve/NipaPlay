@@ -16,7 +16,14 @@
 .sidebar button img {
     animation: none;
 }
+button, input[type="button"], input[type="submit"] {
+    outline: none;
+}
 
+button:focus, input[type="button"]:focus, input[type="submit"]:focus {
+    outline: none;
+    box-shadow: none;
+}
 .sidebar button:hover img {
     animation: scaleAnimation 0.5s ease forwards;
 }
