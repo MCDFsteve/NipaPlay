@@ -3,7 +3,12 @@ const fs = require('fs');
 const path = require('path');
 
 function convertHexColorToCSS(hex) {
-    return '#' + hex.toString(16).padStart(6, '0');
+    // 将负数转换为无符号整数形式
+    const unsignedHex = hex >>> 0;
+    // 提取颜色部分（只保留 RGB）
+    const colorHex = unsignedHex & 0xFFFFFF;
+    // 转换为 CSS 格式
+    return '#' + colorHex.toString(16).padStart(6, '0');
 }
 function escapeStringForJS(str) {
     return str

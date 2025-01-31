@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // 更新所有需要显示版本号的元素
     document.getElementById('version-text').textContent = `ver${nipaplayVersion}`;
     document.querySelectorAll('.about-version').forEach(function (element) {
-        element.innerHTML = `NipaPlay.Ver${nipaplayVersion}<br>咪啪～☆<br>作者：戴夫邻居史蒂夫 ©️copyright2024 Aimes Soft.<br>项目地址：<br> <a href="https://github.com/MCDFsteve/NipaPlay" class="normal-link">https://github.com/MCDFsteve/NipaPlay</a>`;
+        element.innerHTML = `NipaPlay.Ver${nipaplayVersion}<br>咪啪～☆<br>作者：戴夫邻居史蒂夫 ©️copyright2024-2025 Aimes Soft.<br>项目地址：<br> <a href="https://github.com/MCDFsteve/NipaPlay" class="normal-link">https://github.com/MCDFsteve/NipaPlay</a>`;
     });
 });
 // 导入 shell 模块，注意这行代码需要在 Electron 环境中运行

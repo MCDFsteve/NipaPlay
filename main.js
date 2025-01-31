@@ -12,7 +12,7 @@ const { processComments } = require('./danmaku_tran.js');
 const downloadsPath = app.getPath('userData');
 const nipaPath = path.join(downloadsPath, 'nipaplay');
 const tokenFilePath = path.join(nipaPath, 'token.json');
-const binaryFilePath = path.join(nipaPath,'loginData.bin'); 
+const binaryFilePath = path.join(nipaPath, 'loginData.bin');
 const video_commentPath = path.join(nipaPath, 'video_comment');
 const danmakuPath = path.join(nipaPath, 'danmaku');
 const subPath = path.join(nipaPath, 'sub');
@@ -290,13 +290,13 @@ ipcMain.on('login-out-dandanplay', (event) => {
         event.reply('logout-error', { message: 'Logout failed', error: error.message });
     }
 });
-ipcMain.on('login-client', (event, {username,password}) => {
+ipcMain.on('login-client', (event, { username, password }) => {
     loginUserName = username;
     loginPassword = password;
-    console.log(loginUserName,loginPassword);
+    console.log(loginUserName, loginPassword);
     loginAndGetToken();
 });
-ipcMain.on('danmaku-shoot', (event, text, formattedTime, mode, color, episodeId) => {
+ipcMain.on('danmaku-shoot', async (event, text, formattedTime, mode, color, episodeId) => {
     // 构建请求数据
     const requestData = JSON.stringify({
         time: formattedTime,
@@ -305,18 +305,37 @@ ipcMain.on('danmaku-shoot', (event, text, formattedTime, mode, color, episodeId)
         comment: text
     });
 
+    // 获取当前时间戳
+    const timestamp = Math.floor(Date.now() / 1000); // 当前 UTC 时间戳（单位为秒）
+
+    // 获取请求路径（不包括域名和查询参数）
+    const apiPath = `/api/v2/comment/${episodeId}`;
+
+    // 获取 AppSecret（假设从某个函数获取加密的 AppSecret）
+    const encryptedAppSecret = await fetchEncryptedAppSecret(); // 假设此函数返回加密的 AppSecret
+    const appSecret = co(encryptedAppSecret); // 解密 AppSecret，co() 为解密操作的函数
+
+    // 计算签名
+    const signatureString = `${'nipaplayv1'}${timestamp}${apiPath}${appSecret}`; // 拼接 AppId、Timestamp、apiPath 和 AppSecret
+    const signature = crypto.createHash('sha256').update(signatureString).digest('base64'); // 使用 sha256 计算哈希并进行 base64 编码
+
+    // 设置请求选项
     const options = {
         hostname: 'api.dandanplay.net',
         path: `/api/v2/comment/${episodeId}`,
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Bearer ${token}`, // 使用全局的 token 作为身份验证
             'Accept': 'application/json',
-            'Content-Length': Buffer.byteLength(requestData)
+            'Content-Length': Buffer.byteLength(requestData),
+            'X-AppId': 'nipaplayv1',  // 使用你的 AppId
+            'X-Signature': signature, // 使用计算的签名
+            'X-Timestamp': timestamp // 使用当前的时间戳
         }
     };
 
+    // 发送 HTTPS 请求
     const req = https.request(options, (res) => {
         let data = '';
 
@@ -330,7 +349,7 @@ ipcMain.on('danmaku-shoot', (event, text, formattedTime, mode, color, episodeId)
             try {
                 const responseData = JSON.parse(data);
                 console.log('Response from server:', responseData);
-                // 可以根据需要将响应数据发送回渲染进程
+                // 将响应数据发送回渲染进程
                 event.reply('danmaku-response', responseData);
             } catch (parseError) {
                 console.error('解析响应数据失败:', parseError);
@@ -339,6 +358,7 @@ ipcMain.on('danmaku-shoot', (event, text, formattedTime, mode, color, episodeId)
         });
     });
 
+    // 请求错误处理
     req.on('error', (error) => {
         console.error('发送请求时发生错误:', error);
         event.reply('danmaku-response', { error: '请求失败' });
@@ -640,30 +660,58 @@ ipcMain.on('select-video', async (event) => {
     }
 });
 ipcMain.handle('search-anime', async (event, searchTerm) => {
-    //console.log(`Searching for anime: ${searchTerm}`);
     const urlEncodedSearchTerm = encodeURIComponent(searchTerm);
     const url = `https://api.dandanplay.net/api/v2/search/episodes?anime=${urlEncodedSearchTerm}`;
-    //console.log('url:', url);
+
+    // 获取当前时间戳
+    const timestamp = Math.floor(Date.now() / 1000); // 当前 UTC 时间戳（单位为秒）
+
+    // 获取请求路径（不包括域名和查询参数）
+    const apiPath = `/api/v2/search/episodes`;
+
+    // 获取 AppSecret（假设从某个函数获取加密的 AppSecret）
+    const encryptedAppSecret = await fetchEncryptedAppSecret(); // 假设此函数返回加密的 AppSecret
+    const appSecret = co(encryptedAppSecret); // 解密 AppSecret，co() 为解密操作的函数
+
+    // 计算签名
+    const signatureString = `${'nipaplayv1'}${timestamp}${apiPath}${appSecret}`; // 拼接 AppId、Timestamp、apiPath 和 AppSecret
+    const signature = crypto.createHash('sha256').update(signatureString).digest('base64'); // 使用 sha256 计算哈希并进行 base64 编码
+
+    // 设置请求头
+    const options = {
+        headers: {
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`, // 使用全局的 token 作为身份验证
+            'X-AppId': 'nipaplayv1',  // 使用你的 AppId
+            'X-Signature': signature, // 使用计算的签名
+            'X-Timestamp': timestamp, // 使用当前的时间戳
+        }
+    };
+
     return new Promise((resolve, reject) => {
-        https.get(url, { headers: { 'Accept': 'application/json' } }, (response) => {
+        https.get(url, options, (response) => {
             let data = '';
+
+            // 接收数据块
             response.on('data', (chunk) => data += chunk);
+
+            // 响应结束
             response.on('end', () => {
                 try {
                     const parsedData = JSON.parse(data);
-                    //console.log("API Response:", parsedData);
+                    // 如果请求成功并且返回了动漫数据
                     if (parsedData.success && parsedData.animes) {
-                        resolve(parsedData.animes); // 确保返回正确的数组
+                        resolve(parsedData.animes); // 返回数组
                     } else {
-                        resolve([]); // 如果没有数据或不成功，返回空数组
+                        resolve([]); // 如果没有数据或请求不成功，返回空数组
                     }
                 } catch (error) {
-                    console.error('Failed to parse response:', error);
+                    console.error('解析响应数据失败:', error);
                     reject(error);
                 }
             });
         }).on('error', (error) => {
-            console.error('Request failed:', error);
+            console.error('请求失败:', error);
             reject(error);
         });
     });
@@ -729,7 +777,7 @@ function animateWindowResize(window, targetWidth, targetHeight, duration) {
 function loadCredentialsFromBinaryFile(filePath) {
     if (fs.existsSync(filePath)) {
         const buffer = fs.readFileSync(filePath);
-        
+
         // 假设用户名和密码之间用 0 字节分隔
         const [usernameBuffer, passwordBuffer] = buffer.toString('utf-8').split('\0'); // 使用 0 字节作为分隔符
 
@@ -777,7 +825,7 @@ async function loginAndGetToken() {
         const tokenData = JSON.parse(fs.readFileSync(tokenFilePath, 'utf-8'));
         if (tokenData.timestamp && currentTimestamp - tokenData.timestamp < twentyDaysInSeconds) {
             token = tokenData.token;
-            if (loginWindow){
+            if (loginWindow) {
                 loginWindow.webContents.send('login-success', loginUserName);
             }
             mainWindow.webContents.send('login-success', loginUserName);
@@ -1259,16 +1307,16 @@ function getRecognitionResult(videoPath) {
 async function recognizeVideo(videoPath, center) {
     console.log("vaideopath and center:", videoPath, center);
     const fileName = path.basename(videoPath);
-    console.log("fileName:",fileName);
+    console.log("fileName:", fileName);
     let hash;
     if (center === 'lain') {
         hash = 'd41d8cd98f00b204e9800998ecf8427e';
     } else {
         hash = await calculateFileHash(videoPath, 'md5');
     }
-    console.log("hash:",hash);
+    console.log("hash:", hash);
     const fileSize = getFileSize(videoPath);
-    console.log("fileSize:",fileSize);
+    console.log("fileSize:", fileSize);
     const requestData = JSON.stringify({
         fileName: fileName,
         fileHash: hash,
@@ -1449,49 +1497,69 @@ function is(a) {
     if (a.length < 5) return a;
     return a.slice(1, -4) + a[0] + a.slice(-4);
 }
-function danmakudownload(newTitle, videoPath, episodeId, center, token = null) {
+async function danmakudownload(newTitle, videoPath, episodeId, center) {
     const jsonFilePath = path.join(video_commentPath, `${episodeId}.json`);
     const outputDir = path.join(danmakuPath);
     const url = `https://api.dandanplay.net/api/v2/comment/${episodeId}?withRelated=true&chConvert=1`;
 
-    return new Promise((resolve, reject) => {
+    // 获取当前时间戳
+    const timestamp = Math.floor(Date.now() / 1000); // 当前 UTC 时间戳（单位为秒）
+
+    // 获取请求路径（不包括域名和查询参数），使用新的变量名 apiPath
+    const apiPath = `/api/v2/comment/${episodeId}`;
+
+    // 获取 AppSecret（假设从某个函数获取加密的 AppSecret）
+    const encryptedAppSecret = await fetchEncryptedAppSecret(); // 假设此函数返回加密的 AppSecret
+    const appSecret = co(encryptedAppSecret); // 解密 AppSecret，co() 为解密操作的函数
+
+    // 计算签名
+    const signatureString = `${'nipaplayv1'}${timestamp}${apiPath}${appSecret}`; // 拼接 AppId、Timestamp、apiPath 和 AppSecret
+    const signature = crypto.createHash('sha256').update(signatureString).digest('base64'); // 使用 sha256 计算哈希并进行 base64 编码
+
+    const options = {
+        method: 'GET',
+        responseType: 'json',
+        headers: {
+            'Accept': 'application/json',
+            'X-AppId': 'nipaplayv1', // 设置 AppId
+            'X-Signature': signature, // 设置生成的签名
+            'X-Timestamp': timestamp, // 设置时间戳
+        },
+        timeout: {
+            request: 5000,  // 请求超时5秒
+            connect: 5000   // 连接超时5秒
+        }
+    };
+
+    try {
+        // 动态导入 got 并发送请求
         import('got').then(({ default: got }) => {
-            const options = {
-                responseType: 'json',
-                headers: {
-                    'Accept': 'application/json'
-                }
-            };
-
-            // 如果 token 不为空，则将其添加到请求头
-            if (token) {
-                options.headers['Authorization'] = `Bearer ${token}`;
-            }
-
             got(url, options)
                 .then(response => {
                     saveCommentToJson(response.body, episodeId, videoPath);
-                    resolve(response.body);
-
-                    // 在异步请求完成后执行处理评论的函数
                     processComments(jsonFilePath, outputDir, (err) => {
                         if (err) {
                             console.error('Error processing comments:', err);
                             return;
                         }
-                        // 弹幕处理完毕后，继续创建视频窗口
                         createVideoWindow(videoPath, newTitle, episodeId, center);
                     });
                 })
                 .catch(error => {
-                    console.error('发送 HTTPS 请求时发生错误:', error);
-                    reject(error);
+                    console.error('发送 HTTPS 请求时发生错误:', error.message);
+                    if (loadWindow && !loadWindow.isDestroyed()) {
+                        loadWindow.close(); // 关闭窗口
+                    }
+                    throw error;  // 抛出错误以便外部捕获
                 });
-        }).catch(error => {
-            console.error('导入 got 模块时发生错误:', error);
-            reject(error);
         });
-    });
+    } catch (error) {
+        console.error('发生意外错误:', error.message);
+        if (loadWindow && !loadWindow.isDestroyed()) {
+            loadWindow.close(); // 关闭窗口
+        }
+        throw error;  // 抛出错误以便外部捕获
+    }
 }
 function saveCommentToJson(data, episodeId, videoPath) {
     const directoryPath = path.join(video_commentPath);
@@ -1798,7 +1866,7 @@ function createSelectionWindow(matches, videoPath, episodeId, center) {
         maxHeight: 800,
         minWidth: 500,
         minHeight: 333,
-        alwaysOnTop: true,
+        alwaysOnTop: false,
         fullscreen: false,
         vibrancy: 'popover',
         autoHideMenuBar: true,
@@ -1825,54 +1893,78 @@ function createSelectionWindow(matches, videoPath, episodeId, center) {
     ipcMain.removeHandler('process-selection');
     ipcMain.handle('process-selection', async (event, selectedMatch) => {
         const newTitle = `${selectedMatch.animeTitle} ${selectedMatch.episodeTitle}`;
-        //console.log('newTitle 114:', newTitle);
         const episodeId = selectedMatch.episodeId;
         const jsonFilePath = path.join(video_commentPath, `${episodeId}.json`);
         const sourceFile = selectedMatch.file; // file selected by the user
         const targetFile = path.join(video_commentPath, 'file.json');
+
+        // 如果选择的是 .xml 文件
         if (typeof sourceFile === 'string' && sourceFile.endsWith('.xml')) {
             try {
                 const xmlData = fs.readFileSync(sourceFile, 'utf-8');
                 const jsonData = convertXmlToJson(xmlData);
                 fs.writeFileSync(targetFile, JSON.stringify(jsonData, null, 2), 'utf-8');
-                //console.log('File converted and copied successfully');
             } catch (err) {
                 console.error('Error processing XML file:', err);
             }
         } else {
             console.error('Error copying file');
         }
+
         const outputDir = path.join(danmakuPath);
         CreateloadWindow(center);
         selectionWindow.close();
         ipcMain.removeAllListeners('process-selection');
+
         if (selectedMatch.episodeId) {
             const url = `https://api.dandanplay.net/api/v2/comment/${selectedMatch.episodeId}?withRelated=true&chConvert=1`;
 
+            // 获取当前时间戳
+            const timestamp = Math.floor(Date.now() / 1000); // 当前 UTC 时间戳（单位为秒）
+
+            // 获取请求路径（不包括域名和查询参数）
+            const apiPath = `/api/v2/comment/${selectedMatch.episodeId}`;
+
+            // 获取 AppSecret（假设从某个函数获取加密的 AppSecret）
+            const encryptedAppSecret = await fetchEncryptedAppSecret(); // 假设此函数返回加密的 AppSecret
+            const appSecret = co(encryptedAppSecret); // 解密 AppSecret，co() 为解密操作的函数
+
+            // 计算签名
+            const signatureString = `${'nipaplayv1'}${timestamp}${apiPath}${appSecret}`; // 拼接 AppId、Timestamp、apiPath 和 AppSecret
+            const signature = crypto.createHash('sha256').update(signatureString).digest('base64'); // 使用 sha256 计算哈希并进行 base64 编码
+
+            // 设置请求头
+            const options = {
+                responseType: 'json',
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`, // 使用全局的 token 作为身份验证
+                    'X-AppId': 'nipaplayv1',  // 使用你的 AppId
+                    'X-Signature': signature, // 使用计算的签名
+                    'X-Timestamp': timestamp, // 使用当前的时间戳
+                }
+            };
+
             return new Promise((resolve, reject) => {
                 import('got').then(({ default: got }) => {
-                    got(url, {
-                        responseType: 'json',
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    }).then(response => {
-                        saveCommentToJson(response.body, selectedMatch.episodeId, videoPath);
-                        resolve(response.body);
+                    got(url, options)
+                        .then(response => {
+                            saveCommentToJson(response.body, selectedMatch.episodeId, videoPath);
+                            resolve(response.body);
 
-                        // 在异步请求完成后执行处理评论的函数
-                        processComments(jsonFilePath, outputDir, (err) => {
-                            if (err) {
-                                console.error('Error processing comments:', err);
-                                return;
-                            }
-                            // 弹幕处理完毕后，继续创建视频窗口
-                            createVideoWindow(videoPath, newTitle, episodeId, center);
+                            // 在异步请求完成后执行处理评论的函数
+                            processComments(jsonFilePath, outputDir, (err) => {
+                                if (err) {
+                                    console.error('Error processing comments:', err);
+                                    return;
+                                }
+                                // 弹幕处理完毕后，继续创建视频窗口
+                                createVideoWindow(videoPath, newTitle, episodeId, center);
+                            });
+                        }).catch(error => {
+                            console.error('发送 HTTPS 请求时发生错误:', error);
+                            reject(error);
                         });
-                    }).catch(error => {
-                        console.error('发送 HTTPS 请求时发生错误:', error);
-                        reject(error);
-                    });
                 }).catch(error => {
                     console.error('导入 got 模块时发生错误:', error);
                     reject(error);
@@ -1885,7 +1977,6 @@ function createSelectionWindow(matches, videoPath, episodeId, center) {
                     return;
                 }
             });
-            //console.log('selectedMatch.animeTitle:', selectedMatch.animeTitle);
             const defaultTitle = videoPath.split('/').pop().split('.').slice(0, -1).join('.');
             createVideoWindow(videoPath, defaultTitle, 'file', center);
         } else {
@@ -1968,6 +2059,11 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
         //console.log('退出全屏模式', isFullScreen);
         videoWindow.webContents.send('full', 'false');
     });
+    console.log("window:", window);
+    if (window == null) {
+        console.log('window is null');
+        window = videoWindow;
+    }
     const videoPath2 = sanitizeFileName(path.basename(videoPath, path.extname(videoPath)));
     // 使用 encodeURIComponent 确保标题中的特殊字符被正确处理
     const encodedTitle = encodeURIComponent(newTitle || '');
@@ -2330,10 +2426,10 @@ function createMainWindow() {
     //console.log('Window loaded URL:', 'index.html');
     mainWindow.webContents.on('did-finish-load', () => {
         mainWindow.webContents.send('platform-info', { isMac });
-        if (token != null){
+        if (token != null) {
             mainWindow.webContents.send('login-success', loginUserName);
             console.log('登录成功');
-        }else{
+        } else {
             console.log('未登录');
         }
     });
