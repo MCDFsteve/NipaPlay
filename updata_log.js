@@ -1,6 +1,14 @@
 
 var updatesData = [
     {
+        version: "1.6.17",
+        date: "2025.2.6",
+        changes: [
+            "修复了无法自动识别视频弹幕的问题。",
+            "将FFmpeg版本更换为了新版，解决一些字幕识别问题。",
+        ]
+    },
+    {
         version: "1.6.16",
         date: "2025.2.1",
         changes: [

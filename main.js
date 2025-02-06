@@ -306,18 +306,18 @@ ipcMain.on('danmaku-shoot', async (event, text, formattedTime, mode, color, epis
     });
 
     // 获取当前时间戳
-    const timestamp = Math.floor(Date.now() / 1000); // 当前 UTC 时间戳（单位为秒）
+    const timestamp = Math.floor(Date.now() / 1000);  
 
-    // 获取请求路径（不包括域名和查询参数）
+     
     const apiPath = `/api/v2/comment/${episodeId}`;
 
-    // 获取 AppSecret（假设从某个函数获取加密的 AppSecret）
-    const encryptedAppSecret = await fetchEncryptedAppSecret(); // 假设此函数返回加密的 AppSecret
-    const appSecret = co(encryptedAppSecret); // 解密 AppSecret，co() 为解密操作的函数
+     
+    const encryptedAppSecret = await fetchEncryptedAppSecret();  
+    const appSecret = co(encryptedAppSecret);  
 
     // 计算签名
-    const signatureString = `${'nipaplayv1'}${timestamp}${apiPath}${appSecret}`; // 拼接 AppId、Timestamp、apiPath 和 AppSecret
-    const signature = crypto.createHash('sha256').update(signatureString).digest('base64'); // 使用 sha256 计算哈希并进行 base64 编码
+    const signatureString = `${appId}${timestamp}${apiPath}${appSecret}`;  
+    const signature = crypto.createHash('sha256').update(signatureString).digest('base64');  
 
     // 设置请求选项
     const options = {
@@ -326,12 +326,12 @@ ipcMain.on('danmaku-shoot', async (event, text, formattedTime, mode, color, epis
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`, // 使用全局的 token 作为身份验证
+            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Length': Buffer.byteLength(requestData),
-            'X-AppId': 'nipaplayv1',  // 使用你的 AppId
-            'X-Signature': signature, // 使用计算的签名
-            'X-Timestamp': timestamp // 使用当前的时间戳
+            'X-AppId': appId,
+            'X-Signature': signature,
+            'X-Timestamp': timestamp
         }
     };
 
@@ -664,27 +664,23 @@ ipcMain.handle('search-anime', async (event, searchTerm) => {
     const url = `https://api.dandanplay.net/api/v2/search/episodes?anime=${urlEncodedSearchTerm}`;
 
     // 获取当前时间戳
-    const timestamp = Math.floor(Date.now() / 1000); // 当前 UTC 时间戳（单位为秒）
-
-    // 获取请求路径（不包括域名和查询参数）
+    const timestamp = Math.floor(Date.now() / 1000);  
     const apiPath = `/api/v2/search/episodes`;
-
-    // 获取 AppSecret（假设从某个函数获取加密的 AppSecret）
-    const encryptedAppSecret = await fetchEncryptedAppSecret(); // 假设此函数返回加密的 AppSecret
-    const appSecret = co(encryptedAppSecret); // 解密 AppSecret，co() 为解密操作的函数
+    const encryptedAppSecret = await fetchEncryptedAppSecret();  
+    const appSecret = co(encryptedAppSecret);  
 
     // 计算签名
-    const signatureString = `${'nipaplayv1'}${timestamp}${apiPath}${appSecret}`; // 拼接 AppId、Timestamp、apiPath 和 AppSecret
-    const signature = crypto.createHash('sha256').update(signatureString).digest('base64'); // 使用 sha256 计算哈希并进行 base64 编码
+    const signatureString = `${appId}${timestamp}${apiPath}${appSecret}`;  
+    const signature = crypto.createHash('sha256').update(signatureString).digest('base64');  
 
     // 设置请求头
     const options = {
         headers: {
             'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`, // 使用全局的 token 作为身份验证
-            'X-AppId': 'nipaplayv1',  // 使用你的 AppId
-            'X-Signature': signature, // 使用计算的签名
-            'X-Timestamp': timestamp, // 使用当前的时间戳
+            'Authorization': `Bearer ${token}`,  
+            'X-AppId': appId,   
+            'X-Signature': signature,  
+            'X-Timestamp': timestamp,  
         }
     };
 
@@ -1317,6 +1313,7 @@ async function recognizeVideo(videoPath, center) {
     console.log("hash:", hash);
     const fileSize = getFileSize(videoPath);
     console.log("fileSize:", fileSize);
+
     const requestData = JSON.stringify({
         fileName: fileName,
         fileHash: hash,
@@ -1325,29 +1322,49 @@ async function recognizeVideo(videoPath, center) {
         token: token
     });
 
+    // 获取 appSecret
+    const encryptedAppSecret = await fetchEncryptedAppSecret();  
+    const appSecret = co(encryptedAppSecret);
+
+    // 获取当前时间戳并计算签名
+    const timestamp = Math.floor(Date.now() / 1000);
+    const apiPath = '/api/v2/match';
+    const signatureString = `${appId}${timestamp}${apiPath}${appSecret}`;
+    const signature = crypto.createHash('sha256').update(signatureString).digest('base64');
+
+    console.log('Request Data:', requestData);  // 打印发送的请求数据
+    console.log('Request Headers:', {
+        'X-AppId': appId,
+        'X-Signature': signature,
+        'X-Timestamp': timestamp
+    });  // 打印请求头部信息
+
     const options = {
         hostname: 'api.dandanplay.net',
-        path: '/api/v2/match',
+        path: apiPath,
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'Content-Length': Buffer.byteLength(requestData)
+            'Content-Length': Buffer.byteLength(requestData),
+            'X-AppId': appId,
+            'X-Signature': signature,
+            'X-Timestamp': timestamp
         },
-        timeout: 5000  // 设定请求超时时间为 5000 毫秒（5 秒）
+        rejectUnauthorized: false,  // 忽略证书验证
+        timeout: 5000
     };
+
     if (token) {
         options.headers['Authorization'] = `Bearer ${token}`;
     }
-    console.log("is 1");
+
     return new Promise((resolve, reject) => {
         const request = https.request(options, (response) => {
             let data = '';
-            console.log("is 2");
             response.on('data', (chunk) => {
                 data += chunk;
             });
-            console.log("is 3");
             response.on('end', () => {
                 try {
                     const responseData = JSON.parse(data);
@@ -1380,9 +1397,10 @@ async function recognizeVideo(videoPath, center) {
         request.end();
     });
 }
+
 async function recognizeVideo2(title) {
     let videoPath = title;
-    let hash = 'd41d8cd98f00b204e9800998ecf8427e'; // 默认的哈希值
+    let hash = 'd41d8cd98f00b204e9800998ecf8427e';
     let fileSize = 0;
 
     if (title.startsWith('https')) {
@@ -1391,7 +1409,7 @@ async function recognizeVideo2(title) {
         const filename = `${uuidv4()}${ext}`;
         const filepath = path.join(danmakuPath, filename);
         try {
-            const { default: got } = await import('got'); // 动态导入 got 模块
+            const { default: got } = await import('got');
             const response = await got(url, {
                 headers: {
                     'Range': 'bytes=0-16777215'
@@ -1401,10 +1419,8 @@ async function recognizeVideo2(title) {
 
             fs.writeFileSync(filepath, response.body);
             videoPath = filepath;
-
-            // 计算下载文件的哈希值
             hash = await calculateFileHash(videoPath, 'md5');
-            fileSize = response.body.length; // 设置文件大小
+            fileSize = response.body.length;
         } catch (error) {
             console.error('Error downloading video:', error);
             throw new Error('Failed to download video');
@@ -1421,16 +1437,39 @@ async function recognizeVideo2(title) {
         token: token
     });
 
+    // 获取 appSecret
+    const encryptedAppSecret = await fetchEncryptedAppSecret();  
+    const appSecret = co(encryptedAppSecret);
+
+    // 获取当前时间戳并计算签名
+    const timestamp = Math.floor(Date.now() / 1000);
+    const apiPath = '/api/v2/match';
+    const signatureString = `${appId}${timestamp}${apiPath}${appSecret}`;
+    const signature = crypto.createHash('sha256').update(signatureString).digest('base64');
+
+    console.log('Request Data:', requestData);  // 打印发送的请求数据
+    console.log('Request Headers:', {
+        'X-AppId': appId,
+        'X-Signature': signature,
+        'X-Timestamp': timestamp
+    });  // 打印请求头部信息
+
     const options = {
         hostname: 'api.dandanplay.net',
-        path: '/api/v2/match',
+        path: apiPath,
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'Content-Length': Buffer.byteLength(requestData)
-        }
+            'Content-Length': Buffer.byteLength(requestData),
+            'X-AppId': appId,
+            'X-Signature': signature,
+            'X-Timestamp': timestamp
+        },
+        rejectUnauthorized: false,  // 忽略证书验证
+        timeout: 5000
     };
+
     if (token) {
         options.headers['Authorization'] = `Bearer ${token}`;
     }
@@ -1503,25 +1542,23 @@ async function danmakudownload(newTitle, videoPath, episodeId, center) {
     const url = `https://api.dandanplay.net/api/v2/comment/${episodeId}?withRelated=true&chConvert=1`;
 
     // 获取当前时间戳
-    const timestamp = Math.floor(Date.now() / 1000); // 当前 UTC 时间戳（单位为秒）
-
-    // 获取请求路径（不包括域名和查询参数），使用新的变量名 apiPath
+    const timestamp = Math.floor(Date.now() / 1000);  
     const apiPath = `/api/v2/comment/${episodeId}`;
 
-    // 获取 AppSecret（假设从某个函数获取加密的 AppSecret）
-    const encryptedAppSecret = await fetchEncryptedAppSecret(); // 假设此函数返回加密的 AppSecret
-    const appSecret = co(encryptedAppSecret); // 解密 AppSecret，co() 为解密操作的函数
+     
+    const encryptedAppSecret = await fetchEncryptedAppSecret();  
+    const appSecret = co(encryptedAppSecret);  
 
     // 计算签名
-    const signatureString = `${'nipaplayv1'}${timestamp}${apiPath}${appSecret}`; // 拼接 AppId、Timestamp、apiPath 和 AppSecret
-    const signature = crypto.createHash('sha256').update(signatureString).digest('base64'); // 使用 sha256 计算哈希并进行 base64 编码
+    const signatureString = `${appId}${timestamp}${apiPath}${appSecret}`;  
+    const signature = crypto.createHash('sha256').update(signatureString).digest('base64');  
 
     const options = {
         method: 'GET',
         responseType: 'json',
         headers: {
             'Accept': 'application/json',
-            'X-AppId': 'nipaplayv1', // 设置 AppId
+            'X-AppId': appId, // 设置 AppId
             'X-Signature': signature, // 设置生成的签名
             'X-Timestamp': timestamp, // 设置时间戳
         },
@@ -1920,28 +1957,28 @@ function createSelectionWindow(matches, videoPath, episodeId, center) {
             const url = `https://api.dandanplay.net/api/v2/comment/${selectedMatch.episodeId}?withRelated=true&chConvert=1`;
 
             // 获取当前时间戳
-            const timestamp = Math.floor(Date.now() / 1000); // 当前 UTC 时间戳（单位为秒）
+            const timestamp = Math.floor(Date.now() / 1000);  
 
-            // 获取请求路径（不包括域名和查询参数）
+             
             const apiPath = `/api/v2/comment/${selectedMatch.episodeId}`;
 
-            // 获取 AppSecret（假设从某个函数获取加密的 AppSecret）
-            const encryptedAppSecret = await fetchEncryptedAppSecret(); // 假设此函数返回加密的 AppSecret
-            const appSecret = co(encryptedAppSecret); // 解密 AppSecret，co() 为解密操作的函数
+             
+            const encryptedAppSecret = await fetchEncryptedAppSecret();  
+            const appSecret = co(encryptedAppSecret);  
 
             // 计算签名
-            const signatureString = `${'nipaplayv1'}${timestamp}${apiPath}${appSecret}`; // 拼接 AppId、Timestamp、apiPath 和 AppSecret
-            const signature = crypto.createHash('sha256').update(signatureString).digest('base64'); // 使用 sha256 计算哈希并进行 base64 编码
+            const signatureString = `${appId}${timestamp}${apiPath}${appSecret}`;  
+            const signature = crypto.createHash('sha256').update(signatureString).digest('base64');  
 
             // 设置请求头
             const options = {
                 responseType: 'json',
                 headers: {
                     'Accept': 'application/json',
-                    'Authorization': `Bearer ${token}`, // 使用全局的 token 作为身份验证
-                    'X-AppId': 'nipaplayv1',  // 使用你的 AppId
-                    'X-Signature': signature, // 使用计算的签名
-                    'X-Timestamp': timestamp, // 使用当前的时间戳
+                    'Authorization': `Bearer ${token}`,  
+                    'X-AppId': appId,   
+                    'X-Signature': signature,  
+                    'X-Timestamp': timestamp,  
                 }
             };
 
