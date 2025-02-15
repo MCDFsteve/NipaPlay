@@ -903,15 +903,29 @@ function tr(b) {
         return char;
     }).join('');
 }
-function fetchToken(requestData, currentTimestamp) {
+async function fetchToken(requestData, currentTimestamp) {
+    const apiPath = '/api/v2/login';
+
+    const timestamp = Math.floor(Date.now() / 1000);
+    const apiPathFull = apiPath;
+
+    const encryptedAppSecret = await fetchEncryptedAppSecret();
+    const appSecret = co(encryptedAppSecret);
+
+    const signatureString = `${'nipaplayv1'}${timestamp}${apiPathFull}${appSecret}`;
+    const signature = crypto.createHash('sha256').update(signatureString).digest('base64');
+
     const options = {
         hostname: 'api.dandanplay.net',
         port: 443,
-        path: '/api/v2/login',
+        path: apiPath,
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Content-Length': requestData.length
+            'Content-Length': requestData.length,
+            'X-AppId': 'nipaplayv1',
+            'X-Signature': signature,
+            'X-Timestamp': timestamp
         }
     };
 
@@ -926,13 +940,10 @@ function fetchToken(requestData, currentTimestamp) {
                 if (response.token) {
                     token = response.token;
 
-                    // 发送成功消息
                     loginWindow.webContents.send('login-success', loginUserName);
                     mainWindow.webContents.send('login-success', loginUserName);
-                    // 保存 token 和时间戳到文件
                     fs.writeFileSync(tokenFilePath, JSON.stringify({ token, timestamp: currentTimestamp }), 'utf-8');
 
-                    // 将用户名和密码保存到二进制文件
                     saveCredentialsToBinaryFile(loginUserName, loginPassword);
                 } else {
                     loginWindow.webContents.send('login-failed');
@@ -951,7 +962,6 @@ function fetchToken(requestData, currentTimestamp) {
     req.write(requestData);
     req.end();
 }
-
 function saveCredentialsToBinaryFile(username, password) {
     // 创建一个缓冲区，先转换用户名和密码为字节
     const usernameBuffer = Buffer.from(username, 'utf-8');

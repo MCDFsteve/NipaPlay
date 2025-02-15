@@ -1,6 +1,13 @@
 
 var updatesData = [
     {
+        version: "1.6.18",
+        date: "2025.2.12",
+        changes: [
+            "修复了卡登录的bug。",
+        ]
+    },
+    {
         version: "1.6.17",
         date: "2025.2.6",
         changes: [
