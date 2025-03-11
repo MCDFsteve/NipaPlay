@@ -1,12 +1,12 @@
 {
   "name": "nipaplay",
   "productName": "NipaPlay",
-  "version": "1.6.18",
+  "version": "1.7.0",
   "description": "咪啪～☆",
   "main": "main.js",
   "author": "DFsteve",
   "license": "GPLv3",
-  "asar": false,
+  "asar": true,
   "dependencies": {
     "electron-store": "^8.2.0",
     "electron-updater": "^6.1.8",
@@ -71,8 +71,9 @@
       "!**/electron-builder.yml",
       "!**/.DS_Store",
       "!**/*.bak",
-      "!**/ffmpeg/ffmpeg_mac",
-      "!**/ffmpeg/ffmpeg_win"
+      "!**/ffmpeg/ffmpeg_win",
+      "!**/ffmpeg/ffmpeg_linux64",
+      "!**/ffmpeg/ffmpeg_linuxarm"
     ],
     "publish": {
       "provider": "github",
@@ -88,7 +89,27 @@
       "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
       "identity": null,
       "entitlements": "entitlements.mac.plist",
-      "entitlementsInherit": "entitlements.mac.inherit.plist"
+      "entitlementsInherit": "entitlements.mac.inherit.plist",
+      "extendInfo": {
+        "CFBundleDocumentTypes": [
+          {
+            "CFBundleTypeName": "MP4 Movie",
+            "CFBundleTypeRole": "Viewer",
+            "LSHandlerRank": "Owner",
+            "LSItemContentTypes": [
+              "public.movie"
+            ]
+          },
+          {
+            "CFBundleTypeName": "MKV Movie",
+            "CFBundleTypeRole": "Viewer",
+            "LSHandlerRank": "Owner",
+            "LSItemContentTypes": [
+              "public.movie"
+            ]
+          }
+        ]
+      }
     },
     "nsis": {
       "oneClick": false,

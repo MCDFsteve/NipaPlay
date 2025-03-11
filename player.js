@@ -892,7 +892,7 @@ winscreenButton.addEventListener('mouseleave', () => {
     }
 });*/
 //////
-seekBar.addEventListener('mousemove', (event) => {
+seekBar.addEventListener('mousemove', (event) => { 
     const seekBarRect = seekBar.getBoundingClientRect();
     const seekBarSon = event.clientX - seekBarRect.left;
     const seekBarWidth = seekBarRect.width;

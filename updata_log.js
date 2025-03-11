@@ -1,6 +1,15 @@
 
 var updatesData = [
     {
+        version: "1.7.0",
+        date: "？",
+        changes: [
+            "现在主菜单的logo悬浮上去会放大了。",
+            "现在播放窗口会有带差分的图标了。",
+            "现在Windows和Linux版本会使用不同设计风格的软件图标。",
+        ]
+    },
+    {
         version: "1.6.18",
         date: "2025.2.12",
         changes: [

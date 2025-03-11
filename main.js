@@ -44,6 +44,8 @@ function log(message) {
 //const client = steamworks.init(2520710);
 //const steamId = client.localplayer.getSteamId();
 // 创建主窗口实例
+let windowIcon;
+let windowPlayIcon;
 let mainWindow;
 let urlWindow;
 let loginWindow;
@@ -78,11 +80,20 @@ app.on('ready', () => {
 app.setAsDefaultProtocolClient('Nipaplay', process.execPath, ['--open-file']);
 // macOS: handle file opening
 app.on('open-file', (event, filePath) => {
+    console.log('open-file event triggered');
+    console.log('Dropped file path:', filePath);
+
     event.preventDefault();
+
     if (app.isReady()) {
+        console.log('App is ready, processing file...');
         ffmpegif(filePath);
     } else {
-        app.on('ready', () => ffmpegif(filePath));
+        console.log('App is not ready, waiting...');
+        app.on('ready', () => {
+            console.log('App is now ready, processing file...');
+            ffmpegif(filePath);
+        });
     }
 });
 // All platforms: handle second instance
@@ -113,7 +124,7 @@ app.on('activate', () => {
 app.whenReady().then(() => {
     app.setAppUserModelId('com.dfsteve.nipaplay'); // 设置应用程序的 User Model ID
     app.setBadgeCount(0); // 设置任务栏图标上的计数
-    app.dock.setIcon(path.join(__dirname, 'window_icon.png'));
+    app.dock.setIcon(path.join(__dirname, windowIcon));
 });
 app.on('before-quit', () => {
     app.isQuitting = true;
@@ -149,6 +160,9 @@ app.on('ready', () => {
     app.on('browser-window-blur', () => {
         unregisterShortcuts();
     });
+    const isMacOS = process.platform === 'darwin';
+    windowIcon = isMacOS ? 'window_icon.png' : 'icon.png';
+    windowPlayIcon = isMacOS ? 'window_play_icon.png' : 'play_icon.png';
     // 创建主窗口
     createMainWindow();
     loginAndGetToken();
@@ -306,18 +320,18 @@ ipcMain.on('danmaku-shoot', async (event, text, formattedTime, mode, color, epis
     });
 
     // 获取当前时间戳
-    const timestamp = Math.floor(Date.now() / 1000);  
+    const timestamp = Math.floor(Date.now() / 1000);
 
-     
+
     const apiPath = `/api/v2/comment/${episodeId}`;
 
-     
-    const encryptedAppSecret = await fetchEncryptedAppSecret();  
-    const appSecret = co(encryptedAppSecret);  
+
+    const encryptedAppSecret = await fetchEncryptedAppSecret();
+    const appSecret = co(encryptedAppSecret);
 
     // 计算签名
-    const signatureString = `${appId}${timestamp}${apiPath}${appSecret}`;  
-    const signature = crypto.createHash('sha256').update(signatureString).digest('base64');  
+    const signatureString = `${appId}${timestamp}${apiPath}${appSecret}`;
+    const signature = crypto.createHash('sha256').update(signatureString).digest('base64');
 
     // 设置请求选项
     const options = {
@@ -598,9 +612,9 @@ ipcMain.handle('read-file', async (event, filePath) => {
 });
 // 在main.js中添加一个新的IPC事件监听器来处理从渲染进程发来的请求
 ipcMain.on('open-video-file', (event, filePath) => {
-    console.log("Received file path:", filePath);
+    //console.log("Received file path:", filePath);
     if (filePath) {
-        console.log("Received file path:", filePath);
+        //console.log("Received file path:", filePath);
         ffmpegif(filePath); // 使用接收到的文件路径打开视频窗口
     } else {
         console.error('No file path provided');
@@ -664,23 +678,23 @@ ipcMain.handle('search-anime', async (event, searchTerm) => {
     const url = `https://api.dandanplay.net/api/v2/search/episodes?anime=${urlEncodedSearchTerm}`;
 
     // 获取当前时间戳
-    const timestamp = Math.floor(Date.now() / 1000);  
+    const timestamp = Math.floor(Date.now() / 1000);
     const apiPath = `/api/v2/search/episodes`;
-    const encryptedAppSecret = await fetchEncryptedAppSecret();  
-    const appSecret = co(encryptedAppSecret);  
+    const encryptedAppSecret = await fetchEncryptedAppSecret();
+    const appSecret = co(encryptedAppSecret);
 
     // 计算签名
-    const signatureString = `${appId}${timestamp}${apiPath}${appSecret}`;  
-    const signature = crypto.createHash('sha256').update(signatureString).digest('base64');  
+    const signatureString = `${appId}${timestamp}${apiPath}${appSecret}`;
+    const signature = crypto.createHash('sha256').update(signatureString).digest('base64');
 
     // 设置请求头
     const options = {
         headers: {
             'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`,  
-            'X-AppId': appId,   
-            'X-Signature': signature,  
-            'X-Timestamp': timestamp,  
+            'Authorization': `Bearer ${token}`,
+            'X-AppId': appId,
+            'X-Signature': signature,
+            'X-Timestamp': timestamp,
         }
     };
 
@@ -1007,7 +1021,7 @@ function createUrlWindow() {
         modal: true, // 设置为模态窗口
         vibrancy: 'popover',
         parent: mainWindow, // 设置父窗口
-        icon: path.join(__dirname, 'window_icon.png'),
+        icon: path.join(__dirname, windowIcon),
         autoHideMenuBar: true,
         webPreferences: {
             nodeIntegration: true,
@@ -1084,11 +1098,9 @@ function calculateFileHash(filePath, algorithm = 'md5') {
     return new Promise((resolve, reject) => {
         const hash = crypto.createHash(algorithm);
         const stream = fs.createReadStream(filePath);
-        console.log("hash 1");
         let totalBytes = 0;
         const limit = 16 * 1024 * 1024; // 16 MB的限制
         let digestCalled = false; // 添加标志位，防止多次调用digest
-        console.log("hash 2");
         stream.on('error', err => reject(err));
         stream.on('data', chunk => {
             totalBytes += chunk.length;
@@ -1099,7 +1111,6 @@ function calculateFileHash(filePath, algorithm = 'md5') {
                 stream.close();
             }
         });
-        console.log("hash 3");
         stream.on('end', () => {
             // 仅在正常结束流（未提前关闭）时返回哈希
             if (totalBytes <= limit && !digestCalled) {
@@ -1108,12 +1119,10 @@ function calculateFileHash(filePath, algorithm = 'md5') {
                 resolve(hash.digest('hex'));
             }
         });
-        console.log("hash 4");
         stream.on('close', () => {
             // 如果流被提前关闭，返回当前哈希状态
             if (!digestCalled) {
                 digestCalled = true;
-                console.log("close")
                 resolve(hash.digest('hex'));
             }
         });
@@ -1333,7 +1342,7 @@ async function recognizeVideo(videoPath, center) {
     });
 
     // 获取 appSecret
-    const encryptedAppSecret = await fetchEncryptedAppSecret();  
+    const encryptedAppSecret = await fetchEncryptedAppSecret();
     const appSecret = co(encryptedAppSecret);
 
     // 获取当前时间戳并计算签名
@@ -1341,14 +1350,14 @@ async function recognizeVideo(videoPath, center) {
     const apiPath = '/api/v2/match';
     const signatureString = `${appId}${timestamp}${apiPath}${appSecret}`;
     const signature = crypto.createHash('sha256').update(signatureString).digest('base64');
-
+/*
     console.log('Request Data:', requestData);  // 打印发送的请求数据
     console.log('Request Headers:', {
         'X-AppId': appId,
         'X-Signature': signature,
         'X-Timestamp': timestamp
     });  // 打印请求头部信息
-
+*/
     const options = {
         hostname: 'api.dandanplay.net',
         path: apiPath,
@@ -1448,7 +1457,7 @@ async function recognizeVideo2(title) {
     });
 
     // 获取 appSecret
-    const encryptedAppSecret = await fetchEncryptedAppSecret();  
+    const encryptedAppSecret = await fetchEncryptedAppSecret();
     const appSecret = co(encryptedAppSecret);
 
     // 获取当前时间戳并计算签名
@@ -1456,14 +1465,14 @@ async function recognizeVideo2(title) {
     const apiPath = '/api/v2/match';
     const signatureString = `${appId}${timestamp}${apiPath}${appSecret}`;
     const signature = crypto.createHash('sha256').update(signatureString).digest('base64');
-
+/*
     console.log('Request Data:', requestData);  // 打印发送的请求数据
     console.log('Request Headers:', {
         'X-AppId': appId,
         'X-Signature': signature,
         'X-Timestamp': timestamp
     });  // 打印请求头部信息
-
+*/
     const options = {
         hostname: 'api.dandanplay.net',
         path: apiPath,
@@ -1552,16 +1561,16 @@ async function danmakudownload(newTitle, videoPath, episodeId, center) {
     const url = `https://api.dandanplay.net/api/v2/comment/${episodeId}?withRelated=true&chConvert=1`;
 
     // 获取当前时间戳
-    const timestamp = Math.floor(Date.now() / 1000);  
+    const timestamp = Math.floor(Date.now() / 1000);
     const apiPath = `/api/v2/comment/${episodeId}`;
 
-     
-    const encryptedAppSecret = await fetchEncryptedAppSecret();  
-    const appSecret = co(encryptedAppSecret);  
+
+    const encryptedAppSecret = await fetchEncryptedAppSecret();
+    const appSecret = co(encryptedAppSecret);
 
     // 计算签名
-    const signatureString = `${appId}${timestamp}${apiPath}${appSecret}`;  
-    const signature = crypto.createHash('sha256').update(signatureString).digest('base64');  
+    const signatureString = `${appId}${timestamp}${apiPath}${appSecret}`;
+    const signature = crypto.createHash('sha256').update(signatureString).digest('base64');
 
     const options = {
         method: 'GET',
@@ -1791,7 +1800,7 @@ function showSubtitleSelection(tracks, center) {
             autoHideMenuBar: true,
             modal: true, // 设置为模态窗口
             parent: (center === 'amadeus' || center === 'lain') ? videoWindow : mainWindow,
-            icon: path.join(__dirname, 'window_icon.png'),
+            icon: path.join(__dirname, windowIcon),
             webPreferences: {
                 nodeIntegration: true,
                 contextIsolation: false
@@ -1917,7 +1926,7 @@ function createSelectionWindow(matches, videoPath, episodeId, center) {
         fullscreen: false,
         vibrancy: 'popover',
         autoHideMenuBar: true,
-        icon: path.join(__dirname, 'window_icon.png'),
+        icon: path.join(__dirname, windowIcon),
         show: false,
         frame: false,
         modal: true, // 设置为模态窗口
@@ -1967,28 +1976,28 @@ function createSelectionWindow(matches, videoPath, episodeId, center) {
             const url = `https://api.dandanplay.net/api/v2/comment/${selectedMatch.episodeId}?withRelated=true&chConvert=1`;
 
             // 获取当前时间戳
-            const timestamp = Math.floor(Date.now() / 1000);  
+            const timestamp = Math.floor(Date.now() / 1000);
 
-             
+
             const apiPath = `/api/v2/comment/${selectedMatch.episodeId}`;
 
-             
-            const encryptedAppSecret = await fetchEncryptedAppSecret();  
-            const appSecret = co(encryptedAppSecret);  
+
+            const encryptedAppSecret = await fetchEncryptedAppSecret();
+            const appSecret = co(encryptedAppSecret);
 
             // 计算签名
-            const signatureString = `${appId}${timestamp}${apiPath}${appSecret}`;  
-            const signature = crypto.createHash('sha256').update(signatureString).digest('base64');  
+            const signatureString = `${appId}${timestamp}${apiPath}${appSecret}`;
+            const signature = crypto.createHash('sha256').update(signatureString).digest('base64');
 
             // 设置请求头
             const options = {
                 responseType: 'json',
                 headers: {
                     'Accept': 'application/json',
-                    'Authorization': `Bearer ${token}`,  
-                    'X-AppId': appId,   
-                    'X-Signature': signature,  
-                    'X-Timestamp': timestamp,  
+                    'Authorization': `Bearer ${token}`,
+                    'X-AppId': appId,
+                    'X-Signature': signature,
+                    'X-Timestamp': timestamp,
                 }
             };
 
@@ -2082,7 +2091,7 @@ function createVideoWindow(videoPath, newTitle, episodeId, center) {
         show: false,
         x: WindowX,
         y: WindowY,
-        icon: path.join(__dirname, 'window_icon_play.png'),
+        icon: path.join(__dirname, windowPlayIcon),
         vibrancy: 'sidebar',
         webPreferences: {
             nodeIntegration: true,
@@ -2318,15 +2327,10 @@ async function openVideoAndFetchDetails(videoPath, episodeId, center, isDanmukuC
         //console.log("未找到存储结果，开始识别:", videoPath);
         let response;
         if (videoPath.startsWith('https')) {
-            console.log("1")
             response = await recognizeVideo2(videoPath);
-            console.log("response:", response);
         } else {
-            console.log("2")
             response = await recognizeVideo(videoPath, center);
-            console.log("response:", response);
         }
-        console.log("response:", response);
         // 如果 response 为 false，直接执行 createSelectionWindow
         if (response === false) {
             createSelectionWindow([], videoPath, episodeId, center);
@@ -2357,7 +2361,7 @@ function createMainWindow() {
         height: 600,
         minWidth: 700,  // 设置最小宽度
         minHeight: 400, // 设置最小高度
-        icon: path.join(__dirname, 'window_icon.png'),
+        icon: path.join(__dirname, windowIcon),
         //vibrancy: 'content-under', // 这里设置毛玻璃效果
         //visualEffectState: 'active',
         fullscreen: false,
@@ -2497,7 +2501,7 @@ function CreateloadWindow(center) {
         vibrancy: 'popover',
         show: false,
         modal: true, // 设置为模态窗口
-        icon: path.join(__dirname, 'window_icon.png'),
+        icon: path.join(__dirname, windowIcon),
         parent: (center === 'amadeus' || center === 'lain') ? videoWindow : mainWindow,
         webPreferences: {
             nodeIntegration: true,
@@ -2524,7 +2528,7 @@ function CreateLoginWindow(center) {
         vibrancy: 'popover',
         show: false,
         modal: true, // 设置为模态窗口
-        icon: path.join(__dirname, 'window_icon.png'),
+        icon: path.join(__dirname, windowIcon),
         parent: (center === 'amadeus' || center === 'lain') ? videoWindow : mainWindow,
         webPreferences: {
             nodeIntegration: true,

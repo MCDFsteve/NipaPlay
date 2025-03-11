@@ -27,7 +27,27 @@ button:focus, input[type="button"]:focus, input[type="submit"]:focus {
 .sidebar button:hover img {
     animation: scaleAnimation 0.5s ease forwards;
 }
+.title-text {
+    position: fixed;
+    top: 7vh;
+    left: 2vw;
+    width: 18vw;
+}
 
+.title-text img {
+    -webkit-app-region: no-drag;
+    scale:1;
+    -webkit-user-drag: none; 
+    width: 100%;
+    /* 确保图片适应容器宽度 */
+    height: auto;
+    /* 保持图片的原始比例 */
+    transition: scale 0.3s ease, transform 0.3s ease;
+}
+.title-text img:hover{
+    scale: 1.2;
+    transition: scale 0.3s ease, transform 0.3s ease;
+}
 /* 定义序列动画 */
 @keyframes scaleAnimation {
     0% {
@@ -590,21 +610,6 @@ h2 {
 #import-video {
     margin-top: calc(17vh + 20%);
 }
-
-.title-text {
-    position: fixed;
-    top: 7vh;
-    left: 2vw;
-    width: 18vw;
-}
-
-.title-text img {
-    width: 100%;
-    /* 确保图片适应容器宽度 */
-    height: auto;
-    /* 保持图片的原始比例 */
-}
-
 .section-divider {
     border: none;
     border-top: 1px solid rgb(0, 0, 0);
