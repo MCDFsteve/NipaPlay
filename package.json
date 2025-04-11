@@ -71,7 +71,7 @@
       "!**/electron-builder.yml",
       "!**/.DS_Store",
       "!**/*.bak",
-      "!**/ffmpeg/ffmpeg_win",
+      "!**/ffmpeg/ffmpeg_mac",
       "!**/ffmpeg/ffmpeg_linux64",
       "!**/ffmpeg/ffmpeg_linuxarm"
     ],
