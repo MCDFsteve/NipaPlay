@@ -2,7 +2,7 @@
 
 
 # NipaPlay 一款本地弹幕播放器。看番专用。弹弹play的macOS代餐。
-
+# 已停止更新，请前往重制版的仓库：https://github.com/MCDFsteve/NipaPlay-Reload
 ## 特色
 - electron开发，html5播放器内核（支持mkv），支持硬解hevc/h265，自动调用GPU解码。
 - 支持加载内嵌字幕（ass和srt）的视频。
@@ -21,7 +21,6 @@
 - 支持播放器默认以小窗口顶格左上角播放视频，设置置顶之后可以一边看番一边做其他的事情。
 ### 下载
 - 直接在右侧[Releases](https://github.com/MCDFsteve/NipaPlay/releases)下载最新包即可使用。目前支持Windows版和macOS版，Linux版。
-### 软件持续维护和更新中...
 ### macOS用户请注意
 - 直接运行程序会提示已损坏，请在终端输入sudo xattr -dr com.apple.quarantine 程序.app的运行路径（可以从访达拖放），输入密码以后就能正常打开了
 ### 软件截图
